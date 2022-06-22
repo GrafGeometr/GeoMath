@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="alert alert-secondary">Код для пользователя со статусом {{ status }} успешно сгенерирован</h1>
+<div class="alert alert-success">Вот он:<br>
+    {{ code }}<br>
+    Вы можете скопировать его и переслать другому пользователю. Срок действия кода - 1 день.
+</div>
+{% endblock %}
