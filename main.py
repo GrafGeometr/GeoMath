@@ -4,6 +4,9 @@ from loginform import LoginForm
 from data import db_session
 from data.users import User
 from data.post import Post
+from data.problem import Problem
+from data.comment import Comment
+from data.solution import Solution
 from registerform import RegisterForm
 from postform import PostForm
 from secret_code import generate_code, check_code
@@ -20,7 +23,22 @@ def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
+@login_required
+@app.route('/problem/<problem_id>')
+def problem(problem_id):
+    db_sess = db_session.create_session()
+    problem = db_sess.query(Problem).filter(Problem.id==problem_id).first()
+    if problem:
+        return render_template("problemshow.html",problem=problem)
+    return "К сожалению такой задачи нет"
 
+
+@login_required
+@app.route('/my')
+def toread():
+    pass
+
+# (геома, алгебра, комба, всё) (посты, задачи, задачи без решений, всё) (друзья, подписки, популярные) (час, день, неделя, месяц, все)
 @app.route('/')
 def index():
     db_sess = db_session.create_session()
@@ -62,7 +80,7 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect("/")
+            return redirect(f"/profile/{user.id}")
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
@@ -181,11 +199,44 @@ def main():
     print(generate_code('преподаватель'))
     app.run(port=8080, host='127.0.0.1')
     """db_sess = db_session.create_session()
-    user = User()
-    user.name='123'
-    user.hashed_password='1234'
-    db_sess.add(user)
+
+
+    user = db_sess.query(User).filter(User.id==1).first()
+    problem = Problem()
+    problem.content = 'условие'
+    user.problems.append(problem)
+    db_sess.commit()
+
+
+    user = db_sess.query(User).filter(User.id == 2).first()
+    problem = db_sess.query(Problem).filter(Problem.id==1).first()
+    comment = Comment()
+    comment.content = 'tekst2'
+    user.comments.append(comment)
+    problem.comments.append(comment)
+
+    user = db_sess.query(User).filter(User.id == 1).first()
+    problem = db_sess.query(Problem).filter(Problem.id == 1).first()
+    comment = Comment()
+    comment.content = 'tekst1'
+    user.comments.append(comment)
+    problem.comments.append(comment)
+
+    user1 = db_sess.query(User).filter(User.id==1).first()
+    user2 = db_sess.query(User).filter(User.id==2).first()
+    solution = Solution()
+    solution.content = 'решение'
+    user1.solutions.append(solution)
+    problem.solutions.append(solution)
+    comment = Comment()
+    comment.content = 'tekst3'
+    user2.comments.append(comment)
+    solution.comments.append(comment)
+
+
     db_sess.commit()"""
+
+
 
 
 if __name__ == '__main__':

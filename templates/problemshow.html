@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Задача номер {{ problem.id }}</h1>
+<div class="alert alert-secondary">Условие задачи:<br>
+    <hr>
+    {{ problem.content }}
+    <hr>
+    Автор задачи:
+    <a class="badge bg-light" href={{ problem.user.profile_href() }}><font size="3">
+        {% if problem.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+        {% endif %}
+        {% if problem.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+        {% endif %}
+        {{ problem.user.name }}
+        {% if problem.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+        преподаватель
+        {% endif %}
+        {% if problem.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+        {% endif %}
+    </font></a>
+</div>
+{% if problem.solutions %} Решения:
+{% for solution in problem.solutions %}
+<div class="alert alert-secondary">
+    <a class="badge bg-light" href={{ solution.user.profile_href() }}><font size="3">
+        {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+        {% endif %}
+        {% if solution.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+        {% endif %}
+        {{ solution.user.name }}
+        {% if solution.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+        преподаватель
+        {% endif %}
+        {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+        {% endif %}
+    </font></a><br>
+    {{ solution.content }}
+</div>
+{% if solution.comments %}
+{% for comment in solution.comments %}
+<div class="alert alert-secondary" style="margin-left:20px">
+    <a class="badge bg-light" href={{ comment.user.profile_href() }}><font size="3">
+        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+        {% endif %}
+        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+        {% endif %}
+        {{ comment.user.name }}
+        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+        преподаватель
+        {% endif %}
+        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+        {% endif %}
+    </font></a><br>
+    {{ comment.content }}
+</div>
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% else %}
+<div class="alert alert-danger">Внимание, у этой задачи пока нет решения. Тот, кто первым напишет решение, получит
+    половину рейтинга от этой задачи.
+</div>
+{% endif %}
+{% if problem.comments %}
+<div class="alert alert-secondary">Комментарии:</div>
+{% for comment in problem.comments %}
+<div class="alert alert-secondary" style="margin-left:20px">
+    <a class="badge bg-light" href={{ comment.user.profile_href() }}><font size="3">
+        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+        {% endif %}
+        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+        {% endif %}
+        {{ comment.user.name }}
+        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+        преподаватель
+        {% endif %}
+        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+        {% endif %}
+    </font></a><br>
+    {{ comment.content }}
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -5,12 +5,11 @@ from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 
 
-class Post(SqlAlchemyBase):
-    __tablename__ = 'posts'
+class Problem(SqlAlchemyBase):
+    __tablename__ = 'problems'
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    title = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
@@ -20,4 +19,8 @@ class Post(SqlAlchemyBase):
                                 sqlalchemy.ForeignKey("users.id"))
     user = orm.relation('User')
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
-    comments = orm.relation("Comment", back_populates='post')
+    comments = orm.relation("Comment", back_populates='problem')
+
+    solutions = orm.relation("Solution", back_populates='problem')
+
+
