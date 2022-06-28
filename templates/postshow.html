@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ post.title }}</h1>
+<div class="alert alert-secondary">
+    <hr>
+    {{ post.content }}
+    <hr>
+    <a class="badge bg-light" style="margin-left:20px" href={{ post.user.profile_href() }}><font size="3">
+        {% if post.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+        {% endif %}
+        {% if post.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+        {% endif %}
+        {{ post.user.name }}
+        {% if post.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+        преподаватель
+        {% endif %}
+        {% if post.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+        {% endif %}
+    </font></a>
+</div>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <div> {{ form.content.label }} {{ form.content(class="form-control") }}
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    </div>
+</form>
+{% if post.comments %}
+<div class="alert alert-secondary">Комментарии:
+    <hr>
+    {% for comment in post.comments %}
+    <div class="alert alert-secondary" style="margin-left:20px">
+        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3">
+            {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+            {% endif %}
+            {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+            {% endif %}
+            {{ comment.user.name }}
+            {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+            преподаватель
+            {% endif %}
+            {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+            {% endif %}
+        </font></a><br>
+        {{ comment.content }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

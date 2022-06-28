@@ -5,10 +5,12 @@ from data import db_session
 from data.users import User
 from data.post import Post
 from data.problem import Problem
+from commentaddform import CommentAddForm
 from data.comment import Comment
 from data.solution import Solution
 from registerform import RegisterForm
 from postform import PostForm
+from commentaddform import CommentAddForm
 from secret_code import generate_code, check_code
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
@@ -25,7 +27,9 @@ def load_user(user_id):
 
 @login_required
 @app.route('/problem/<problem_id>')
-def problem(problem_id):
+def problem_show(problem_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = db_session.create_session()
     problem = db_sess.query(Problem).filter(Problem.id==problem_id).first()
     if problem:
@@ -34,13 +38,40 @@ def problem(problem_id):
 
 
 @login_required
+@app.route('/post/<post_id>', methods=['GET', 'POST'])
+def post_show(post_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    form = CommentAddForm()
+    if form.validate_on_submit():
+        if post:
+            comment = Comment()
+            comment.content = form.content.data
+            current_user.comments.append(comment)
+            db_sess.merge(current_user)
+            comment = db_sess.merge(comment)
+            post.comments.append(comment)
+            db_sess.commit()
+
+    if post:
+        return render_template("postshow.html", post=post,form=form)
+    return "К сожалению такой записи нет"
+
+
+@login_required
 @app.route('/my')
 def toread():
+    if not current_user.is_authenticated:
+        return redirect('/login')
     pass
 
 # (геома, алгебра, комба, всё) (посты, задачи, задачи без решений, всё) (друзья, подписки, популярные) (час, день, неделя, месяц, все)
 @app.route('/')
 def index():
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
         posts = db_sess.query(Post).filter(
@@ -53,6 +84,8 @@ def index():
 @login_required
 @app.route('/profile/<user_id>')
 def profile(user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     if not user:
@@ -65,6 +98,8 @@ def profile(user_id):
 @login_required
 @app.route('/generate_code/<status>')
 def gen_code(status):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     statuses = {'админ': 3, 'жюри': 2, 'преподаватель': 1, 'участник': 0}
     if statuses.get(status, 1000) > statuses[current_user.status]:
         return redirect('/')
@@ -125,7 +160,7 @@ def logout():
     return redirect("/")
 
 
-@app.route('/post', methods=['GET', 'POST'])
+"""@app.route('/post', methods=['GET', 'POST'])
 @login_required
 def add_post():
     form = PostForm()
@@ -190,7 +225,7 @@ def post_delete(id):
     else:
         abort(404)
     return redirect('/')
-
+"""
 
 def main():
     db_session.global_init("db/blogs.db")
@@ -235,6 +270,21 @@ def main():
 
 
     db_sess.commit()"""
+
+    """db_sess = db_session.create_session()
+    user1 = db_sess.query(User).filter(User.id == 1).first()
+    user2 = db_sess.query(User).filter(User.id == 2).first()
+    post = Post()
+    post.title = "Геома"
+    post.content = "Больше геомы"
+    user1.posts.append(post)
+    comment = Comment()
+    comment.content = 'Да, согласен'
+    user2.comments.append(comment)
+    post.comments.append(comment)
+
+    db_sess.commit()"""
+
 
 
 
