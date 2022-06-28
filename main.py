@@ -5,7 +5,7 @@ from data import db_session
 from data.users import User
 from data.post import Post
 from data.problem import Problem
-from commentaddform import CommentAddForm
+from solutionaddform import SolutionAddForm
 from data.comment import Comment
 from data.solution import Solution
 from registerform import RegisterForm
@@ -37,7 +37,8 @@ def problem_show(problem_id):
         return "К сожалению такой задачи нет"
     form = CommentAddForm(prefix='problem_comment_form')
     comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.comments))]
-    if request.method=='POST':
+    solform = SolutionAddForm(prefix='problem_solution_form')
+    if request.method == 'POST':
         if form.validate_on_submit():
             comment = Comment()
             comment.content = form.content.data
@@ -45,6 +46,15 @@ def problem_show(problem_id):
             db_sess.merge(current_user)
             comment = db_sess.merge(comment)
             problem.comments.append(comment)
+            db_sess.commit()
+            return redirect(f'/problem/{problem_id}')
+        if solform.validate_on_submit():
+            solution = Solution()
+            solution.content = solform.content.data
+            current_user.solutions.append(solution)
+            db_sess.merge(current_user)
+            solution = db_sess.merge(solution)
+            problem.solutions.append(solution)
             db_sess.commit()
             return redirect(f'/problem/{problem_id}')
         for i in range(len(comment_forms)):
@@ -58,7 +68,7 @@ def problem_show(problem_id):
                 solution.comments.append(comment)
                 db_sess.commit()
                 return redirect(f'/problem/{problem_id}')
-    return render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms)
+    return render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms, solform=solform)
 
 
 @login_required

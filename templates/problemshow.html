@@ -20,6 +20,12 @@
         {% endif %}
     </font></a>
 </div>
+<form action="" method="post">
+        {{ solform.hidden_tag() }}
+        <div>{{ solform.content.label }} {{ solform.submit(type="submit", class="btn btn-primary")
+            }}{{ solform.content(class="form-control") }}
+        </div>
+    </form>
 {% if problem.solutions %} Решения:
 {% for i in range(problem.solutions|length) %}
 {% set solution = problem.solutions[i] %}
