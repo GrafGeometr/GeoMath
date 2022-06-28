@@ -21,7 +21,8 @@
     </font></a>
 </div>
 {% if problem.solutions %} Решения:
-{% for solution in problem.solutions %}
+{% for i in range(problem.solutions|length) %}
+{% set solution = problem.solutions[i] %}
 <div class="alert alert-secondary">
     <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3">
         {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -36,6 +37,13 @@
         {% endif %}
     </font></a><br>
     {{ solution.content }}
+    <hr>
+    <form action="" method="post">
+        {{ comment_forms[i].hidden_tag() }}
+        <div>{{ comment_forms[i].content.label }} {{ comment_forms[i].submit(type="submit", class="btn btn-primary")
+            }}{{ comment_forms[i].content(class="form-control") }}
+        </div>
+    </form>
     <hr>
     {% if solution.comments %}
     {% for comment in solution.comments %}
@@ -63,24 +71,33 @@
     половину рейтинга от этой задачи.
 </div>
 {% endif %}
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <div>{{ form.content.label }} {{ form.submit(type="submit", class="btn btn-primary") }}{{
+        form.content(class="form-control") }}
+
+    </div>
+</form>
 {% if problem.comments %}
-<div class="alert alert-secondary">Комментарии:<hr>
-{% for comment in problem.comments %}
-<div class="alert alert-secondary" style="margin-left:20px">
-    <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3">
-        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
-        {% endif %}
-        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
-        {% endif %}
-        {{ comment.user.name }}
-        {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
-        преподаватель
-        {% endif %}
-        {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
-        {% endif %}
-    </font></a><br>
-    {{ comment.content }}
+<div class="alert alert-secondary">Комментарии:
+    <hr>
+    {% for comment in problem.comments %}
+    <div class="alert alert-secondary" style="margin-left:20px">
+        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3">
+            {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+            {% endif %}
+            {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+            {% endif %}
+            {{ comment.user.name }}
+            {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+            преподаватель
+            {% endif %}
+            {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+            {% endif %}
+        </font></a><br>
+        {{ comment.content }}
+    </div>
+    {% endfor %}
 </div>
-{% endfor %}</div>
 {% endif %}
 {% endblock %}

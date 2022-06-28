@@ -21,8 +21,8 @@
 </div>
 <form action="" method="post">
     {{ form.hidden_tag() }}
-    <div> {{ form.content.label }} {{ form.content(class="form-control") }}
-        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <div>{{ form.content.label }} {{ form.submit(type="submit", class="btn btn-primary") }}{{ form.content(class="form-control") }}
+
     </div>
 </form>
 {% if post.comments %}

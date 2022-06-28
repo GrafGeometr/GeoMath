@@ -25,16 +25,40 @@ def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
+
 @login_required
-@app.route('/problem/<problem_id>')
+@app.route('/problem/<problem_id>', methods=['GET', 'POST'])
 def problem_show(problem_id):
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
-    problem = db_sess.query(Problem).filter(Problem.id==problem_id).first()
-    if problem:
-        return render_template("problemshow.html",problem=problem)
-    return "К сожалению такой задачи нет"
+    problem = db_sess.query(Problem).filter(Problem.id == problem_id).first()
+    if not problem:
+        return "К сожалению такой задачи нет"
+    form = CommentAddForm(prefix='problem_comment_form')
+    comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.comments))]
+    if request.method=='POST':
+        if form.validate_on_submit():
+            comment = Comment()
+            comment.content = form.content.data
+            current_user.comments.append(comment)
+            db_sess.merge(current_user)
+            comment = db_sess.merge(comment)
+            problem.comments.append(comment)
+            db_sess.commit()
+            return redirect(f'/problem/{problem_id}')
+        for i in range(len(comment_forms)):
+            if comment_forms[i].validate_on_submit():
+                comment = Comment()
+                comment.content = comment_forms[i].content.data
+                current_user.comments.append(comment)
+                db_sess.merge(current_user)
+                comment = db_sess.merge(comment)
+                solution = problem.solutions[i]
+                solution.comments.append(comment)
+                db_sess.commit()
+                return redirect(f'/problem/{problem_id}')
+    return render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms)
 
 
 @login_required
@@ -44,20 +68,19 @@ def post_show(post_id):
         return redirect('/login')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        return "К сожалению такой записи нет"
     form = CommentAddForm()
     if form.validate_on_submit():
-        if post:
-            comment = Comment()
-            comment.content = form.content.data
-            current_user.comments.append(comment)
-            db_sess.merge(current_user)
-            comment = db_sess.merge(comment)
-            post.comments.append(comment)
-            db_sess.commit()
-
-    if post:
-        return render_template("postshow.html", post=post,form=form)
-    return "К сожалению такой записи нет"
+        comment = Comment()
+        comment.content = form.content.data
+        current_user.comments.append(comment)
+        db_sess.merge(current_user)
+        comment = db_sess.merge(comment)
+        post.comments.append(comment)
+        db_sess.commit()
+        return redirect(f'/post/{post_id}')
+    return render_template("postshow.html", post=post, form=form)
 
 
 @login_required
@@ -66,6 +89,7 @@ def toread():
     if not current_user.is_authenticated:
         return redirect('/login')
     pass
+
 
 # (геома, алгебра, комба, всё) (посты, задачи, задачи без решений, всё) (друзья, подписки, популярные) (час, день, неделя, месяц, все)
 @app.route('/')
@@ -227,6 +251,7 @@ def post_delete(id):
     return redirect('/')
 """
 
+
 def main():
     db_session.global_init("db/blogs.db")
     print(generate_code('админ'))
@@ -284,9 +309,6 @@ def main():
     post.comments.append(comment)
 
     db_sess.commit()"""
-
-
-
 
 
 if __name__ == '__main__':
