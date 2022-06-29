@@ -144,7 +144,9 @@ def gen_code(status):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+    print(123)
     if form.validate_on_submit():
+        print(2123)
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):

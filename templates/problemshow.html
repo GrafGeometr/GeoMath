@@ -7,7 +7,8 @@
     {{ problem.content }}
     <hr>
     Автор задачи:
-    <a class="badge bg-light" style="margin-left:20px" href={{ problem.user.profile_href() }}><font size="3">
+    <a class="badge bg-light" style="margin-left:20px" href={{ problem.user.profile_href() }}><font size="3"
+                                                                                                    color="blue">
         {% if problem.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
         {% endif %}
         {% if problem.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
@@ -20,17 +21,27 @@
         {% endif %}
     </font></a>
 </div>
-<form action="" method="post">
+<p>
+    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
+            aria-expanded="false" aria-controls="collapse1">
+        {{ solform.content.label }}
+    </button>
+</p>
+<div class="collapse" id="collapse1">
+    <form action="" method="post">
         {{ solform.hidden_tag() }}
-        <div>{{ solform.content.label }} {{ solform.submit(type="submit", class="btn btn-primary")
+        <div>{{ solform.submit(type="submit", class="btn btn-primary")
             }}{{ solform.content(class="form-control") }}
         </div>
     </form>
+</div>
+
 {% if problem.solutions %} Решения:
 {% for i in range(problem.solutions|length) %}
 {% set solution = problem.solutions[i] %}
 <div class="alert alert-secondary">
-    <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3">
+    <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3"
+                                                                                                     color="blue">
         {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
         {% endif %}
         {% if solution.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
@@ -44,17 +55,29 @@
     </font></a><br>
     {{ solution.content }}
     <hr>
-    <form action="" method="post">
-        {{ comment_forms[i].hidden_tag() }}
-        <div>{{ comment_forms[i].content.label }} {{ comment_forms[i].submit(type="submit", class="btn btn-primary")
-            }}{{ comment_forms[i].content(class="form-control") }}
-        </div>
-    </form>
+    {% set comformid = "comform"+i|string %}
+    {% set comformidph = "#"+comformid %}
+    <p>
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target={{ comformidph }}
+                aria-expanded="false" aria-controls={{ comformid }}>
+            {{ comment_forms[i].content.label }}
+        </button>
+    </p>
+    <div class="collapse" id={{ comformid }}>
+        <form action="" method="post">
+            {{ comment_forms[i].hidden_tag() }}
+            <div>{{ comment_forms[i].submit(type="submit", class="btn btn-primary")
+                }}{{ comment_forms[i].content(class="form-control") }}
+            </div>
+        </form>
+    </div>
+
     <hr>
     {% if solution.comments %}
     {% for comment in solution.comments %}
     <div class="alert alert-secondary" style="margin-left:20px">
-        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3">
+        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3"
+                                                                                                        color="blue">
             {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
             {% endif %}
             {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
@@ -77,19 +100,28 @@
     половину рейтинга от этой задачи.
 </div>
 {% endif %}
-<form action="" method="post">
-    {{ form.hidden_tag() }}
-    <div>{{ form.content.label }} {{ form.submit(type="submit", class="btn btn-primary") }}{{
-        form.content(class="form-control") }}
+<p>
+    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2"
+            aria-expanded="false" aria-controls="collapse2">
+        {{ form.content.label }}
+    </button>
+</p>
+<div class="collapse" id="collapse2">
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <div>{{ form.submit(type="submit", class="btn btn-primary") }}{{
+            form.content(class="form-control") }}
 
-    </div>
-</form>
+        </div>
+    </form>
+</div>
 {% if problem.comments %}
 <div class="alert alert-secondary">Комментарии:
     <hr>
     {% for comment in problem.comments %}
     <div class="alert alert-secondary" style="margin-left:20px">
-        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3">
+        <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3"
+                                                                                                        color="blue">
             {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
             {% endif %}
             {% if comment.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
