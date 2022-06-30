@@ -9,8 +9,9 @@ from solutionaddform import SolutionAddForm
 from data.comment import Comment
 from data.solution import Solution
 from registerform import RegisterForm
-from postform import PostForm
+from postaddform import PostAddForm
 from commentaddform import CommentAddForm
+from problemaddform import ProblemAddForm
 from secret_code import generate_code, check_code
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
@@ -36,7 +37,7 @@ def problem_show(problem_id):
     if not problem:
         return "К сожалению такой задачи нет"
     form = CommentAddForm(prefix='problem_comment_form')
-    comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.comments))]
+    comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.solutions))]
     solform = SolutionAddForm(prefix='problem_solution_form')
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -144,9 +145,7 @@ def gen_code(status):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    print(123)
     if form.validate_on_submit():
-        print(2123)
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
@@ -196,24 +195,47 @@ def logout():
     return redirect("/")
 
 
-"""@app.route('/post', methods=['GET', 'POST'])
+@app.route('/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
-    form = PostForm()
+    form = PostAddForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         post = Post()
         post.title = form.title.data
         post.content = form.content.data
-        post.is_private = form.is_private.data
         current_user.posts.append(post)
         db_sess.merge(current_user)
         db_sess.commit()
         return redirect('/')
-    return render_template('post.html', title='Добавление новости',
+    return render_template('postadd.html', title='Добавление информации для размышления',
+                           form=form)
+
+@app.route('/add_problem', methods=['GET', 'POST'])
+@login_required
+def add_problem():
+    form = ProblemAddForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        problem = Problem()
+        problem.content = form.content.data
+        current_user.problems.append(problem)
+        user = db_sess.merge(current_user)
+        db_sess.commit()
+        problem = user.problems[-1]
+        if not form.nosolution.data:
+            solution = Solution()
+            solution.content = form.original_solution.data
+            user.solutions.append(solution)
+            problem.solutions.append(solution)
+        db_sess.commit()
+        return redirect(f'/problem/{problem.id}')
+    return render_template('problemadd.html', title='Добавление информации для размышления',
                            form=form)
 
 
+
+"""
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):

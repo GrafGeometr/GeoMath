@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Добавление задачи</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.content.label }}<br>
+        {{ form.content(class="form-control") }}<br>
+        {% for error in form.content.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.original_solution.label }}<br>
+        {{ form.original_solution(class="form-control") }}<br>
+        {% for error in form.content.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>{{ form.nosolution() }}{{form.nosolution.label }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    {{message}}
+</form>
+{% endblock %}

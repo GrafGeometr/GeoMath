@@ -33,6 +33,11 @@
         <div>{{ solform.submit(type="submit", class="btn btn-primary")
             }}{{ solform.content(class="form-control") }}
         </div>
+        {% for error in solform.content.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
     </form>
 </div>
 
@@ -69,6 +74,11 @@
             <div>{{ comment_forms[i].submit(type="submit", class="btn btn-primary")
                 }}{{ comment_forms[i].content(class="form-control") }}
             </div>
+            {% for error in comment_forms[i].content.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
         </form>
     </div>
 
@@ -111,8 +121,12 @@
         {{ form.hidden_tag() }}
         <div>{{ form.submit(type="submit", class="btn btn-primary") }}{{
             form.content(class="form-control") }}
-
         </div>
+        {% for error in form.content.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
     </form>
 </div>
 {% if problem.comments %}
