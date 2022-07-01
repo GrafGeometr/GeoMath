@@ -12,6 +12,7 @@ from registerform import RegisterForm
 from postaddform import PostAddForm
 from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
+from problemeditform import ProblemEditForm
 from secret_code import generate_code, check_code
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
@@ -28,13 +29,14 @@ def load_user(user_id):
 
 
 @login_required
-@app.route('/problem/<problem_id>', methods=['GET', 'POST'])
+@app.route('/problem/<int:problem_id>', methods=['GET', 'POST'])
 def problem_show(problem_id):
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
     problem = db_sess.query(Problem).filter(Problem.id == problem_id).first()
     if not problem:
+        db_sess.close()
         return "К сожалению такой задачи нет"
     form = CommentAddForm(prefix='problem_comment_form')
     comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.solutions))]
@@ -48,6 +50,7 @@ def problem_show(problem_id):
             comment = db_sess.merge(comment)
             problem.comments.append(comment)
             db_sess.commit()
+            db_sess.close()
             return redirect(f'/problem/{problem_id}')
         if solform.validate_on_submit():
             solution = Solution()
@@ -57,6 +60,7 @@ def problem_show(problem_id):
             solution = db_sess.merge(solution)
             problem.solutions.append(solution)
             db_sess.commit()
+            db_sess.close()
             return redirect(f'/problem/{problem_id}')
         for i in range(len(comment_forms)):
             if comment_forms[i].validate_on_submit():
@@ -68,18 +72,21 @@ def problem_show(problem_id):
                 solution = problem.solutions[i]
                 solution.comments.append(comment)
                 db_sess.commit()
+                db_sess.close()
                 return redirect(f'/problem/{problem_id}')
-    return render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms, solform=solform)
+    return render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms, solform=solform,
+                           viewer=current_user)
 
 
 @login_required
-@app.route('/post/<post_id>', methods=['GET', 'POST'])
+@app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def post_show(post_id):
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == post_id).first()
     if not post:
+        db_sess.close()
         return "К сожалению такой записи нет"
     form = CommentAddForm()
     if form.validate_on_submit():
@@ -90,8 +97,9 @@ def post_show(post_id):
         comment = db_sess.merge(comment)
         post.comments.append(comment)
         db_sess.commit()
+        db_sess.close()
         return redirect(f'/post/{post_id}')
-    return render_template("postshow.html", post=post, form=form)
+    return render_template("postshow.html", post=post, form=form, viewer=current_user)
 
 
 @login_required
@@ -117,13 +125,14 @@ def index():
 
 
 @login_required
-@app.route('/profile/<user_id>')
+@app.route('/profile/<int:user_id>')
 def profile(user_id):
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     if not user:
+        db_sess.close()
         return redirect("/")
     return render_template("profile.html", user=user, viewer=current_user, friends=1, subscribers=2, readers=3,
                            geom1=60, alg1=30, comb1=95,
@@ -150,7 +159,9 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            db_sess.close()
             return redirect(f"/profile/{user.id}")
+        db_sess.close()
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
@@ -172,6 +183,7 @@ def register():
                                    message="Пароли не совпадают")
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
+            db_sess.close()
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
@@ -184,6 +196,7 @@ def register():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
+        db_sess.close()
         return redirect('/login')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -205,11 +218,14 @@ def add_post():
         post.title = form.title.data
         post.content = form.content.data
         current_user.posts.append(post)
-        db_sess.merge(current_user)
+        user = db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
+        post = user.posts[-1]
+        db_sess.close()
+        return redirect(f'/post/{post.id}')
     return render_template('postadd.html', title='Добавление информации для размышления',
                            form=form)
+
 
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
@@ -223,23 +239,23 @@ def add_problem():
         user = db_sess.merge(current_user)
         db_sess.commit()
         problem = user.problems[-1]
-        if not form.nosolution.data:
+        if not form.nosolution.data and form.original_solution.data:
             solution = Solution()
             solution.content = form.original_solution.data
             user.solutions.append(solution)
             problem.solutions.append(solution)
         db_sess.commit()
-        return redirect(f'/problem/{problem.id}')
+        problem_id = problem.id
+        db_sess.close()
+        return redirect(f'/problem/{problem_id}')
     return render_template('problemadd.html', title='Добавление информации для размышления',
                            form=form)
 
 
-
-"""
-@app.route('/post/<int:id>', methods=['GET', 'POST'])
+@app.route('/edit_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
-    form = PostForm()
+    form = PostAddForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
         post = db_sess.query(Post).filter(Post.id == id,
@@ -248,8 +264,8 @@ def edit_post(id):
         if post:
             form.title.data = post.title
             form.content.data = post.content
-            form.is_private.data = post.is_private
         else:
+            db_sess.close()
             abort(404)
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -259,31 +275,193 @@ def edit_post(id):
         if post:
             post.title = form.title.data
             post.content = form.content.data
-            post.is_private = form.is_private.data
             db_sess.commit()
-            return redirect('/')
+            db_sess.close()
+            return redirect(f'/post/{id}')
         else:
+            db_sess.close()
             abort(404)
-    return render_template('post.html',
-                           title='Редактирование новости',
+    return render_template('postadd.html',
+                           title='Редактирование',
                            form=form
                            )
 
 
-@app.route('/post_delete/<int:id>', methods=['GET', 'POST'])
+@app.route('/edit_problem/<int:id>', methods=['GET', 'POST'])
+@login_required  # TODO fix problem original solution
+def edit_problem(id):  # without solution
+    form = ProblemEditForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        problem = db_sess.query(Problem).filter(Problem.id == id,
+                                                Problem.user == current_user
+                                                ).first()
+        if problem:
+            form.content.data = problem.content
+        else:
+            db_sess.close()
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        problem = db_sess.query(Problem).filter(Problem.id == id,
+                                                Problem.user == current_user
+                                                ).first()
+        if problem:
+            problem.content = form.content.data
+            db_sess.commit()
+            db_sess.close()
+            return redirect(f'/problem/{id}')
+        else:
+            db_sess.close()
+            abort(404)
+    return render_template('problemedit.html',
+                           title='Редактирование',
+                           form=form
+                           )
+
+
+@app.route('/delete_post/<int:id>', methods=['GET', 'POST'])
 @login_required
-def post_delete(id):
+def delete_post(id):
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == id,
                                       Post.user == current_user
                                       ).first()
-    if post:
+    if post and not post.comments:  # TODO check likes
         db_sess.delete(post)
         db_sess.commit()
+        db_sess.close()
     else:
+        db_sess.close()
         abort(404)
-    return redirect('/')
-"""
+    return redirect(current_user.profile_href())
+
+
+@app.route('/delete_problem/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_problem(id):
+    db_sess = db_session.create_session()
+    problem = db_sess.query(Problem).filter(Problem.id == id,
+                                            Problem.user == current_user
+                                            ).first()
+    if problem and not problem.comments and not problem.solutions:  # TODO check likes
+        db_sess.delete(problem)
+        db_sess.commit()
+        db_sess.close()
+    else:
+        db_sess.close()
+        abort(404)
+    return redirect(current_user.profile_href())
+
+
+@app.route('/edit_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
+           methods=["POST", "GET"])
+@login_required
+def edit_comment(comment_id, place_name, place_id, par_name, par_id):
+    comment = None
+    db_sess = db_session.create_session()
+    form = CommentAddForm()
+    if par_name == 'post':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.post_id == par_id).first()
+    elif par_name == 'problem':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.problem_id == par_id).first()
+    elif par_name == 'solution':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.solution_id == par_id).first()
+    else:
+        db_sess.close()
+        abort(404)
+    if comment:
+        if request.method == "GET":
+            form.content.data = comment.content
+        if form.validate_on_submit():
+            comment.content = form.content.data
+            db_sess.commit()
+            db_sess.close()
+            return redirect(f'/{place_name}/{place_id}')
+    else:
+        db_sess.close()
+        abort(404)
+    return render_template('comsoledit.html', title='Редактирование', form=form)
+
+
+@app.route('/delete_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
+           methods=["POST", "GET"])
+@login_required
+def delete_comment(comment_id, place_name, place_id, par_name, par_id):
+    comment = None
+    db_sess = db_session.create_session()
+    if par_name == 'post':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.post_id == par_id).first()
+    elif par_name == 'problem':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.problem_id == par_id).first()
+    elif par_name == 'solution':
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id,
+                                                Comment.user == current_user,
+                                                Comment.solution_id == par_id).first()
+    else:
+        db_sess.close()
+        abort(404)
+    if comment:
+        db_sess.delete(comment)
+        db_sess.commit()
+        db_sess.close()
+        return redirect(f'/{place_name}/{place_id}')
+    else:
+        db_sess.close()
+        abort(404)
+
+
+@app.route('/edit_solution/<int:solution_id>/<int:problem_id>',
+           methods=["POST", "GET"])
+@login_required
+def edit_solution(solution_id, problem_id):
+    solution = None
+    db_sess = db_session.create_session()
+    form = SolutionAddForm()
+    solution = db_sess.query(Solution).filter(Solution.id == solution_id,
+                                              Solution.user == current_user,
+                                              Solution.problem_id == problem_id).first()
+    if solution:
+        if request.method == "GET":
+            form.content.data = solution.content
+        if form.validate_on_submit():
+            solution.content = form.content.data
+            db_sess.commit()
+            db_sess.close()
+            return redirect(f'/problem/{problem_id}')
+    else:
+        db_sess.close()
+        abort(404)
+    return render_template('comsoledit.html', title='Редактирование', form=form)
+
+
+@app.route('/delete_solution/<int:solution_id>/<int:problem_id>',
+           methods=["POST", "GET"])
+@login_required
+def delete_solution(solution_id, problem_id):
+    solution = None
+    db_sess = db_session.create_session()
+    solution = db_sess.query(Solution).filter(Solution.id == solution_id,
+                                              Solution.user == current_user,
+                                              Solution.problem_id == problem_id).first()
+    if solution and not solution.comments:  # TODO check likes
+        db_sess.delete(solution)
+        db_sess.commit()
+        db_sess.close()
+        return redirect(f'/problem/{problem_id}')
+    else:
+        db_sess.close()
+        abort(404)
 
 
 def main():

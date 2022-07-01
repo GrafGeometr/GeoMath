@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Задача номер {{ problem.id }}</h1>
+<h1>Задача</h1>
 <div class="alert alert-secondary">Условие задачи:<br>
     <hr>
     {{ problem.content }}
@@ -21,6 +21,14 @@
         {% endif %}
     </font></a>
 </div>
+{% if viewer==problem.user %}
+{% set edit_href = "/edit_problem/"+problem.id|string %}
+{% set delete_href = "/delete_problem/"+problem.id|string %}
+<a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+{% if not problem.comments and not problem.solutions %}
+<a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+{% endif %}
+{% endif %}
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
             aria-expanded="false" aria-controls="collapse1">
@@ -34,9 +42,9 @@
             }}{{ solform.content(class="form-control") }}
         </div>
         {% for error in solform.content.errors %}
-            <p class="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
         {% endfor %}
     </form>
 </div>
@@ -60,6 +68,14 @@
     </font></a><br>
     {{ solution.content }}
     <hr>
+    {% if viewer==solution.user %}
+    {% set edit_href = "/edit_solution/"+solution.id|string+"/"+problem.id|string %}
+    {% set delete_href = "/delete_solution/"+solution.id|string+"/"+problem.id|string %}
+    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+    {% if not solution.comments %}
+    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+    {% endif %}
+    {% endif %}
     {% set comformid = "comform"+i|string %}
     {% set comformidph = "#"+comformid %}
     <p>
@@ -78,7 +94,7 @@
             <p class="alert alert-danger" role="alert">
                 {{ error }}
             </p>
-        {% endfor %}
+            {% endfor %}
         </form>
     </div>
 
@@ -101,6 +117,14 @@
         </font></a><br>
         {{ comment.content }}
     </div>
+    {% if viewer==comment.user %}
+    {% set edit_href = "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string
+    %}
+    {% set delete_href =
+    "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string %}
+    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+    {% endif %}
     {% endfor %}
     {% endif %}
 </div>
@@ -123,9 +147,9 @@
             form.content(class="form-control") }}
         </div>
         {% for error in form.content.errors %}
-            <p class="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
         {% endfor %}
     </form>
 </div>
@@ -149,6 +173,13 @@
         </font></a><br>
         {{ comment.content }}
     </div>
+    {% if viewer==comment.user %}
+    {% set edit_href = "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
+    {% set delete_href =
+    "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
+    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+    {% endif %}
     {% endfor %}
 </div>
 {% endif %}

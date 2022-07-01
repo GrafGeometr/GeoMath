@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ post.title }}</h1>
 <div class="alert alert-secondary">
+    <h1>{{ post.title }}</h1>
     <hr>
     {{ post.content }}
     <hr>
@@ -19,6 +19,14 @@
         {% endif %}
     </font></a>
 </div>
+{% if viewer==post.user %}
+{% set edit_href = "/edit_post/"+post.id|string %}
+{% set delete_href = "/delete_post/"+post.id|string %}
+<a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+{% if not post.comments %}
+<a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+{% endif %}
+{% endif %}
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
             aria-expanded="false" aria-controls="collapse1">
@@ -32,9 +40,9 @@
             form.content(class="form-control") }}
         </div>
         {% for error in form.content.errors %}
-            <p class="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
         {% endfor %}
     </form>
 </div>
@@ -59,6 +67,12 @@
         </font></a><br>
         {{ comment.content }}
     </div>
+    {% if viewer==comment.user %}
+    {% set edit_href = "/edit_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
+    {% set delete_href = "/delete_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
+    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+    {% endif %}
     {% endfor %}
 </div>
 {% endif %}
