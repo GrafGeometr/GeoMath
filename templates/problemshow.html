@@ -4,6 +4,11 @@
 <h1>Задача</h1>
 <div class="alert alert-secondary">Условие задачи:<br>
     <hr>
+    {% for image_id in problem.image_ids %}
+    {% set location = "/static/user_images/"+image_id %}
+    <img src={{ location }} height="400">
+    {% endfor %}
+    <hr>
     {{ problem.content }}
     <hr>
     Автор задачи:

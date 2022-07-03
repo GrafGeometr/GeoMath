@@ -90,7 +90,6 @@ def post_show(post_id):
         return redirect('/login')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == post_id).first()
-    print(post.image_ids)
     if not post:
         db_sess.close()
         return "К сожалению такой записи нет"
@@ -225,7 +224,6 @@ def add_post():
         post.content = form.content.data
         files_filenames = []
         for file in form.images.data:
-            print(help(type(file)))
             try:
                 f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
                 n = int(f.read())
@@ -237,9 +235,7 @@ def add_post():
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     abort(400)
             filename = f'img{n}.png'
-            # print(basedir)
             file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
-            # print(file_path)
             file.save(file_path)
             files_filenames.append(filename)
             n += 1
@@ -265,6 +261,27 @@ def add_problem():
         db_sess = db_session.create_session()
         problem = Problem()
         problem.content = form.content.data
+        files_filenames = []
+        for file in form.images.data:
+            try:
+                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                n = int(f.read())
+                f.close()
+            except Exception as e:
+                n = 0
+            if file.filename != '':
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    abort(400)
+            filename = f'img{n}.png'
+            file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+            file.save(file_path)
+            files_filenames.append(filename)
+            n += 1
+            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+            f.write(str(n))
+            f.close()
+        problem.image_ids = files_filenames
         current_user.problems.append(problem)
         user = db_sess.merge(current_user)
         db_sess.commit()
@@ -312,7 +329,6 @@ def edit_post(id):
                 for file in form.images.data:
                     if file.filename != '':
                         k += 1
-                        # print(file)
                         try:
                             f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
                             n = int(f.read())
@@ -325,10 +341,8 @@ def edit_post(id):
                                 db_sess.close()
                                 abort(400)
                         filename = f'img{n}.png'
-                        # print(basedir)
                         file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
-                                                 filename)  # TODO add togler of deleting old files
-                        # print(file_path)
+                                                 filename)
                         file.save(file_path)
                         files_filenames.append(filename)
                         n += 1
@@ -336,24 +350,16 @@ def edit_post(id):
                         f.write(str(n))
                         f.close()
             if form.delete_old_images.data:
-                print(1)
                 if k != 0:
-                    print(2)
                     post.image_ids = files_filenames
                 else:
-                    print(3)
                     post.image_ids = []
             else:
-                print(4)
                 if k != 0:
-                    print(5)
                     new_files_filenames = list(post.image_ids) + files_filenames
                     post.image_ids = new_files_filenames
-                    print(post.image_ids)
                     db_sess.commit()
-                    print(post.image_ids)
             db_sess.commit()
-            print(post.image_ids)
             db_sess.close()
             return redirect(f'/post/{id}')
         else:
@@ -386,6 +392,42 @@ def edit_problem(id):  # without solution
                                                 ).first()
         if problem:
             problem.content = form.content.data
+            k = 0
+            files_filenames = []
+            if form.images.data:
+                for file in form.images.data:
+                    if file.filename != '':
+                        k += 1
+                        try:
+                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            n = int(f.read())
+                            f.close()
+                        except Exception as e:
+                            n = 0
+
+                            file_ext = os.path.splitext(file.filename)[1]
+                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                                db_sess.close()
+                                abort(400)
+                        filename = f'img{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                                                 filename)
+                        file.save(file_path)
+                        files_filenames.append(filename)
+                        n += 1
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f.write(str(n))
+                        f.close()
+            if form.delete_old_images.data:
+                if k != 0:
+                    problem.image_ids = files_filenames
+                else:
+                    problem.image_ids = []
+            else:
+                if k != 0:
+                    new_files_filenames = list(problem.image_ids) + files_filenames
+                    problem.image_ids = new_files_filenames
+                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/problem/{id}')
