@@ -4,6 +4,11 @@
 <div class="alert alert-secondary">
     <h1>{{ post.title }}</h1>
     <hr>
+    {% for image_id in post.image_ids %}
+    {% set location = "/static/user_images/"+image_id %}
+    <img src={{ location }} height="400">
+    {% endfor %}
+    <hr>
     {{ post.content }}
     <hr>
     <a class="badge bg-light" style="margin-left:20px" href={{ post.user.profile_href() }}><font size="3" color="blue">

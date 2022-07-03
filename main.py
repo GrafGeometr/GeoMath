@@ -8,18 +8,23 @@ from data.problem import Problem
 from solutionaddform import SolutionAddForm
 from data.comment import Comment
 from data.solution import Solution
+from werkzeug.datastructures import FileStorage
 from registerform import RegisterForm
 from postaddform import PostAddForm
 from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
 from problemeditform import ProblemEditForm
 from secret_code import generate_code, check_code
+import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+app.config['UPLOAD_FOLDER'] = '/user_images'
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 login_manager = LoginManager()
 login_manager.init_app(app)
+basedir = os.path.abspath(os.curdir)
 
 
 @login_manager.user_loader
@@ -85,6 +90,7 @@ def post_show(post_id):
         return redirect('/login')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == post_id).first()
+    print(post.image_ids)
     if not post:
         db_sess.close()
         return "К сожалению такой записи нет"
@@ -217,6 +223,30 @@ def add_post():
         post = Post()
         post.title = form.title.data
         post.content = form.content.data
+        files_filenames = []
+        for file in form.images.data:
+            print(help(type(file)))
+            try:
+                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                n = int(f.read())
+                f.close()
+            except Exception as e:
+                n = 0
+            if file.filename != '':
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    abort(400)
+            filename = f'img{n}.png'
+            # print(basedir)
+            file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+            # print(file_path)
+            file.save(file_path)
+            files_filenames.append(filename)
+            n += 1
+            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+            f.write(str(n))
+            f.close()
+        post.image_ids = files_filenames
         current_user.posts.append(post)
         user = db_sess.merge(current_user)
         db_sess.commit()
@@ -264,6 +294,7 @@ def edit_post(id):
         if post:
             form.title.data = post.title
             form.content.data = post.content
+            # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_images',filename))) for filename in post.image_ids] #TODO fix this !!!
         else:
             db_sess.close()
             abort(404)
@@ -275,13 +306,60 @@ def edit_post(id):
         if post:
             post.title = form.title.data
             post.content = form.content.data
+            k = 0
+            files_filenames = []
+            if form.images.data:
+                for file in form.images.data:
+                    if file.filename != '':
+                        k += 1
+                        # print(file)
+                        try:
+                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            n = int(f.read())
+                            f.close()
+                        except Exception as e:
+                            n = 0
+
+                            file_ext = os.path.splitext(file.filename)[1]
+                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                                db_sess.close()
+                                abort(400)
+                        filename = f'img{n}.png'
+                        # print(basedir)
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                                                 filename)  # TODO add togler of deleting old files
+                        # print(file_path)
+                        file.save(file_path)
+                        files_filenames.append(filename)
+                        n += 1
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f.write(str(n))
+                        f.close()
+            if form.delete_old_images.data:
+                print(1)
+                if k != 0:
+                    print(2)
+                    post.image_ids = files_filenames
+                else:
+                    print(3)
+                    post.image_ids = []
+            else:
+                print(4)
+                if k != 0:
+                    print(5)
+                    new_files_filenames = list(post.image_ids) + files_filenames
+                    post.image_ids = new_files_filenames
+                    print(post.image_ids)
+                    db_sess.commit()
+                    print(post.image_ids)
             db_sess.commit()
+            print(post.image_ids)
             db_sess.close()
             return redirect(f'/post/{id}')
         else:
             db_sess.close()
             abort(404)
-    return render_template('postadd.html',
+    return render_template('postedit.html',
                            title='Редактирование',
                            form=form
                            )

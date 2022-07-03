@@ -23,4 +23,6 @@ class Problem(SqlAlchemyBase):
 
     solutions = orm.relation("Solution", back_populates='problem')
 
+    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+
 
