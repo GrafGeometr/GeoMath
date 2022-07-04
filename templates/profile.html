@@ -44,6 +44,8 @@
     <a href="/generate_code/участник" class="btn btn-primary">Участник</a>
 </div>
 {% endif %}
+{% set edit_profile_href = "edit_profile/" + user.if|string %}
+<a class="btn btn-secondary" href={{ edit_profile_href }}>Редактировать профиль</a>
 {% endif %}
 <div class="alert alert-secondary">Друзей: {{ friends }} Подписчиков: {{ subscribers }} Постоянных читателей: {{ readers
     }}

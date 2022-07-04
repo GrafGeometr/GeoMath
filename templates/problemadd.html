@@ -23,6 +23,7 @@
             </p>
         {% endfor %}
     </p>
+    <p>{{ form.solution_images.label }} {{ form.solution_images(class="btn btn-secondary") }}</p>
     <p>{{ form.nosolution() }}{{form.nosolution.label }}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {{message}}

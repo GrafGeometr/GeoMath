@@ -8,7 +8,6 @@ from data.problem import Problem
 from solutionaddform import SolutionAddForm
 from data.comment import Comment
 from data.solution import Solution
-from werkzeug.datastructures import FileStorage
 from registerform import RegisterForm
 from postaddform import PostAddForm
 from commentaddform import CommentAddForm
@@ -50,6 +49,34 @@ def problem_show(problem_id):
         if form.validate_on_submit():
             comment = Comment()
             comment.content = form.content.data
+            files_filenames = []
+            k = 0
+            for file in form.images.data:
+                if file.filename != '':
+                    k += 1
+                    try:
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        n = int(f.read())
+                        f.close()
+                    except Exception as e:
+                        n = 0
+
+                    file_ext = os.path.splitext(file.filename)[1]
+                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                        abort(400)
+                    filename = f'img{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    file.save(file_path)
+                    files_filenames.append(filename)
+                    n += 1
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f.write(str(n))
+                    f.close()
+            if k > 0:
+                comment.image_ids = files_filenames
+            else:
+                comment.image_ids = []
+            print(comment.image_ids)
             current_user.comments.append(comment)
             db_sess.merge(current_user)
             comment = db_sess.merge(comment)
@@ -60,6 +87,33 @@ def problem_show(problem_id):
         if solform.validate_on_submit():
             solution = Solution()
             solution.content = solform.content.data
+            files_filenames = []
+            k = 0
+            for file in solform.images.data:
+                if file.filename != '':
+                    k += 1
+                    try:
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        n = int(f.read())
+                        f.close()
+                    except Exception as e:
+                        n = 0
+
+                    file_ext = os.path.splitext(file.filename)[1]
+                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                        abort(400)
+                    filename = f'img{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    file.save(file_path)
+                    files_filenames.append(filename)
+                    n += 1
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f.write(str(n))
+                    f.close()
+            if k > 0:
+                solution.image_ids = files_filenames
+            else:
+                solution.image_ids = []
             current_user.solutions.append(solution)
             db_sess.merge(current_user)
             solution = db_sess.merge(solution)
@@ -71,6 +125,33 @@ def problem_show(problem_id):
             if comment_forms[i].validate_on_submit():
                 comment = Comment()
                 comment.content = comment_forms[i].content.data
+                files_filenames = []
+                k = 0
+                for file in comment_forms[i].images.data:
+                    if file.filename != '':
+                        k += 1
+                        try:
+                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            n = int(f.read())
+                            f.close()
+                        except Exception as e:
+                            n = 0
+
+                        file_ext = os.path.splitext(file.filename)[1]
+                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                            abort(400)
+                        filename = f'img{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                        file.save(file_path)
+                        files_filenames.append(filename)
+                        n += 1
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f.write(str(n))
+                        f.close()
+                if k > 0:
+                    comment.image_ids = files_filenames
+                else:
+                    comment.image_ids = []
                 current_user.comments.append(comment)
                 db_sess.merge(current_user)
                 comment = db_sess.merge(comment)
@@ -97,6 +178,33 @@ def post_show(post_id):
     if form.validate_on_submit():
         comment = Comment()
         comment.content = form.content.data
+        files_filenames = []
+        k = 0
+        for file in form.images.data:
+            if file.filename != '':
+                k += 1
+                try:
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 0
+
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    abort(400)
+                filename = f'img{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                file.save(file_path)
+                files_filenames.append(filename)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+        if k > 0:
+            comment.image_ids = files_filenames
+        else:
+            comment.image_ids = []
         current_user.comments.append(comment)
         db_sess.merge(current_user)
         comment = db_sess.merge(comment)
@@ -223,26 +331,32 @@ def add_post():
         post.title = form.title.data
         post.content = form.content.data
         files_filenames = []
+        k = 0
         for file in form.images.data:
-            try:
-                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
-                n = int(f.read())
-                f.close()
-            except Exception as e:
-                n = 0
             if file.filename != '':
+                k += 1
+                try:
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 0
+
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     abort(400)
-            filename = f'img{n}.png'
-            file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
-            file.save(file_path)
-            files_filenames.append(filename)
-            n += 1
-            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
-            f.write(str(n))
-            f.close()
-        post.image_ids = files_filenames
+                filename = f'img{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                file.save(file_path)
+                files_filenames.append(filename)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+        if k > 0:
+            post.image_ids = files_filenames
+        else:
+            post.image_ids = []
         current_user.posts.append(post)
         user = db_sess.merge(current_user)
         db_sess.commit()
@@ -262,26 +376,32 @@ def add_problem():
         problem = Problem()
         problem.content = form.content.data
         files_filenames = []
+        k = 0
         for file in form.images.data:
-            try:
-                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
-                n = int(f.read())
-                f.close()
-            except Exception as e:
-                n = 0
             if file.filename != '':
-                file_ext = os.path.splitext(file.filename)[1]
-                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                    abort(400)
-            filename = f'img{n}.png'
-            file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
-            file.save(file_path)
-            files_filenames.append(filename)
-            n += 1
-            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
-            f.write(str(n))
-            f.close()
-        problem.image_ids = files_filenames
+                k += 1
+                try:
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 0
+
+                    file_ext = os.path.splitext(file.filename)[1]
+                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                        abort(400)
+                filename = f'img{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                file.save(file_path)
+                files_filenames.append(filename)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+        if k > 0:
+            problem.image_ids = files_filenames
+        else:
+            problem.image_ids = []
         current_user.problems.append(problem)
         user = db_sess.merge(current_user)
         db_sess.commit()
@@ -289,6 +409,32 @@ def add_problem():
         if not form.nosolution.data and form.original_solution.data:
             solution = Solution()
             solution.content = form.original_solution.data
+            sol_files_filenames = []
+            k = 0
+            for file in form.solution_images.data:
+                if file.filename != '':
+                    try:
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        n = int(f.read())
+                        f.close()
+                    except Exception as e:
+                        n = 0
+
+                    file_ext = os.path.splitext(file.filename)[1]
+                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                        abort(400)
+                    filename = f'img{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    file.save(file_path)
+                    files_filenames.append(filename)
+                    n += 1
+                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f.write(str(n))
+                    f.close()
+            if k > 0:
+                solution.image_ids = sol_files_filenames
+            else:
+                solution.image_ids = []
             user.solutions.append(solution)
             problem.solutions.append(solution)
         db_sess.commit()
@@ -477,7 +623,7 @@ def delete_problem(id):
 @app.route('/edit_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
            methods=["POST", "GET"])
 @login_required
-def edit_comment(comment_id, place_name, place_id, par_name, par_id):
+def edit_comment(comment_id, place_name, place_id, par_name, par_id):  # TODO fix html(add picture edit)
     comment = None
     db_sess = db_session.create_session()
     form = CommentAddForm()
@@ -501,6 +647,42 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
             form.content.data = comment.content
         if form.validate_on_submit():
             comment.content = form.content.data
+            k = 0
+            files_filenames = []
+            if form.images.data:
+                for file in form.images.data:
+                    if file.filename != '':
+                        k += 1
+                        try:
+                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            n = int(f.read())
+                            f.close()
+                        except Exception as e:
+                            n = 0
+
+                            file_ext = os.path.splitext(file.filename)[1]
+                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                                db_sess.close()
+                                abort(400)
+                        filename = f'img{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                                                 filename)
+                        file.save(file_path)
+                        files_filenames.append(filename)
+                        n += 1
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f.write(str(n))
+                        f.close()
+            if form.delete_old_images.data:
+                if k != 0:
+                    comment.image_ids = files_filenames
+                else:
+                    comment.image_ids = []
+            else:
+                if k != 0:
+                    new_files_filenames = list(comment.image_ids) + files_filenames
+                    comment.image_ids = new_files_filenames
+                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/{place_name}/{place_id}')
@@ -556,6 +738,42 @@ def edit_solution(solution_id, problem_id):
             form.content.data = solution.content
         if form.validate_on_submit():
             solution.content = form.content.data
+            k = 0
+            files_filenames = []
+            if form.images.data:
+                for file in form.images.data:
+                    if file.filename != '':
+                        k += 1
+                        try:
+                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            n = int(f.read())
+                            f.close()
+                        except Exception as e:
+                            n = 0
+
+                            file_ext = os.path.splitext(file.filename)[1]
+                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                                db_sess.close()
+                                abort(400)
+                        filename = f'img{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                                                 filename)
+                        file.save(file_path)
+                        files_filenames.append(filename)
+                        n += 1
+                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f.write(str(n))
+                        f.close()
+            if form.delete_old_images.data:
+                if k != 0:
+                    solution.image_ids = files_filenames
+                else:
+                    solution.image_ids = []
+            else:
+                if k != 0:
+                    new_files_filenames = list(solution.image_ids) + files_filenames
+                    solution.image_ids = new_files_filenames
+                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/problem/{problem_id}')

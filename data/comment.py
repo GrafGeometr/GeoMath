@@ -23,10 +23,10 @@ class Comment(SqlAlchemyBase):
                                 sqlalchemy.ForeignKey("posts.id"))
     post = orm.relation('Post')
     problem_id = sqlalchemy.Column(sqlalchemy.Integer,
-                                sqlalchemy.ForeignKey("problems.id"))
+                                   sqlalchemy.ForeignKey("problems.id"))
     problem = orm.relation('Problem')
     solution_id = sqlalchemy.Column(sqlalchemy.Integer,
-                                   sqlalchemy.ForeignKey("solutions.id"))
+                                    sqlalchemy.ForeignKey("solutions.id"))
     solution = orm.relation('Solution')
 
-
+    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)

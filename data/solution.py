@@ -25,4 +25,6 @@ class Solution(SqlAlchemyBase):
 
     comments = orm.relation("Comment", back_populates='solution')
 
+    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+
 
