@@ -13,6 +13,7 @@ from postaddform import PostAddForm
 from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
 from problemeditform import ProblemEditForm
+from profileeditform import ProfileEditForm
 from secret_code import generate_code, check_code
 import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -253,6 +254,61 @@ def profile(user_id):
 
 
 @login_required
+@app.route('/edit_profile/<int:user_id>', methods=["POST", "GET"])
+def edit_profile(user_id):
+    if not current_user.is_authenticated:
+        return redirect('login')
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if not user:
+        db_sess.close()
+        abort(404)
+    if user.email != current_user.email:
+        db_sess.close()
+        abort(404)
+    form = ProfileEditForm()
+    if form.validate_on_submit():
+        if not user.check_password(form.old_password.data):
+            print(1)
+
+            return render_template('profileedit.html', form=form, title='Редактирование профиля',
+                                   message='Неверный пароль')
+        if form.change_status.data:
+            print(2)
+            res, status = check_code(form.secret_code.data)
+            if not res:
+                return render_template('profileedit.html', title='Редактирование профиля',
+                                       form=form,
+                                       code_message=status)
+        else:
+            status = user.status
+        if form.password.data != form.password_again.data:
+            print(3)
+            return render_template('profileedit.html', title='Редактирование профиля',
+                                   form=form,
+                                   message="Пароли не совпадают")
+        if user.email != form.email.data:
+            print(4)
+            if db_sess.query(User).filter(User.email == form.email.data).first():
+                db_sess.close()
+                return render_template('profileedit.html', title='Редактирование профиля',
+                                       form=form,
+                                       message="Такой пользователь уже есть")
+        user.email = form.email.data
+        user.name = form.name.data
+        user.about = form.about.data
+        user.status = status
+        user.set_password(form.password.data)
+        db_sess.commit()
+        print('???')
+        return redirect(f'/profile/{user_id}')
+    form.email.data = user.email
+    form.name.data = user.name
+    form.about.data = user.about
+    return render_template("profileedit.html", title='Редактирование профиля', form=form)
+
+
+@login_required
 @app.route('/generate_code/<status>')
 def gen_code(status):
     if not current_user.is_authenticated:
@@ -457,7 +513,7 @@ def edit_post(id):
         if post:
             form.title.data = post.title
             form.content.data = post.content
-            # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_images',filename))) for filename in post.image_ids] #TODO fix this !!!
+            # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_images',filename))) for filename in post.image_ids]
         else:
             db_sess.close()
             abort(404)
@@ -623,7 +679,7 @@ def delete_problem(id):
 @app.route('/edit_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
            methods=["POST", "GET"])
 @login_required
-def edit_comment(comment_id, place_name, place_id, par_name, par_id):  # TODO fix html(add picture edit)
+def edit_comment(comment_id, place_name, place_id, par_name, par_id):
     comment = None
     db_sess = db_session.create_session()
     form = CommentAddForm()

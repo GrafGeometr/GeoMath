@@ -15,6 +15,8 @@
     {% endif %}
     {% if viewer.id==user.id and user.status=="админ" %}, администратор
     {% endif %}
+    <hr>
+    Адрес электронной почты: {{ user.email }}
 </font></div>
 {% if user.about %}
 <div class="alert alert-secondary">Информация о себе <br> {{ user.about }}</div>
@@ -44,7 +46,7 @@
     <a href="/generate_code/участник" class="btn btn-primary">Участник</a>
 </div>
 {% endif %}
-{% set edit_profile_href = "edit_profile/" + user.if|string %}
+{% set edit_profile_href = "/edit_profile/" + user.id|string %}
 <a class="btn btn-secondary" href={{ edit_profile_href }}>Редактировать профиль</a>
 {% endif %}
 <div class="alert alert-secondary">Друзей: {{ friends }} Подписчиков: {{ subscribers }} Постоянных читателей: {{ readers
