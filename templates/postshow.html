@@ -31,6 +31,8 @@
 {% if not post.comments %}
 <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
 {% endif %}
+{% else %}
+<button onclick="">Нравиться</button>
 {% endif %}
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"

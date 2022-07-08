@@ -1,26 +1,113 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Записи в блоге</h1>
-{% for item in posts%}
-<div class="col-md6 border rounded">
-    <h2>{{item.title}}</h2>
-    <div>
-        {{item.content}}
-    </div>
-    <div>
-        Автор - {{item.user.name}}, Дата написания - {{item.created_date}}
-    </div>
-    {% if current_user.is_authenticated and current_user == item.user %}
-        <div>
-            <a href="/news/{{ item.id }}" class="btn btn-warning">
-                Изменить
-            </a>
-            <a href="/news_delete/{{ item.id }}" class="btn btn-danger">
-                Удалить
-            </a>
+<header>
+    <form action="" method="post" class="navbar navbar-light bg-light">
+        {{ form.hidden_tag() }}
+        <div class="alert alert-dark">
+            <p>{{ form.geom() }} {{ form.geom.label }} </p>
+            <p>{{ form.algb() }} {{ form.algb.label }} </p>
+            <p>{{ form.comb() }} {{ form.comb.label }} </p>
         </div>
-    {% endif %}
+        <div class="alert alert-dark">
+            <p>{{ form.posts() }} {{ form.posts.label }} </p>
+            <p>{{ form.solprob() }} {{ form.solprob.label }} </p>
+            <p>{{ form.nosolprob() }} {{ form.nosolprob.label }} </p>
+        </div>
+        <div class="alert alert-dark">
+            Временные рамки:
+            {{ form.time(class="btn btn-secondary") }}
+        </div>
+        <div class="alert alert-dark">{{ form.submit(type="submit", class="btn btn-primary") }}</div>
+    </form>
+</header>
+{% for publ in publications %}
+<div class="alert alert-dark">
+    <div class="alert alert-secondary">
+        {% if isinstance(publ, Post) %}
+        <h2>{{publ.title}}</h2>
+        <hr>
+        {% for image_id in publ.image_ids %}
+        {% set location = "/static/user_images/"+image_id %}
+        <img src={{ location }} height="400">
+        {% endfor %}
+        <hr>
+        <div>
+            {{ publ.content }}
+        </div>
+        <div>
+            Автор записи:
+            <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
+                                                                                                         color="blue">
+                {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+                {% endif %}
+                {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+                {% endif %}
+                {{ publ.user.name }}
+                {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+                преподаватель
+                {% endif %}
+                {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+                {% endif %}
+            </font></a>
+        </div>
+        {% set publ_href = "/post/"+publ.id|string %}
+        <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a></div>
+        {% if viewer==publ.user %}
+        {% set edit_href = "/edit_publ/"+publ.id|string %}
+        {% set delete_href = "/delete_publ/"+publ.id|string %}
+        <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+        {% if not publ.comments %}
+        <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        Условие задачи:<br>
+        <hr>
+        {% for image_id in publ.image_ids %}
+        {% set location = "/static/user_images/"+image_id %}
+        <img src={{ location }} height="400">
+        {% endfor %}
+        <hr>
+        {{ publ.content }}
+        <hr>
+
+        Автор задачи:
+        <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
+                                                                                                     color="blue">
+            {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+            {% endif %}
+            {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+            {% endif %}
+            {{ publ.user.name }}
+            {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+            преподаватель
+            {% endif %}
+            {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+            {% endif %}
+        </font></a>
+        <div>
+            {% set publ_href = "/problem/"+publ.id|string %}
+            {% if publ.solutions %}
+            <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии и решения</a>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">Внимание! У этой задачи пока нет решений. Первый, прикрепивший решение,
+                получит дополнительный рейтинг.
+            </div>
+            <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a></div>
+            {% endif %}
+        </div>
+        {% if viewer==publ.user %}
+        {% set edit_href = "/edit_publ/"+publ.id|string %}
+        {% set delete_href = "/delete_publ/"+publ.id|string %}
+        <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+        {% if not publ.comments and not publ.solutions %}
+        <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+    </div>
 </div>
 {% endfor %}
 {% endblock %}

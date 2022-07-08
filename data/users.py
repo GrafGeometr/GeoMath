@@ -13,12 +13,15 @@ class User(SqlAlchemyBase, UserMixin):
                            primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     status = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    rank = sqlalchemy.Column(sqlalchemy.Float,default=0)
     about = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     email = sqlalchemy.Column(sqlalchemy.String,
                               index=True, unique=True, nullable=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
+
+    toread = sqlalchemy.Column(sqlalchemy.PickleType)
 
     posts = orm.relation("Post", back_populates='user')
     problems = orm.relation("Problem", back_populates='user')

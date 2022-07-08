@@ -11,6 +11,8 @@ class Post(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     title = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    theme = sqlalchemy.Column(sqlalchemy.String)
+    rank = sqlalchemy.Column(sqlalchemy.Float,default=0)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,

@@ -58,6 +58,7 @@
 {% if problem.solutions %} Решения:
 {% for i in range(problem.solutions|length) %}
 {% set solution = problem.solutions[i] %}
+{{ solution.image_ids }}
 <div class="alert alert-secondary">
     <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3"
                                                                                                      color="blue">

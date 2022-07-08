@@ -65,6 +65,7 @@
 
 
 
+
     </style>
     <!-- Custom styles for this template -->
     <link href="/static/css/cheatsheet.css" rel="stylesheet">
@@ -95,7 +96,26 @@
     {% block content %}{% endblock %}
 </main>
 <script src="/static/js/bootstrap.bundle.min.js"></script>
-
+<script src="/static/js/cookie.min.js"></script>
 <script src="/static/js/cheatsheet.js"></script>
+<script>
+    function like(user_id, name, item_id, user_rank) {
+        old = getCookie("user_actions");
+        setCookie("user_actions",old+"like"+" "+user_id+" "+name+" "+item_id+" "+user_rank+";";
+    }
+    function dislike(user_id, name, item_id, user_rank) {
+        old = getCookie("user_actions");
+        setCookie("user_actions",old+"dislike"+" "+user_id+" "+name+" "+item_id+" "+user_rank+";";
+    }
+    function toread(user_id, name, item_id, user_rank) {
+        old = getCookie("user_actions");
+        setCookie("user_actions",old+"toread"+" "+user_id+" "+name+" "+item_id+" "+user_rank+";";
+    }
+</script>
+<script>
+    window.onbeforeunload = function () {
+        socket.emit('client_disconnecting', {'username':localStorage.getItem('username')});
+    }
+</script>
 </body>
 </html>

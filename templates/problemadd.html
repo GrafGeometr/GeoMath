@@ -2,26 +2,27 @@
 
 {% block content %}
 <h1>Добавление задачи</h1>
-<form action="" method="post"  enctype="multipart/form-data">
+<form action="" method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <p>
         {{ form.content.label }}<br>
         {{ form.content(class="form-control") }}<br>
         {% for error in form.content.errors %}
-            <p content="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
-        {% endfor %}
+    <p content="alert alert-danger" role="alert">
+        {{ error }}
+    </p>
+    {% endfor %}
     </p>
     <p>{{ form.images.label }} {{ form.images(class="btn btn-secondary") }}</p>
+    <p>{{ form.theme(class="btn btn-secondary") }}</p>
     <p>
         {{ form.original_solution.label }}<br>
         {{ form.original_solution(class="form-control") }}<br>
         {% for error in form.content.errors %}
-            <p content="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
-        {% endfor %}
+    <p content="alert alert-danger" role="alert">
+        {{ error }}
+    </p>
+    {% endfor %}
     </p>
     <p>{{ form.solution_images.label }} {{ form.solution_images(class="btn btn-secondary") }}</p>
     <p>{{ form.nosolution() }}{{form.nosolution.label }}</p>
