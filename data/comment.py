@@ -11,9 +11,10 @@ class Comment(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    rank = sqlalchemy.Column(sqlalchemy.Float,default=0)
+    rank = sqlalchemy.Column(sqlalchemy.Float, default=0)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
+    theme = sqlalchemy.Column(sqlalchemy.String)
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
@@ -28,5 +29,7 @@ class Comment(SqlAlchemyBase):
     solution_id = sqlalchemy.Column(sqlalchemy.Integer,
                                     sqlalchemy.ForeignKey("solutions.id"))
     solution = orm.relation('Solution')
+
+    liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
     image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)

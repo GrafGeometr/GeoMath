@@ -48,13 +48,39 @@
 {% endif %}
 {% set edit_profile_href = "/edit_profile/" + user.id|string %}
 <a class="btn btn-secondary" href={{ edit_profile_href }}>Редактировать профиль</a>
+{% else %}
+{% set subscribe_href = "/subscribe/"+user.id|string+"/"+viewer.id|string %}
+{% set reader_href = "/reader/"+user.id|string+"/"+viewer.id|string %}
+<div>
+    {% if viewer.subscribes and user.id in viewer.subscribes %}
+    <button id="subscribebtn" class="btn btn-secondary">Подписаться</button>
+    {% else %}
+    <button id="subscribebtn" class="btn btn-outline-secondary">Подписаться</button>
+    {% endif %}
+    <script>
+        var btn = document.getElementById("subscribebtn");
+        btn.onclick = function(){ toread("subscribebtn", "{{ subscribe_href }}"); };
+    </script>
+
+    {% if user.readers and viewer.id in user.readers %}
+    <button id="readerbtn" class="btn btn-secondary">Стать постоянным читателем</button>
+    {% else %}
+    <button id="readerbtn" class="btn btn-outline-secondary">Стать постоянным читателем</button>
+    {% endif %}
+    <script>
+        var btn = document.getElementById("readerbtn");
+        btn.onclick = function(){ toread("readerbtn", "{{ reader_href }}"); };
+    </script>
+</div>
+
+
 {% endif %}
 <div class="alert alert-secondary">Друзей: {{ friends }} Подписчиков: {{ subscribers }} Постоянных читателей: {{ readers
     }}
 </div>
 {% if user.status!="жюри" and user.status!="преподаватель" %}
 <div class="alert alert-secondary">
-    Рейтинг по составлению задач<br>
+    Рейтинг<br>
     Геометрия:
     <div class="progress" style="height: 40px;">
         {% if 0<=geom1 and geom1<10 %}
@@ -156,111 +182,148 @@
     </div>
     <br>
 </div>
-<div class="alert alert-secondary">
-    Рейтинг по решению задач<br>
-    Геометрия:
-    <div class="progress" style="height: 40px;">
-        {% if 0<=geom2 and geom2<10 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 5%" aria-valuenow="5" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif 10<=geom2 and geom2<30 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif 30<=geom2 and geom2<50 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif 50<=geom2 and geom2<70 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif 70<=geom2 and geom2<90 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif 90<=geom2 and geom2<100 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 95%" aria-valuenow="95" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% elif geom2==100 %}
-        <div class="progress-bar bg-info" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ geom2 }}</font></div>
-        {% endif %}
-    </div>
-    <br>
-    Алгебра и ТЧ:
-    <div class="progress" style="height: 40px;">
-        {% if 0<=alg2 and alg2<10 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 5%" aria-valuenow="5" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif 10<=alg2 and alg2<30 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif 30<=alg2 and alg2<50 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif 50<=alg2 and alg2<70 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif 70<=alg2 and alg2<90 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif 90<=alg2 and alg2<100 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 95%" aria-valuenow="95" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% elif alg2==100 %}
-        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%" aria-valuenow="100"
-             aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5"> {{ alg2 }}</font></div>
-        {% endif %}
-    </div>
-    <br>
-    Комбинаторика:
-    <div class="progress" style="height: 40px;">
-        {% if 0<=comb2 and comb2<10 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 5%" aria-valuenow="5" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif 10<=comb2 and comb2<30 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif 30<=comb2 and comb2<50 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif 50<=comb2 and comb2<70 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif 70<=comb2 and comb2<90 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif 90<=comb2 and comb2<100 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 95%" aria-valuenow="95" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% elif comb2==100 %}
-        <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0"
-             aria-valuemax="100"><font
-                size="5">{{ comb2 }}</font></div>
-        {% endif %}
-    </div>
-    <br>
-</div>
+
 {% endif %}
 <div class="alert alert-dark">Публикации пользователя:
-    ЗДЕСЬ ОНИ ДОЛЖНЫ БЫТЬ
+    {% for counter in range(publications|length) %}
+    {% set publ = publications[counter] %}
+    <div class="alert alert-dark">
+        <div class="alert alert-secondary">
+            {% if isinstance(publ, Post) %}
+            <h2>{{publ.title}}</h2>
+            <hr>
+            {% for image_id in publ.image_ids %}
+            {% set location = "/static/user_images/"+image_id %}
+            <img src={{ location }} height="400">
+            {% endfor %}
+            <hr>
+            <div>
+                {{ publ.content }}
+            </div>
+            <div>
+                Автор записи:
+                <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
+                                                                                                             color="blue">
+                    {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+                    {% endif %}
+                    {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20"
+                                                                    height="20">
+                    {% endif %}
+                    {{ publ.user.name }}
+                    {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20"
+                                                                    height="20">,
+                    преподаватель
+                    {% endif %}
+                    {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+                    {% endif %}
+                </font></a>
+            </div>
+            {% set publ_href = "/post/"+publ.id|string %}
+            {% set toread_href = "/addtoread/"+viewer.id|string+"/post/"+publ.id|string %}
+            {% set toreadbtnid = "toreadbtn"+counter|string %}
+            <div>
+                <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a>
+                {% if viewer.toread and ("post "+publ.id|string) in viewer.toread %}
+                    <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
+                    <script>
+                        btn = document.getElementById("{{toreadbtnid}}");
+                        btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                    </script>
+                {% else %}
+                    <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
+                    <script>
+                        btn = document.getElementById("{{toreadbtnid}}");
+                        btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                    </script>
+                {% endif %}
+            </div>
+            {% if viewer==publ.user %}
+            {% set edit_href = "/edit_post/"+publ.id|string %}
+            {% set delete_href = "/delete_post/"+publ.id|string %}
+            <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+            {% if not publ.comments %}
+            <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+            {% endif %}
+            {% endif %}
+            {% else %}
+            Условие задачи:<br>
+            <hr>
+            {% for image_id in publ.image_ids %}
+            {% set location = "/static/user_images/"+image_id %}
+            <img src={{ location }} height="400">
+            {% endfor %}
+            <hr>
+            {{ publ.content }}
+            <hr>
+
+            Автор задачи:
+            <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
+                                                                                                         color="blue">
+                {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+                {% endif %}
+                {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+                {% endif %}
+                {{ publ.user.name }}
+                {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+                преподаватель
+                {% endif %}
+                {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+                {% endif %}
+            </font></a>
+            <div>
+                {% set publ_href = "/problem/"+publ.id|string %}
+                {% set toread_href = "/addtoread/"+viewer.id|string+"/problem/"+publ.id|string %}
+                {% set toreadbtnid = "toreadbtn"+counter|string %}
+                {% if publ.solutions %}
+                <div>
+                    <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии и решения</a>
+                    {% if viewer.toread and ("problem "+publ.id|string) in viewer.toread %}
+                        <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
+                        <script>
+                            btn = document.getElementById("{{toreadbtnid}}");
+                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                        </script>
+                    {% else %}
+                        <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
+                        <script>
+                            btn = document.getElementById("{{toreadbtnid}}");
+                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                        </script>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">Внимание! У этой задачи пока нет решений. Первый, прикрепивший решение,
+                    получит дополнительный рейтинг.
+                </div>
+                <div>
+                    <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a>
+                    {% if viewer.toread and ("problem "+publ.id|string) in viewer.toread %}
+                        <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
+                        <script>
+                            btn = document.getElementById("{{toreadbtnid}}");
+                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                        </script>
+                    {% else %}
+                        <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
+                        <script>
+                            btn = document.getElementById("{{toreadbtnid}}");
+                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+                        </script>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if viewer==publ.user %}
+                {% set edit_href = "/edit_problem/"+publ.id|string %}
+                {% set delete_href = "/delete_problem/"+publ.id|string %}
+                <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+                {% if not publ.comments and not publ.solutions %}
+                <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+                {% endif %}
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

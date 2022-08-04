@@ -11,8 +11,11 @@ class Problem(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    rank = sqlalchemy.Column(sqlalchemy.Float,default=0)
+    rank = sqlalchemy.Column(sqlalchemy.Float, default=0)
     theme = sqlalchemy.Column(sqlalchemy.String)
+
+    # think_is_false = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    # think_is_true = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
@@ -25,6 +28,7 @@ class Problem(SqlAlchemyBase):
 
     solutions = orm.relation("Solution", back_populates='problem')
 
-    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
+    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 

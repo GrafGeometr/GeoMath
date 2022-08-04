@@ -24,4 +24,6 @@ class Post(SqlAlchemyBase):
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
     comments = orm.relation("Comment", back_populates='post')
 
+    liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+
     image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)

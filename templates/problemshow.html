@@ -33,7 +33,29 @@
 {% if not problem.comments and not problem.solutions %}
 <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
 {% endif %}
+{% else %}
+{% set likehref = "/liked/"+viewer.id|string+"/problem/"+problem.id|string %}
+{% set btnid = "#problembtn" %}
+{% set imgid = "#problemlikeimg" %}
+
+{% if problem.liked_by and viewer.id in problem.liked_by %}
+<button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+</button>
+<script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+</script>
+{% else %}
+<button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+</button>
+<script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+</script>
 {% endif %}
+{% endif %}
+
+
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
             aria-expanded="false" aria-controls="collapse1">
@@ -54,11 +76,11 @@
         {% endfor %}
     </form>
 </div>
-
 {% if problem.solutions %} Решения:
-{% for i in range(problem.solutions|length) %}
-{% set solution = problem.solutions[i] %}
-{{ solution.image_ids }}
+
+{% for counter in range(problem.solutions|length) %}
+{% set i = counter %}
+{% set solution = problem.solutions[counter] %}
 <div class="alert alert-secondary">
     <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3"
                                                                                                      color="blue">
@@ -86,7 +108,30 @@
     {% if not solution.comments %}
     <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
     {% endif %}
+    {% else %}
+    {% set likehref = "/liked/"+viewer.id|string+"/solution/"+solution.id|string %}
+    {% set btnid = "#problemsolbtn" + counter|string %}
+    {% set imgid = "#problemsollikeimg" + counter|string %}
+
+    {% if solution.liked_by and viewer.id in solution.liked_by %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+    </button>
+    <script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+    </script>
+    {% else %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+    </button>
+    <script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+    </script>
     {% endif %}
+    {% endif %}
+
     {% set comformid = "comform"+i|string %}
     {% set comformidph = "#"+comformid %}
     <p>
@@ -112,7 +157,8 @@
 
     <hr>
     {% if solution.comments %}
-    {% for comment in solution.comments %}
+    {% for counter2 in range(solution.comments|length) %}
+    {% set comment = solution.comments[counter2] %}
     <div class="alert alert-secondary" style="margin-left:20px">
         <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3"
                                                                                                         color="blue">
@@ -132,15 +178,42 @@
         <img src={{ location }} height="400">
         {% endfor %}
         {{ comment.content }}
+        <hr>
+        {% if viewer==comment.user %}
+        {% set edit_href =
+        "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string
+        %}
+        {% set delete_href =
+        "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string %}
+        <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+        <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+        {% else %}
+        {% set likehref = "/liked/"+viewer.id|string+"/comment/"+comment.id|string %}
+        {% set btnid = "#commentsolbtn" + counter2|string %}
+        {% set imgid = "#commentsollikeimg" + counter2|string %}
+
+        {% if comment.liked_by and viewer.id in comment.liked_by %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+        </button>
+        <script>
+            var btn1 = document.getElementById( "{{ btnid }}" );
+            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+        </script>
+        {% else %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+        </button>
+        <script>
+            var btn1 = document.getElementById( "{{ btnid }}" );
+            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+        </script>
+        {% endif %}
+        {% endif %}
+
+
     </div>
-    {% if viewer==comment.user %}
-    {% set edit_href = "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string
-    %}
-    {% set delete_href =
-    "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string %}
-    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
-    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
-    {% endif %}
+
     {% endfor %}
     {% endif %}
 </div>
@@ -173,7 +246,8 @@
 {% if problem.comments %}
 <div class="alert alert-secondary">Комментарии:
     <hr>
-    {% for comment in problem.comments %}
+    {% for counter3 in range(problem.comments|length) %}
+    {% set comment = problem.comments[counter3] %}
     <div class="alert alert-secondary" style="margin-left:20px">
         <a class="badge bg-light" style="margin-left:20px" href={{ comment.user.profile_href() }}><font size="3"
                                                                                                         color="blue">
@@ -193,14 +267,37 @@
         <img src={{ location }} height="400">
         {% endfor %}
         {{ comment.content }}
+        <hr>
+        {% if viewer==comment.user %}
+        {% set edit_href =
+        "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
+        {% set delete_href =
+        "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
+        <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+        <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+        {% else %}
+        {% set likehref = "/liked/"+viewer.id|string+"/comment/"+comment.id|string %}
+        {% set btnid = "#commentprbtn" + counter3|string %}
+        {% set imgid = "#commentprlikeimg" + counter3|string %}
+
+        {% if comment.liked_by and viewer.id in comment.liked_by %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+        </button>
+        <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+        </script>
+        {% else %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+        </button>
+        <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+        </script>
+        {% endif %}
+        {% endif %}
     </div>
-    {% if viewer==comment.user %}
-    {% set edit_href = "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
-    {% set delete_href =
-    "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
-    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
-    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
-    {% endif %}
+
     {% endfor %}
 </div>
 {% endif %}

@@ -1,5 +1,4 @@
 from flask import Flask, render_template, redirect, request, url_for, make_response
-from flask_socketio import SocketIO
 from flask_restful import abort
 from loginform import LoginForm
 from data import db_session
@@ -21,7 +20,6 @@ from datetime import datetime, timedelta
 import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
-async_mode = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['UPLOAD_FOLDER'] = '/user_images'
@@ -29,61 +27,119 @@ app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 login_manager = LoginManager()
 login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
-socketio = SocketIO(app, async_mode=async_mode, logger=True)
 
 
-def docookies():
-    user_actions = request.cookies.get("user_actions", '')
+@app.route('/jstest')
+def jstest():
+    return render_template("jstest.html")
+
+
+@app.route('/subscribe/<int:user_id>/<int:viewer_id>')
+def subscribe(user_id, viewer_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if viewer_id != current_user.id:
+        abort(404)
     db_sess = db_session.create_session()
-    for line in user_actions.split(';'):
-        text = line.split()
-        if text[0] == 'like':
-            if text[2] == 'post':
-                post = db_sess.query(Post).filter(Post.id == int(text[3])).first()
-                post.rank += float(text[4])
-            if text[2] == 'problem':
-                problem = db_sess.query(Problem).filter(Problem.id == int(text[3])).first()
-                problem.rank += float(text[4])
-            if text[2] == 'solution':
-                solution = db_sess.query(Solution).filter(Solution.id == int(text[3])).first()
-                solution.rank += float(text[4])
-            if text[2] == 'comment':
-                comment = db_sess.query(Comment).filter(Comment.id == int(text[3])).first()
-                comment.rank += float(text[4])
-        if text[0] == 'dislike':
-            if text[2] == 'post':
-                post = db_sess.query(Post).filter(Post.id == int(text[3])).first()
-                post.rank -= float(text[4])
-            if text[2] == 'problem':
-                problem = db_sess.query(Problem).filter(Problem.id == int(text[3])).first()
-                problem.rank -= float(text[4])
-            if text[2] == 'solution':
-                solution = db_sess.query(Solution).filter(Solution.id == int(text[3])).first()
-                solution.rank -= float(text[4])
-            if text[2] == 'comment':
-                comment = db_sess.query(Comment).filter(Comment.id == int(text[3])).first()
-                comment.rank -= float(text[4])
-        if text[0] == 'toread':
-            if text[2] == 'post':
-                post = db_sess.query(Post).filter(Post.id == int(text[3])).first()
-                post.rank += float(text[4]) / 2
-            if text[2] == 'problem':
-                problem = db_sess.query(Problem).filter(Problem.id == int(text[3])).first()
-                problem.rank += float(text[4]) / 2
-            user = db_sess.query(User).filter(User.id == int(text[1]))
-            user.toread = list(user.toread) + [text[2] + ' ' + text[3]]
+    viewer = db_sess.query(User).filter(User.id == viewer_id).first()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if viewer.subscribes:
+        arr = list(viewer.subscribes)
+        if user_id in arr:
+            arr.remove(user_id)
+            user.subscribers_count -= 1
+        else:
+            arr.append(user_id)
+            user.subscribers_count += 1
+        viewer.subscribes = arr
+    else:
+        viewer.subscribes = [user_id]
+        user.subscribers_count += 1
     db_sess.commit()
     db_sess.close()
+    return render_template("nowindow.html")
 
 
-@socketio.on('client_disconnecting')
-def disconnect_details(data):
-    print(123)
+@app.route('/reader/<int:user_id>/<int:viewer_id>')
+def become_reader(user_id, viewer_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if viewer_id != current_user.id:
+        abort(404)
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if user.readers:
+        arr = list(user.readers)
+        if viewer_id in arr:
+            arr.remove(viewer_id)
+        else:
+            arr.append(viewer_id)
+        user.readers = arr
+    else:
+        user.readers = [viewer_id]
+    db_sess.commit()
+    db_sess.close()
+    return render_template("nowindow.html")
 
 
-@socketio.on('disconnect_request')
-def disconnect():
-    print(123)
+@app.route('/addtoread/<int:user_id>/<name>/<int:cont_id>')
+def add_toread(user_id, name, cont_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if user_id != current_user.id:
+        abort(404)
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if user.toread:
+        if f'{name} {cont_id}' in user.toread:
+            arr = list(user.toread)
+            arr.remove(f'{name} {cont_id}')
+            user.toread = arr
+        else:
+            user.toread = list(user.toread) + [f'{name} {cont_id}']
+    else:
+        user.toread = [f'{name} {cont_id}']
+    db_sess.commit()
+    db_sess.close()
+    return render_template("nowindow.html")
+
+
+@app.route('/liked/<int:user_id>/<name>/<int:cont_id>')
+def like(user_id, name, cont_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if user_id != current_user.id:
+        abort(404)
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    publ = None
+    if name == "post":
+        publ = db_sess.query(Post).filter(Post.id == cont_id).first()
+    if name == "problem":
+        publ = db_sess.query(Problem).filter(Problem.id == cont_id).first()
+    if name == "comment":
+        publ = db_sess.query(Comment).filter(Comment.id == cont_id).first()
+    if name == "solution":
+        publ = db_sess.query(Solution).filter(Solution.id == cont_id).first()
+    if not publ:
+        db_sess.close()
+        abort(404)
+    if publ.liked_by is None or user_id not in publ.liked_by:
+        publ.rank += user.get_rank()
+        if not publ.liked_by:
+            arr = []
+        else:
+            arr = list(publ.liked_by)
+        arr.append(user_id)
+        publ.liked_by = arr
+    else:
+        publ.rank -= user.get_rank()
+        arr = list(publ.liked_by)
+        arr.remove(user_id)
+        publ.liked_by = arr
+    db_sess.commit()
+    db_sess.close()
+    return render_template("nowindow.html")
 
 
 @login_manager.user_loader
@@ -102,7 +158,6 @@ def problem_show(problem_id):
     if not problem:
         db_sess.close()
         res = make_response("К сожалению такой задачи нет")
-        res.set_cookie('user_actions', '')
         return res
     form = CommentAddForm(prefix='problem_comment_form')
     comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.solutions))]
@@ -175,6 +230,7 @@ def problem_show(problem_id):
                 solution.image_ids = files_filenames
             else:
                 solution.image_ids = []
+            solution.theme = problem.theme
             current_user.solutions.append(solution)
             db_sess.merge(current_user)
             solution = db_sess.merge(solution)
@@ -217,15 +273,15 @@ def problem_show(problem_id):
                 db_sess.merge(current_user)
                 comment = db_sess.merge(comment)
                 solution = problem.solutions[i]
+                comment.theme = solution.theme
                 solution.comments.append(comment)
                 db_sess.commit()
                 db_sess.close()
                 return redirect(f'/problem/{problem_id}')
     res = make_response(
         render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms, solform=solform,
-                        viewer=current_user,
-                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+                        viewer=current_user))
+
     return res
 
 
@@ -239,7 +295,7 @@ def post_show(post_id):
     if not post:
         db_sess.close()
         res = make_response("К сожалению такой записи нет")
-        res.set_cookie('user_actions', '')
+
         return res
     form = CommentAddForm()
     if form.validate_on_submit():
@@ -272,6 +328,7 @@ def post_show(post_id):
             comment.image_ids = files_filenames
         else:
             comment.image_ids = []
+        comment.theme = post.theme
         current_user.comments.append(comment)
         db_sess.merge(current_user)
         comment = db_sess.merge(comment)
@@ -279,9 +336,8 @@ def post_show(post_id):
         db_sess.commit()
         db_sess.close()
         return redirect(f'/post/{post_id}')
-    res = make_response(render_template("postshow.html", post=post, form=form, viewer=current_user,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template("postshow.html", post=post, form=form, viewer=current_user))
+
     return res
 
 
@@ -290,7 +346,22 @@ def post_show(post_id):
 def toread():
     if not current_user.is_authenticated:
         return redirect('/login')
-    pass
+    publs = []
+    used = set()
+    if current_user.toread:
+        db_sess = db_session.create_session()
+        for name in current_user.toread:
+            if name not in used:
+                used.add(name)
+                publ_type, publ_id = name.split()
+                if publ_type == 'post':
+                    post = db_sess.query(Post).filter(Post.id == int(publ_id)).first()
+                    publs.append(post)
+                else:
+                    problem = db_sess.query(Problem).filter(Problem.id == int(publ_id)).first()
+                    publs.append(problem)
+    return render_template("toread.html", title='Отложенные', Post=Post, Problem=Problem,
+                           publications=publs, isinstance=isinstance, viewer=current_user)
 
 
 @app.route('/')
@@ -300,7 +371,7 @@ def main_page():
 
 # (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'
 @app.route('/<cathegories>/<post_types>/<time>', methods=["POST", "GET"])
-def index(cathegories, post_types, time):
+def index(cathegories, post_types, time):  # TODO добавить функцию упорядочивания по рейтингу, времени и т п
     if not current_user.is_authenticated:
         return redirect('/login')
     form = NavForm()
@@ -377,7 +448,7 @@ def index(cathegories, post_types, time):
     good_themes = [i for i in range(3) if cats[i] == '*']
     if form.posts.data:
         posts = list(db_sess.query(Post).filter(Post.created_date > oldest,
-                                                Post.theme.in_(good_themes)).all())  # TODO добавить виды постов
+                                                Post.theme.in_(good_themes)).all())
     else:
         posts = []
     solprobs = []
@@ -389,15 +460,14 @@ def index(cathegories, post_types, time):
             nosolprobs.append(problem)
     publications = posts + solprobs + nosolprobs
     res = make_response(render_template("index.html", title='Домашняя страница', form=form, Post=Post, Problem=Problem,
-                                        publications=publications, isinstance=isinstance,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+                                        publications=publications, isinstance=isinstance, viewer=current_user))
+
     return res
 
 
 @login_required
 @app.route('/profile/<int:user_id>')
-def profile(user_id):
+def profile(user_id):  # TODO check time order
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
@@ -405,12 +475,18 @@ def profile(user_id):
     if not user:
         db_sess.close()
         return redirect("/")
+    publs = sorted(list(user.posts) + list(user.problems), key=lambda x: x.created_date)[
+            ::-1]  # TODO check how reiting works
     res = make_response(
-        render_template("profile.html", user=user, viewer=current_user, friends=1, subscribers=2, readers=3,
-                        geom1=60, alg1=30, comb1=95,
-                        geom2=0, alg2=100, comb2=35,
-                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+        render_template("profile.html", user=user, viewer=current_user, publications=publs, isinstance=isinstance,
+                        Post=Post, Problem=Problem,
+                        subscribers=user.subscribers_count, readers=(0 if not user.readers else len(user.readers)),
+                        geom1=user.get_rank('0', creating_only=True),
+                        alg1=user.get_rank('1', creating_only=True), comb1=user.get_rank('2', creating_only=True),
+                        geom2=user.get_rank('0'),
+                        alg2=user.get_rank('1'), comb2=user.get_rank('2'),
+                        ))
+
     return res
 
 
@@ -431,36 +507,32 @@ def edit_profile(user_id):
     if form.validate_on_submit():
         if not user.check_password(form.old_password.data):
             res = make_response(render_template('profileedit.html', form=form, title='Редактирование профиля',
-                                                message='Неверный пароль',
-                                                sync_mode=socketio.async_mode))
-            res.set_cookie('user_actions', '')
+                                                message='Неверный пароль'))
+
             return res
         if form.change_status.data:
             res, status = check_code(form.secret_code.data)
             if not res:
                 res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                     form=form,
-                                                    code_message=status,
-                                                    sync_mode=socketio.async_mode))
-                res.set_cookie('user_actions', '')
+                                                    code_message=status))
+
                 return res
         else:
             status = user.status
         if form.password.data != form.password_again.data:
             res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                 form=form,
-                                                message="Пароли не совпадают",
-                                                sync_mode=socketio.async_mode))
-            res.set_cookie('user_actions', '')
+                                                message="Пароли не совпадают"))
+
             return res
         if user.email != form.email.data:
             if db_sess.query(User).filter(User.email == form.email.data).first():
                 db_sess.close()
                 res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                     form=form,
-                                                    message="Такой пользователь уже есть",
-                                                    sync_mode=socketio.async_mode))
-                res.set_cookie('user_actions', '')
+                                                    message="Такой пользователь уже есть"))
+
                 return res
         user.email = form.email.data
         user.name = form.name.data
@@ -472,9 +544,8 @@ def edit_profile(user_id):
     form.email.data = user.email
     form.name.data = user.name
     form.about.data = user.about
-    res = make_response(render_template("profileedit.html", title='Редактирование профиля', form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template("profileedit.html", title='Редактирование профиля', form=form))
+
     return res
 
 
@@ -487,9 +558,8 @@ def gen_code(status):
     if statuses.get(status, 1000) > statuses[current_user.status]:
         return redirect('/')
     else:
-        res = make_response(render_template('codegen.html', status=status, code=generate_code(status),
-                                            sync_mode=socketio.async_mode))
-        res.set_cookie('user_actions', '')
+        res = make_response(render_template('codegen.html', status=status, code=generate_code(status)))
+
         return res
 
 
@@ -506,13 +576,11 @@ def login():
         db_sess.close()
         res = make_response(render_template('login.html',
                                             message="Неправильный логин или пароль",
-                                            form=form,
-                                            sync_mode=socketio.async_mode))
-        res.set_cookie('user_actions', '')
+                                            form=form))
+
         return res
-    res = make_response(render_template('login.html', title='Авторизация', form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template('login.html', title='Авторизация', form=form))
+
     return res
 
 
@@ -524,25 +592,22 @@ def register():
         if not res:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                code_message=status,
-                                                sync_mode=socketio.async_mode))
-            res.set_cookie('user_actions', '')
+                                                code_message=status))
+
             return res
         if form.password.data != form.password_again.data:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                message="Пароли не совпадают",
-                                                sync_mode=socketio.async_mode))
-            res.set_cookie('user_actions', '')
+                                                message="Пароли не совпадают"))
+
             return res
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
             db_sess.close()
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                message="Такой пользователь уже есть",
-                                                sync_mode=socketio.async_mode))
-            res.set_cookie('user_actions', '')
+                                                message="Такой пользователь уже есть"))
+
             return res
         user = User(
             name=form.name.data,
@@ -555,9 +620,8 @@ def register():
         db_sess.commit()
         db_sess.close()
         return redirect('/login')
-    res = make_response(render_template('register.html', title='Регистрация', form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template('register.html', title='Регистрация', form=form))
+
     return res
 
 
@@ -609,12 +673,19 @@ def add_post():
         user = db_sess.merge(current_user)
         db_sess.commit()
         post = user.posts[-1]
+        for reader_id in (user.readers if user.readers is not None else []):
+            reader = db_sess.query(User).filter(User.id == reader_id).first()
+            arr = (list(reader.toread) if reader.toread is not None else [])
+            arr.append('post ' + str(post.id))
+            reader.toread = arr
+            db_sess.commit()
+        post_id = post.id
+        db_sess.commit()
         db_sess.close()
-        return redirect(f'/post/{post.id}')
+        return redirect(f'/post/{post_id}')
     res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
-                                        form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+                                        form=form))
+
     return res
 
 
@@ -656,8 +727,15 @@ def add_problem():
             problem.image_ids = []
         current_user.problems.append(problem)
         user = db_sess.merge(current_user)
-        db_sess.commit()
         problem = user.problems[-1]
+        problem_id = problem.id
+        for reader_id in (user.readers if user.readers is not None else []):
+            reader = db_sess.query(User).filter(User.id == reader_id).first()
+            arr = (list(reader.toread) if reader.toread is not None else [])
+            arr.append('problem ' + str(problem.id))
+            reader.toread = arr
+            db_sess.commit()
+        db_sess.commit()
         if not form.nosolution.data and form.original_solution.data:
             solution = Solution()
             solution.content = form.original_solution.data
@@ -688,16 +766,16 @@ def add_problem():
                 solution.image_ids = sol_files_filenames
             else:
                 solution.image_ids = []
+            solution.theme = problem.theme
             user.solutions.append(solution)
             problem.solutions.append(solution)
-        db_sess.commit()
         problem_id = problem.id
+        db_sess.commit()
         db_sess.close()
         return redirect(f'/problem/{problem_id}')
     res = make_response(render_template('problemadd.html', title='Добавление информации для размышления',
-                                        form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+                                        form=form))
+
     return res
 
 
@@ -770,15 +848,13 @@ def edit_post(id):
             abort(404)
     res = make_response(render_template('postedit.html',
                                         title='Редактирование',
-                                        form=form,
-                                        sync_mode=socketio.async_mode
-                                        ))
-    res.set_cookie('user_actions', '')
+                                        form=form))
+
     return res
 
 
 @app.route('/edit_problem/<int:id>', methods=['GET', 'POST'])
-@login_required  # TODO fix problem original solution
+@login_required
 def edit_problem(id):  # without solution
     form = ProblemEditForm()
     if request.method == "GET":
@@ -843,10 +919,8 @@ def edit_problem(id):  # without solution
             abort(404)
     res = make_response(render_template('problemedit.html',
                                         title='Редактирование',
-                                        form=form,
-                                        sync_mode=socketio.async_mode
-                                        ))
-    res.set_cookie('user_actions', '')
+                                        form=form))
+
     return res
 
 
@@ -857,7 +931,7 @@ def delete_post(id):
     post = db_sess.query(Post).filter(Post.id == id,
                                       Post.user == current_user
                                       ).first()
-    if post and not post.comments:  # TODO check likes
+    if post and not post.comments:  # TODO добавить неверные задачи,решения...
         db_sess.delete(post)
         db_sess.commit()
         db_sess.close()
@@ -874,7 +948,7 @@ def delete_problem(id):
     problem = db_sess.query(Problem).filter(Problem.id == id,
                                             Problem.user == current_user
                                             ).first()
-    if problem and not problem.comments and not problem.solutions:  # TODO check likes
+    if problem and not problem.comments and not problem.solutions:
         db_sess.delete(problem)
         db_sess.commit()
         db_sess.close()
@@ -953,9 +1027,8 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
     else:
         db_sess.close()
         abort(404)
-    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form))
+
     return res
 
 
@@ -1047,9 +1120,8 @@ def edit_solution(solution_id, problem_id):
     else:
         db_sess.close()
         abort(404)
-    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form,
-                                        sync_mode=socketio.async_mode))
-    res.set_cookie('user_actions', '')
+    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form))
+
     return res
 
 
@@ -1062,7 +1134,7 @@ def delete_solution(solution_id, problem_id):
     solution = db_sess.query(Solution).filter(Solution.id == solution_id,
                                               Solution.user == current_user,
                                               Solution.problem_id == problem_id).first()
-    if solution and not solution.comments:  # TODO check likes
+    if solution and not solution.comments:
         db_sess.delete(solution)
         db_sess.commit()
         db_sess.close()
