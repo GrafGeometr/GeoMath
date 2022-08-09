@@ -76,6 +76,5 @@ class User(SqlAlchemyBase, UserMixin):
         timedelta = datetime.datetime.now() - self.created_date
         months = timedelta.seconds / 60 / 60 / 24 / 30
         res -= months
-        # TODO fix reiting
         rank = max(1, math.atan(res / 2000) / math.pi * 200)
         return rank

@@ -553,7 +553,7 @@ def main_page():
 # (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'
 @login_required
 @app.route('/<cathegories>/<post_types>/<time>', methods=["POST", "GET"])
-def index(cathegories, post_types, time):  # TODO добавить функцию упорядочивания по рейтингу, времени и т п
+def index(cathegories, post_types, time):
     if not current_user.is_authenticated:
         return redirect('/login')
     form = NavForm()
@@ -670,7 +670,7 @@ def profile(user_id):  # TODO check time order
         db_sess.close()
         return redirect("/")
     publs = sorted(list(user.posts) + list(user.problems), key=lambda x: x.created_date)[
-            ::-1]  # TODO check how reiting works
+            ::-1]
     res = make_response(
         render_template("profile.html", user=user, viewer=current_user, publications=publs, isinstance=isinstance,
                         Post=Post, Problem=Problem,
@@ -1127,7 +1127,7 @@ def delete_post(id):
     post = db_sess.query(Post).filter(Post.id == id,
                                       Post.user == current_user
                                       ).first()
-    if post and not post.comments:  # TODO добавить неверные задачи,решения...
+    if post and not post.comments:
         db_sess.delete(post)
         db_sess.commit()
         db_sess.close()
