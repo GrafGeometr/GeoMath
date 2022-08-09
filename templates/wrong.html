@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% for counter in range(publications|length) %}
+{% set publ = publications[counter] %}
+<div class="alert alert-dark">
+    <div class="alert alert-secondary">
+        {% if isinstance(publ, Solution) %}
+        Ваше решение считают неверным
+        {% for image_id in publ.image_ids %}
+        {% set location = "/static/user_images/"+image_id %}
+        <img src={{ location }} height="400">
+        {% endfor %}
+        <hr>
+        <div>
+            {{ publ.content }}
+        </div>
+        {% set publ_href = "/problem/"+publ.problem.id|string %}
+        <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Перейти к задаче</a>
+
+        {% elif isinstance(publ, Problem) %}
+        Вашу задачу считают неверной
+        <hr>
+        {% for image_id in publ.image_ids %}
+        {% set location = "/static/user_images/"+image_id %}
+        <img src={{ location }} height="400">
+        {% endfor %}
+        <hr>
+        {{ publ.content }}
+        <hr>
+
+        {% set publ_href = "/problem/"+publ.id|string %}
+        <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Перейти к задаче</a>
+
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

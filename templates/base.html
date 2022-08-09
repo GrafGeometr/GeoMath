@@ -74,25 +74,7 @@
 
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="/">Главная</a>
-        {% if current_user.is_authenticated %}
-        <a href="/add_post" class="btn btn-secondary">Добавить информацию для размышления</a>
-        <a href="/add_problem" class="btn btn-secondary">Добавить задачу</a>
-        {% endif %}
-        {% if current_user.is_authenticated %}
-        <a class="btn btn-danger" href="/logout">Выйти</a>
-        <a class="navbar-brand" href={{ current_user.profile_href() }}>{{ current_user.name }}</a>
-        <a class="btn btn-primary" href="/my">Перейти к отложенным</a>
-        {% else %}
-        <p>
-            <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
-            <a class="btn btn-success" href="/login">Войти</a>
-        </p>
-        {% endif %}
-    </nav>
-</header>
+
 
 <script>
     function dolike(imageid, link_to_go) {
@@ -116,11 +98,52 @@
 
 </script>
 <!-- Begin page content -->
-<main role="main" class="container">
-    {% block content %}{% endblock %}
-</main>
+
 <script src="/static/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/cookie.min.js"></script>
 <script src="/static/js/cheatsheet.js"></script>
+
+<header>
+    <nav class="navbar navbar-secondary bg-light">
+        <a class="navbar-brand" href="/">Главная</a>
+        <a class="navbar-brand" href="/help">Помощь и руководство</a>
+
+        {% if current_user.is_authenticated %}
+
+        <a class="navbar-brand" href={{ current_user.profile_href() }}>{{ current_user.name }}</a>
+
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+        <a class="btn btn-danger" href="/logout">Выйти</a>
+        {% else %}
+        <p>
+            <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
+            <a class="btn btn-success" href="/login">Войти</a>
+        </p>
+        {% endif %}
+    </nav>
+</header>
+
+
+<main role="main">
+    {% block content %}{% endblock %}
+</main>
+
+<header>
+    <nav class="navbar navbar bg-light">
+        <div class="btn-group-vertical" role="group">
+        {% if current_user.is_authenticated %}
+        <a href="/add_post" class="btn btn-outline-secondary">Добавить заметку</a>
+        <a href="/add_problem" class="btn btn-outline-secondary">Добавить задачу</a>
+        <a class="btn btn-outline-secondary" href="/my">Перейти к отложенным</a>
+        {% if current_user.wrong %}
+        <a class="btn btn-danger" href="/wrong">Некоторые ваши решения или задачи считают неверными</a>
+        {% endif %}
+        {% endif %}
+        </div>
+    </nav>
+</header>
+
 </body>
 </html>

@@ -1,8 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script>
+    function makeFalse(false_id, true_id, link_to_go) {
+        if (document.getElementById(false_id).className=="btn btn-outline-danger") {
+            document.getElementById(false_id).className="btn btn-danger";
+            document.getElementById(true_id).className="btn btn-outline-success";
+        } else {
+            document.getElementById(false_id).className="btn btn-outline-danger";
+        }
+        window.open(link_to_go);
+    }
+
+    function makeTrue(false_id, true_id, link_to_go) {
+        if (document.getElementById(true_id).className=="btn btn-outline-success") {
+            document.getElementById(true_id).className="btn btn-success";
+            document.getElementById(false_id).className="btn btn-outline-danger";
+        } else {
+            document.getElementById(true_id).className="btn btn-outline-success";
+        }
+        window.open(link_to_go);
+    }
+</script>
 <h1>Задача</h1>
-<div class="alert alert-secondary">Условие задачи:<br>
+{% set problem_class = "alert alert-secondary" %}
+{% if problem.is_false or problem.author_thinks_false  %}
+{% set problem_class = "alert alert-danger" %}
+{% elif problem.is_true %}
+{% set problem_class = "alert alert-success" %}
+{% endif %}
+<div class="{{ problem_class }}">Условие задачи:<br>
     <hr>
     {% for image_id in problem.image_ids %}
     {% set location = "/static/user_images/"+image_id %}
@@ -27,32 +54,83 @@
     </font></a>
 </div>
 {% if viewer==problem.user %}
+{% if not problem.author_thinks_false %}
 {% set edit_href = "/edit_problem/"+problem.id|string %}
 {% set delete_href = "/delete_problem/"+problem.id|string %}
 <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
 {% if not problem.comments and not problem.solutions %}
 <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
 {% endif %}
-{% else %}
-{% set likehref = "/liked/"+viewer.id|string+"/problem/"+problem.id|string %}
-{% set btnid = "#problembtn" %}
-{% set imgid = "#problemlikeimg" %}
-
-{% if problem.liked_by and viewer.id in problem.liked_by %}
-<button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-</button>
-<script>
-    var btn1 = document.getElementById( "{{ btnid }}" );
-    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-</script>
-{% else %}
-<button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-</button>
-<script>
-    var btn1 = document.getElementById( "{{ btnid }}" );
-    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-</script>
 {% endif %}
+
+{% if not problem.author_thinks_false and not problem.is_false and not problem.notauthor %}
+<p>
+    <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#problemfalseauthor"
+            aria-expanded="false" aria-controls="problemfalseauthor">
+        Признать задачу неверной
+    </button>
+</p>
+<div class="collapse" id="problemfalseauthor">
+    Если вы признаете задачу неверной, то больше не сможете редактировать её и получите штраф к рейтингу!<br>
+    {% set author_problem_false_href = "/author_false/problem/"+problem.id|string %}
+    <a class="btn btn-danger" href={{ author_problem_false_href }}>Признать неверной</a>
+</div>
+{% endif %}
+
+{% else %}
+{% if not problem.author_thinks_false and not problem.notauthor %}
+<div>
+    {% set false_href = "/isfalse/problem/"+problem.id|string+"/"+viewer.id|string %}
+    {% set false_problem_btn_id = "falseproblembtn" %}
+
+    {% set true_href = "/istrue/problem/"+problem.id|string+"/"+viewer.id|string %}
+    {% set true_problem_btn_id = "trueproblembtn" %}
+
+
+    {% if viewer.id not in problem.think_is_false %}
+    <button id={{ false_problem_btn_id }} class="btn btn-outline-danger">Неверно</button>
+    {% else %}
+    <button id={{ false_problem_btn_id }} class="btn btn-danger">Неверно</button>
+    {% endif %}
+
+    <script>
+        var btn = document.getElementById("{{ false_problem_btn_id }}");
+        btn.onclick = function(){ makeFalse("{{false_problem_btn_id}}", "{{true_problem_btn_id}}", "{{false_href}}"); };
+    </script>
+
+    {% if viewer.id not in problem.think_is_true %}
+    <button id={{ true_problem_btn_id }} class="btn btn-outline-success">Верно</button>
+    {% else %}
+    <button id={{ true_problem_btn_id }} class="btn btn-success">Верно</button>
+    {% endif %}
+
+    <script>
+        var btn = document.getElementById("{{ true_problem_btn_id }}");
+        btn.onclick = function(){ makeTrue("{{false_problem_btn_id}}", "{{true_problem_btn_id}}", "{{true_href}}"); };
+    </script>
+</div>
+{% endif %}
+<div>
+    {% set likehref = "/liked/"+viewer.id|string+"/problem/"+problem.id|string %}
+    {% set btnid = "#problembtn" %}
+    {% set imgid = "#problemlikeimg" %}
+
+    {% if problem.liked_by and viewer.id in problem.liked_by %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+    </button>
+    <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% else %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+    </button>
+    <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% endif %}`
+</div>
 {% endif %}
 
 
@@ -81,7 +159,13 @@
 {% for counter in range(problem.solutions|length) %}
 {% set i = counter %}
 {% set solution = problem.solutions[counter] %}
-<div class="alert alert-secondary">
+{% set solution_class = "alert alert-secondary" %}
+{% if solution.is_false or solution.author_thinks_false %}
+{% set solution_class = "alert alert-danger" %}
+{% elif solution.is_true %}
+{% set solution_class = "alert alert-success" %}
+{% endif %}
+<div class="{{ solution_class }}">
     <a class="badge bg-light" style="margin-left:20px" href={{ solution.user.profile_href() }}><font size="3"
                                                                                                      color="blue">
         {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -101,35 +185,87 @@
     {% endfor %}
     {{ solution.content }}
     <hr>
-    {% if viewer==solution.user %}
+    {% if viewer==solution.user and not solution.author_thinks_false %}
     {% set edit_href = "/edit_solution/"+solution.id|string+"/"+problem.id|string %}
     {% set delete_href = "/delete_solution/"+solution.id|string+"/"+problem.id|string %}
     <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
     {% if not solution.comments %}
     <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
     {% endif %}
-    {% else %}
-    {% set likehref = "/liked/"+viewer.id|string+"/solution/"+solution.id|string %}
-    {% set btnid = "#problemsolbtn" + counter|string %}
-    {% set imgid = "#problemsollikeimg" + counter|string %}
 
-    {% if solution.liked_by and viewer.id in solution.liked_by %}
-    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-    </button>
-    <script>
-    var btn1 = document.getElementById( "{{ btnid }}" );
-    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    {% if not solution.author_thinks_false and not solution.is_false %}
+    {% set collapse_solbtn_id = "solutionfalseauthor"+counter|string %}
+    {% set collapse_solbtn_id2 = "#"+collapse_solbtn_id %}
+    <p>
+        <button class="btn btn-danger" type="button" data-bs-toggle="collapse" data-bs-target={{ collapse_solbtn_id2 }}
+                aria-expanded="false" aria-controls={{ collapse_solbtn_id }}>
+            Признать решение неверным
+        </button>
+    </p>
+    <div class="collapse" id={{ collapse_solbtn_id }}>
+        Если вы признаете решение неверным, то больше не сможете редактировать его и получите штраф к рейтингу!<br>
+        {% set author_solution_false_href = "/author_false/solution/"+solution.id|string %}
+        <a class="btn btn-danger" href={{ author_solution_false_href }}>Признать неверным</a>
+    </div>
 
-    </script>
-    {% else %}
-    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-    </button>
-    <script>
-    var btn1 = document.getElementById( "{{ btnid }}" );
-    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-
-    </script>
     {% endif %}
+
+    {% else %}
+    {% if not solution.author_thinks_false %}
+    <div>
+        {% set false_href = "/isfalse/solution/"+solution.id|string+"/"+viewer.id|string %}
+        {% set false_solution_btn_id = "falsesolutionbtn"+counter|string %}
+
+        {% set true_href = "/istrue/solution/"+solution.id|string+"/"+viewer.id|string %}
+        {% set true_solution_btn_id = "truesolutionbtn"+counter|string %}
+
+
+        {% if viewer.id not in solution.think_is_false %}
+        <button id={{ false_solution_btn_id }} class="btn btn-outline-danger">Неверно</button>
+        {% else %}
+        <button id={{ false_solution_btn_id }} class="btn btn-danger">Неверно</button>
+        {% endif %}
+
+        <script>
+            var btn = document.getElementById("{{ false_solution_btn_id }}");
+            btn.onclick = function(){ makeFalse("{{false_solution_btn_id}}", "{{true_solution_btn_id}}", "{{false_href}}"); };
+        </script>
+
+        {% if viewer.id not in solution.think_is_true %}
+        <button id={{ true_solution_btn_id }} class="btn btn-outline-success">Верно</button>
+        {% else %}
+        <button id={{ true_solution_btn_id }} class="btn btn-success">Верно</button>
+        {% endif %}
+
+        <script>
+            var btn = document.getElementById("{{ true_solution_btn_id }}");
+            btn.onclick = function(){ makeTrue("{{false_solution_btn_id}}", "{{true_solution_btn_id}}", "{{true_href}}"); };
+        </script>
+    </div>
+    {% endif %}
+    <div>
+        {% set likehref = "/liked/"+viewer.id|string+"/solution/"+solution.id|string %}
+        {% set btnid = "#problemsolbtn" + counter|string %}
+        {% set imgid = "#problemsollikeimg" + counter|string %}
+
+        {% if solution.liked_by and viewer.id in solution.liked_by %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+        </button>
+        <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+        </script>
+        {% else %}
+        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+        </button>
+        <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
+        </script>
+        {% endif %}
+    </div>
     {% endif %}
 
     {% set comformid = "comform"+i|string %}

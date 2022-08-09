@@ -19,6 +19,7 @@ from secret_code import generate_code, check_code
 from datetime import datetime, timedelta
 import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -33,7 +34,187 @@ basedir = os.path.abspath(os.curdir)
 def jstest():
     return render_template("jstest.html")
 
+@login_required
+@app.route('/wrong')
+def wrong():
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    publs = []
+    used = set()
+    if current_user.wrong:
+        db_sess = db_session.create_session()
+        for name in current_user.wrong:
+            if name not in used:
+                used.add(name)
+                publ_type, publ_id = name.split()
+                if publ_type == 'solution':
+                    solution = db_sess.query(Solution).filter(Solution.id == int(publ_id)).first()
+                    publs.append(solution)
+                else:
+                    problem = db_sess.query(Problem).filter(Problem.id == int(publ_id)).first()
+                    publs.append(problem)
+    return render_template("wrong.html", title='Неверные задачи и решения', Solution=Solution, Problem=Problem,
+                           publications=publs[::-1], isinstance=isinstance, viewer=current_user)
 
+
+@login_required
+@app.route('/author_false/<name>/<int:publ_id>')
+def author_false(name, publ_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    if name == "problem":
+        publ = db_sess.query(Problem).filter(Problem.id == publ_id).first()
+    else:
+        publ = db_sess.query(Solution).filter(Solution.id == publ_id).first()
+    if publ.user.id != current_user.id:
+        db_sess.close()
+        abort(404)
+    publ.author_thinks_false = True
+    arr = list(current_user.wrong)
+    if f"{name} {publ_id}" in arr:
+        arr.remove(f"{name} {publ_id}")
+    current_user.wrong = arr
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f'/{name}/{publ_id}')
+
+
+def check_truth(publ, db_sess):
+    rank = sum(
+        [db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in list(publ.think_is_true)]) - \
+           sum([db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in
+                list(publ.think_is_false)])
+    if rank < -400:
+        if publ.is_true:
+            publ.rank -= 100
+        if not publ.is_false:
+            publ.rank -= 100
+        publ.is_false = True
+        publ.is_true = False
+    if -400 <= rank <= 400:
+        if publ.is_false:
+            publ.rank += 100
+        if publ.is_true:
+            publ.rank -= 100
+        publ.is_true = False
+        publ.is_false = False
+    if rank > 400:
+        if not publ.is_true:
+            publ.rank += 100
+        if publ.is_false:
+            publ.rank += 100
+        publ.is_false = False
+        publ.is_true = True
+    if isinstance(publ, Problem):
+        line = f'problem {publ.id}'
+    else:
+        line = f'solution {publ.id}'
+    arr = list(publ.user.wrong)
+    print(arr)
+    if publ.is_false or publ.is_true or (not publ.think_is_false):
+        if line in arr:
+            arr.remove(line)
+    elif publ.think_is_false:
+        if line in arr:
+            arr.remove(line)
+        arr.append(line)
+    print(arr)
+    publ.user.wrong = arr
+    db_sess.commit()
+
+@login_required
+@app.route('/isfalse/<name>/<int:publ_id>/<int:user_id>')
+def make_false(name, publ_id, user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if user_id != current_user.id:
+        abort(404)
+    db_sess = db_session.create_session()
+    if name == "problem":
+        problem = db_sess.query(Problem).filter(Problem.id == publ_id).first()
+        if not problem:
+            abort(404)
+        if user_id in problem.think_is_false:
+            arr = list(problem.think_is_false)
+            arr.remove(user_id)
+            problem.think_is_false = arr
+        else:
+            if user_id in problem.think_is_true:
+                arr = list(problem.think_is_true)
+                arr.remove(user_id)
+                problem.think_is_true = arr
+            problem.think_is_false = list(problem.think_is_false) + [user_id]
+        db_sess.commit()
+        check_truth(problem, db_sess)
+        db_sess.close()
+        return render_template("nowindow.html")
+    else:
+        solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
+        if not solution:
+            abort(404)
+        if user_id in solution.think_is_false:
+            arr = list(solution.think_is_false)
+            arr.remove(user_id)
+            solution.think_is_false = arr
+        else:
+            if user_id in solution.think_is_true:
+                arr = list(solution.think_is_true)
+                arr.remove(user_id)
+                solution.think_is_true = arr
+            solution.think_is_false = list(solution.think_is_false) + [user_id]
+        db_sess.commit()
+        check_truth(solution, db_sess)
+        db_sess.close()
+        return render_template("nowindow.html")
+
+@login_required
+@app.route('/istrue/<name>/<int:publ_id>/<int:user_id>')
+def make_true(name, publ_id, user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if user_id != current_user.id:
+        abort(404)
+    db_sess = db_session.create_session()
+    if name == "problem":
+        problem = db_sess.query(Problem).filter(Problem.id == publ_id).first()
+        if not problem:
+            abort(404)
+        if user_id in problem.think_is_true:
+            arr = list(problem.think_is_true)
+            arr.remove(user_id)
+            problem.think_is_true = arr
+        else:
+            if user_id in problem.think_is_false:
+                arr = list(problem.think_is_false)
+                arr.remove(user_id)
+                problem.think_is_false = arr
+            problem.think_is_true = list(problem.think_is_true) + [user_id]
+        db_sess.commit()
+        check_truth(problem, db_sess)
+        db_sess.close()
+        return render_template("nowindow.html")
+    else:
+        solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
+        if not solution:
+            abort(404)
+        if user_id in solution.think_is_true:
+            arr = list(solution.think_is_true)
+            arr.remove(user_id)
+            solution.think_is_true = arr
+        else:
+            if user_id in solution.think_is_false:
+                arr = list(solution.think_is_false)
+                arr.remove(user_id)
+                solution.think_is_false = arr
+            solution.think_is_true = list(solution.think_is_true) + [user_id]
+        solution.is_true = not solution.is_true
+        db_sess.commit()
+        check_truth(solution, db_sess)
+        db_sess.close()
+        return render_template("nowindow.html")
+
+@login_required
 @app.route('/subscribe/<int:user_id>/<int:viewer_id>')
 def subscribe(user_id, viewer_id):
     if not current_user.is_authenticated:
@@ -59,7 +240,7 @@ def subscribe(user_id, viewer_id):
     db_sess.close()
     return render_template("nowindow.html")
 
-
+@login_required
 @app.route('/reader/<int:user_id>/<int:viewer_id>')
 def become_reader(user_id, viewer_id):
     if not current_user.is_authenticated:
@@ -81,7 +262,7 @@ def become_reader(user_id, viewer_id):
     db_sess.close()
     return render_template("nowindow.html")
 
-
+@login_required
 @app.route('/addtoread/<int:user_id>/<name>/<int:cont_id>')
 def add_toread(user_id, name, cont_id):
     if not current_user.is_authenticated:
@@ -103,7 +284,7 @@ def add_toread(user_id, name, cont_id):
     db_sess.close()
     return render_template("nowindow.html")
 
-
+@login_required
 @app.route('/liked/<int:user_id>/<name>/<int:cont_id>')
 def like(user_id, name, cont_id):
     if not current_user.is_authenticated:
@@ -361,15 +542,16 @@ def toread():
                     problem = db_sess.query(Problem).filter(Problem.id == int(publ_id)).first()
                     publs.append(problem)
     return render_template("toread.html", title='Отложенные', Post=Post, Problem=Problem,
-                           publications=publs, isinstance=isinstance, viewer=current_user)
+                           publications=publs[::-1], isinstance=isinstance, viewer=current_user)
 
-
+@login_required
 @app.route('/')
 def main_page():
     return redirect('/***/***/30 минут')
 
 
 # (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'
+@login_required
 @app.route('/<cathegories>/<post_types>/<time>', methods=["POST", "GET"])
 def index(cathegories, post_types, time):  # TODO добавить функцию упорядочивания по рейтингу, времени и т п
     if not current_user.is_authenticated:
@@ -459,6 +641,18 @@ def index(cathegories, post_types, time):  # TODO добавить функци�
         elif not problem.solutions and form.nosolprob.data:
             nosolprobs.append(problem)
     publications = posts + solprobs + nosolprobs
+
+    def interest(publ):
+        reit = 0
+        if publ.user.id in current_user.subscribes:
+            reit += 100 + random.randrange(100)
+        reit += publ.rank
+        if (datetime.now() - publ.created_date).seconds < 60 * 15:
+            reit += 100
+        reit+=random.randrange(50)
+        return reit
+
+    publications.sort(key=interest, reverse=True)
     res = make_response(render_template("index.html", title='Домашняя страница', form=form, Post=Post, Problem=Problem,
                                         publications=publications, isinstance=isinstance, viewer=current_user))
 
@@ -698,6 +892,7 @@ def add_problem():
         problem = Problem()
         problem.content = form.content.data
         problem.theme = form.theme.data
+        problem.notauthor = form.notauthor.data
         files_filenames = []
         k = 0
         for file in form.images.data:
@@ -875,6 +1070,7 @@ def edit_problem(id):  # without solution
         if problem:
             problem.content = form.content.data
             problem.theme = form.theme.data
+            problem.notauthor = form.notauthor.data
             k = 0
             files_filenames = []
             if form.images.data:
@@ -1150,8 +1346,13 @@ def main():
     print(generate_code('жюри'))
     print(generate_code('преподаватель'))
     # socketio.init_app(app, debug=True)
+
+    db_sess = db_session.create_session()
+    db_sess.close()
+
     app.run(port=8080, host='127.0.0.1')
     # app.run(port=8080, host='127.0.0.1')
+
     """db_sess = db_session.create_session()
 
 

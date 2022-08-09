@@ -21,11 +21,13 @@ class User(SqlAlchemyBase, UserMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
 
-    toread = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    wrong = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+
+    toread = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     subscribers_count = sqlalchemy.Column(sqlalchemy.Integer, default=0)
-    readers = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
-    subscribes = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    readers = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+    subscribes = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     posts = orm.relation("Post", back_populates='user')
     problems = orm.relation("Problem", back_populates='user')
@@ -42,7 +44,7 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
     def get_rank(self, theme=None, creating_only=False):
-        res = 1
+        res = 0
         if self.status in ['жюри', 'преподаватель']:
             return 100
         for post in self.posts:
@@ -51,14 +53,29 @@ class User(SqlAlchemyBase, UserMixin):
         for problem in self.problems:
             if theme == None or problem.theme == theme:
                 res += problem.rank * 0.5
+                if problem.author_thinks_false:
+                    res -= 50
+                elif problem.is_false:
+                    res -= 100
         for solution in self.solutions:
             if not creating_only and theme == None or solution.theme == theme:
                 res += solution.rank
-                if solution.problem.solutions[0].id == solution.id:
-                    res += solution.problem.rank * 0.5
+                for other_solution in solution.problem.solutions:
+                    if other_solution.id == solution.id and not solution.is_false:
+                        res += 0.5 * solution.problem.rank
+                        if solution.author_thinks_false:
+                            res -= 25
+                        elif solution.is_false:
+                            res -= 50
+                        break
+                    elif not other_solution.is_false:
+                        break
         for comment in self.comments:
             if theme == None or comment.theme == theme:
                 res += comment.rank * 0.3
-        res /= 1000  # TODO fix reiting
-        rank = (1 + 1 / res) ** res * 100 / math.e
+        timedelta = datetime.datetime.now() - self.created_date
+        months = timedelta.seconds / 60 / 60 / 24 / 30
+        res -= months
+        # TODO fix reiting
+        rank = max(1, math.atan(res / 2000) / math.pi * 200)
         return rank
