@@ -14,12 +14,17 @@ from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
 from problemeditform import ProblemEditForm
 from profileeditform import ProfileEditForm
+from verifyform import VerifyForm
 from navform import NavForm
 from secret_code import generate_code, check_code
 from datetime import datetime, timedelta
 import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+import smtplib
+from email.mime.text import MIMEText
 import random
+from email_secret_data import EMAIL, PASSWORD
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -33,6 +38,26 @@ basedir = os.path.abspath(os.curdir)
 @app.route('/jstest')
 def jstest():
     return render_template("jstest.html")
+
+
+def send_email(to, code):
+    text = f"Вы только что зарегистрировались на сайте GeoMath.\nВаш код регистрации:\n{code}"
+
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL
+    msg['To'] = to
+    msg['Subject'] = 'Регистрация на сайте'
+    message = text
+    msg.attach(MIMEText(message))
+
+    mailserver = smtplib.SMTP('smtp.yandex.ru', 587)
+    mailserver.ehlo()
+    mailserver.starttls()
+    mailserver.ehlo()
+    mailserver.login(EMAIL, PASSWORD)
+    mailserver.sendmail(EMAIL, to, msg.as_string())
+    mailserver.quit()
+
 
 @login_required
 @app.route('/wrong')
@@ -123,6 +148,7 @@ def check_truth(publ, db_sess):
     publ.user.wrong = arr
     db_sess.commit()
 
+
 @login_required
 @app.route('/isfalse/<name>/<int:publ_id>/<int:user_id>')
 def make_false(name, publ_id, user_id):
@@ -167,6 +193,7 @@ def make_false(name, publ_id, user_id):
         check_truth(solution, db_sess)
         db_sess.close()
         return render_template("nowindow.html")
+
 
 @login_required
 @app.route('/istrue/<name>/<int:publ_id>/<int:user_id>')
@@ -214,6 +241,7 @@ def make_true(name, publ_id, user_id):
         db_sess.close()
         return render_template("nowindow.html")
 
+
 @login_required
 @app.route('/subscribe/<int:user_id>/<int:viewer_id>')
 def subscribe(user_id, viewer_id):
@@ -240,6 +268,7 @@ def subscribe(user_id, viewer_id):
     db_sess.close()
     return render_template("nowindow.html")
 
+
 @login_required
 @app.route('/reader/<int:user_id>/<int:viewer_id>')
 def become_reader(user_id, viewer_id):
@@ -262,6 +291,7 @@ def become_reader(user_id, viewer_id):
     db_sess.close()
     return render_template("nowindow.html")
 
+
 @login_required
 @app.route('/addtoread/<int:user_id>/<name>/<int:cont_id>')
 def add_toread(user_id, name, cont_id):
@@ -283,6 +313,7 @@ def add_toread(user_id, name, cont_id):
     db_sess.commit()
     db_sess.close()
     return render_template("nowindow.html")
+
 
 @login_required
 @app.route('/liked/<int:user_id>/<name>/<int:cont_id>')
@@ -544,6 +575,7 @@ def toread():
     return render_template("toread.html", title='Отложенные', Post=Post, Problem=Problem,
                            publications=publs[::-1], isinstance=isinstance, viewer=current_user)
 
+
 @login_required
 @app.route('/')
 def main_page():
@@ -649,7 +681,7 @@ def index(cathegories, post_types, time):
         reit += publ.rank
         if (datetime.now() - publ.created_date).seconds < 60 * 15:
             reit += 100
-        reit+=random.randrange(50)
+        reit += random.randrange(50)
         return reit
 
     publications.sort(key=interest, reverse=True)
@@ -763,6 +795,10 @@ def login():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
+        user_id = user.id
+        if user.email_code != "":
+            db_sess.close()
+            return redirect(f'/email_verify/{user_id}')
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             db_sess.close()
@@ -776,6 +812,35 @@ def login():
     res = make_response(render_template('login.html', title='Авторизация', form=form))
 
     return res
+
+
+@app.route('/reset_email_code/<int:user_id>')
+def reset_email_code(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f'/email_verify/{user_id}')
+
+
+@app.route('/email_verify/<int:user_id>', methods=['GET', 'POST'])
+def verify_email(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if user.email_code == "":
+        return redirect('/login')
+    form = VerifyForm()
+    if form.validate_on_submit():
+        if user.email_code == form.code.data:
+            user.email_code = ""
+            db_sess.commit()
+            db_sess.close()
+            return redirect('/login')
+        else:
+            return render_template("verify.html", form=form, message='Неправильный код', user_id=user_id)
+    send_email(user.email, user.email_code)  # TODO доделать емайлы
+    return render_template("verify.html", form=form, user_id=user_id)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -810,10 +875,15 @@ def register():
             status=status
         )
         user.set_password(form.password.data)
+        user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
         db_sess.add(user)
+        user_id = user.id
+        print(user_id)
         db_sess.commit()
+        user_id = user.id
+        print(user_id)
         db_sess.close()
-        return redirect('/login')
+        return redirect(f'/email_verify/{user_id}')
     res = make_response(render_template('register.html', title='Регистрация', form=form))
 
     return res
