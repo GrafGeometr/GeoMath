@@ -40,6 +40,13 @@ def jstest():
     return render_template("jstest.html")
 
 
+@app.route('/help')
+def help():
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    return render_template('help.html')
+
+
 def send_email(to, code):
     text = f"Вы только что зарегистрировались на сайте GeoMath.\nВаш код регистрации:\n{code}"
 
@@ -693,7 +700,7 @@ def index(cathegories, post_types, time):
 
 @login_required
 @app.route('/profile/<int:user_id>')
-def profile(user_id):  # TODO check time order
+def profile(user_id):
     if not current_user.is_authenticated:
         return redirect('/login')
     db_sess = db_session.create_session()
@@ -795,6 +802,10 @@ def login():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if not user:
+            return make_response(render_template('login.html',
+                                            message="Неправильный логин или пароль",
+                                            form=form))
         user_id = user.id
         if user.email_code != "":
             db_sess.close()
@@ -839,7 +850,7 @@ def verify_email(user_id):
             return redirect('/login')
         else:
             return render_template("verify.html", form=form, message='Неправильный код', user_id=user_id)
-    send_email(user.email, user.email_code)  # TODO доделать емайлы
+    send_email(user.email, user.email_code)
     return render_template("verify.html", form=form, user_id=user_id)
 
 

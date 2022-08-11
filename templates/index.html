@@ -82,22 +82,24 @@
                     {% set likehref = "/liked/"+viewer.id|string+"/post/"+publ.id|string %}
                     {% set btnid = "#postbtn" + counter|string %}
                     {% set imgid = "#postlikeimg" + counter|string %}
-
-                    {% if publ.liked_by and viewer.id in publ.liked_by %}
-                        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-                        </button>
-                        <script>
-                        var btn1 = document.getElementById( "{{ btnid }}" );
-                        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                        </script>
-                    {% else %}
-                        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-                        </button>
-                        <script>
-                        var btn1 = document.getElementById( "{{ btnid }}" );
-                        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                        </script>
-                    {% endif %}
+                    <div class="alert alert-light">
+                        {{ publ.rank }}
+                        {% if publ.liked_by and viewer.id in publ.liked_by %}
+                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+                            </button>
+                            <script>
+                            var btn1 = document.getElementById( "{{ btnid }}" );
+                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                            </script>
+                        {% else %}
+                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+                            </button>
+                            <script>
+                            var btn1 = document.getElementById( "{{ btnid }}" );
+                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                            </script>
+                        {% endif %}
+                    </div>
                 {% endif %}
             {% else %}
                 Условие задачи:<br>
@@ -176,21 +178,24 @@
                         {% set likehref = "/liked/"+viewer.id|string+"/problem/"+publ.id|string %}
                         {% set btnid = "#problembtn" + counter|string %}
                         {% set imgid = "#problemlikeimg" + counter|string %}
-                        {% if publ.liked_by and viewer.id in publ.liked_by %}
-                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-                            </button>
-                            <script>
-                            var btn1 = document.getElementById( "{{ btnid }}" );
-                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                            </script>
-                        {% else %}
-                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-                            </button>
-                            <script>
-                            var btn1 = document.getElementById( "{{ btnid }}" );
-                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                            </script>
-                        {% endif %}
+                        <div class="alert alert-light">
+                            {{ publ.rank }}
+                            {% if publ.liked_by and viewer.id in publ.liked_by %}
+                                <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+                                </button>
+                                <script>
+                                var btn1 = document.getElementById( "{{ btnid }}" );
+                                btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                                </script>
+                            {% else %}
+                                <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+                                </button>
+                                <script>
+                                var btn1 = document.getElementById( "{{ btnid }}" );
+                                btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                                </script>
+                            {% endif %}
+                        </div>
                     {% endif %}
             {% endif %}
             </div>

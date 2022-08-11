@@ -60,6 +60,8 @@ class User(SqlAlchemyBase, UserMixin):
                     res -= 50
                 elif problem.is_false:
                     res -= 100
+                elif problem.is_true:
+                    res += 150
         for solution in self.solutions:
             if not creating_only and theme == None or solution.theme == theme:
                 res += solution.rank
@@ -70,6 +72,8 @@ class User(SqlAlchemyBase, UserMixin):
                             res -= 25
                         elif solution.is_false:
                             res -= 50
+                        elif solution.is_true:
+                            res += 150
                         break
                     elif not other_solution.is_false:
                         break
