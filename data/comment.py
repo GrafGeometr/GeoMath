@@ -32,4 +32,4 @@ class Comment(SqlAlchemyBase):
 
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
-    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    files = orm.relation("UsersFile", back_populates='comment')

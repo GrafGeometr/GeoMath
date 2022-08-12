@@ -26,4 +26,4 @@ class Post(SqlAlchemyBase):
 
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
-    image_ids = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+    files = orm.relation("UsersFile", back_populates='post')

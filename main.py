@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for, make_response
+from flask import Flask, render_template, redirect, request, url_for, make_response, session, send_from_directory
 from flask_restful import abort
 from loginform import LoginForm
 from data import db_session
@@ -14,6 +14,8 @@ from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
 from problemeditform import ProblemEditForm
 from profileeditform import ProfileEditForm
+from data.users_file import UsersFile
+from fileform import FileAddForm
 from verifyform import VerifyForm
 from navform import NavForm
 from secret_code import generate_code, check_code
@@ -28,8 +30,8 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-app.config['UPLOAD_FOLDER'] = '/user_images'
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
+app.config['UPLOAD_FOLDER'] = '/user_files'
+app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jpeg', '.jpg', '.gif', '.ggb']
 login_manager = LoginManager()
 login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
@@ -38,6 +40,21 @@ basedir = os.path.abspath(os.curdir)
 @app.route('/jstest')
 def jstest():
     return render_template("jstest.html")
+
+@app.route('/delete_file/<int:file_id>/<togo>')
+def delete_file(file_id, togo):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    users_file = db_sess.query(UsersFile).filter(UsersFile.id == file_id).first()
+    if users_file:
+        db_sess.delete(users_file)
+        db_sess.commit()
+        db_sess.close()
+    else:
+        db_sess.close()
+        abort(404)
+    return redirect(togo.replace('$', '/'))
 
 
 @app.route('/help')
@@ -391,7 +408,7 @@ def problem_show(problem_id):
                 if file.filename != '':
                     k += 1
                     try:
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                         n = int(f.read())
                         f.close()
                     except Exception as e:
@@ -400,18 +417,18 @@ def problem_show(problem_id):
                     file_ext = os.path.splitext(file.filename)[1]
                     if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                         abort(400)
-                    filename = f'img{n}.png'
-                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    filename = f'{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                                             filename)  # TODO доделать файлы
                     file.save(file_path)
-                    files_filenames.append(filename)
+                    users_file = UsersFile()
+                    users_file.name = file.filename
+                    users_file.extension = file_ext
+                    comment.files.append(users_file)
                     n += 1
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                     f.write(str(n))
                     f.close()
-            if k > 0:
-                comment.image_ids = files_filenames
-            else:
-                comment.image_ids = []
             current_user.comments.append(comment)
             db_sess.merge(current_user)
             comment = db_sess.merge(comment)
@@ -428,7 +445,7 @@ def problem_show(problem_id):
                 if file.filename != '':
                     k += 1
                     try:
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                         n = int(f.read())
                         f.close()
                     except Exception as e:
@@ -437,18 +454,18 @@ def problem_show(problem_id):
                     file_ext = os.path.splitext(file.filename)[1]
                     if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                         abort(400)
-                    filename = f'img{n}.png'
-                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    filename = f'{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                     file.save(file_path)
                     files_filenames.append(filename)
+                    users_file = UsersFile()
+                    users_file.name = file.filename
+                    users_file.extension = file_ext
+                    solution.files.append(users_file)
                     n += 1
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                     f.write(str(n))
                     f.close()
-            if k > 0:
-                solution.image_ids = files_filenames
-            else:
-                solution.image_ids = []
             solution.theme = problem.theme
             current_user.solutions.append(solution)
             db_sess.merge(current_user)
@@ -467,7 +484,7 @@ def problem_show(problem_id):
                     if file.filename != '':
                         k += 1
                         try:
-                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                             n = int(f.read())
                             f.close()
                         except Exception as e:
@@ -476,18 +493,18 @@ def problem_show(problem_id):
                         file_ext = os.path.splitext(file.filename)[1]
                         if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                             abort(400)
-                        filename = f'img{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                        filename = f'{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                         file.save(file_path)
                         files_filenames.append(filename)
+                        users_file = UsersFile()
+                        users_file.name = file.filename
+                        users_file.extension = file_ext
+                        comment.files.append(users_file)
                         n += 1
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                         f.write(str(n))
                         f.close()
-                if k > 0:
-                    comment.image_ids = files_filenames
-                else:
-                    comment.image_ids = []
                 current_user.comments.append(comment)
                 db_sess.merge(current_user)
                 comment = db_sess.merge(comment)
@@ -526,7 +543,7 @@ def post_show(post_id):
             if file.filename != '':
                 k += 1
                 try:
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                     n = int(f.read())
                     f.close()
                 except Exception as e:
@@ -535,18 +552,18 @@ def post_show(post_id):
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     abort(400)
-                filename = f'img{n}.png'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                filename = f'{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                 file.save(file_path)
                 files_filenames.append(filename)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                comment.files.append(users_file)
                 n += 1
-                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
-        if k > 0:
-            comment.image_ids = files_filenames
-        else:
-            comment.image_ids = []
         comment.theme = post.theme
         current_user.comments.append(comment)
         db_sess.merge(current_user)
@@ -804,8 +821,8 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if not user:
             return make_response(render_template('login.html',
-                                            message="Неправильный логин или пароль",
-                                            form=form))
+                                                 message="Неправильный логин или пароль",
+                                                 form=form))
         user_id = user.id
         if user.email_code != "":
             db_sess.close()
@@ -923,7 +940,7 @@ def add_post():
             if file.filename != '':
                 k += 1
                 try:
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                     n = int(f.read())
                     f.close()
                 except Exception as e:
@@ -932,18 +949,18 @@ def add_post():
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     abort(400)
-                filename = f'img{n}.png'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                filename = f'{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                 file.save(file_path)
                 files_filenames.append(filename)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                post.files.append(users_file)
                 n += 1
-                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
-        if k > 0:
-            post.image_ids = files_filenames
-        else:
-            post.image_ids = []
         current_user.posts.append(post)
         user = db_sess.merge(current_user)
         db_sess.commit()
@@ -980,27 +997,28 @@ def add_problem():
             if file.filename != '':
                 k += 1
                 try:
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                     n = int(f.read())
                     f.close()
                 except Exception as e:
                     n = 0
 
-                    file_ext = os.path.splitext(file.filename)[1]
-                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                        abort(400)
-                filename = f'img{n}.png'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                file_ext = os.path.splitext(file.filename)[1]
+                print(file_ext)
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    abort(400)
+                filename = f'{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                 file.save(file_path)
                 files_filenames.append(filename)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                problem.files.append(users_file)
                 n += 1
-                f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
-        if k > 0:
-            problem.image_ids = files_filenames
-        else:
-            problem.image_ids = []
         current_user.problems.append(problem)
         user = db_sess.merge(current_user)
         problem = user.problems[-1]
@@ -1021,7 +1039,7 @@ def add_problem():
                 k += 1
                 if file.filename != '':
                     try:
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                         n = int(f.read())
                         f.close()
                     except Exception as e:
@@ -1030,18 +1048,18 @@ def add_problem():
                     file_ext = os.path.splitext(file.filename)[1]
                     if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                         abort(400)
-                    filename = f'img{n}.png'
-                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'), filename)
+                    filename = f'{n}.png'
+                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
                     file.save(file_path)
                     sol_files_filenames.append(filename)
+                    users_file = UsersFile()
+                    users_file.name = file.filename
+                    users_file.extension = file_ext
+                    solution.files.append(users_file)
                     n += 1
-                    f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                     f.write(str(n))
                     f.close()
-            if k > 0:
-                solution.image_ids = sol_files_filenames
-            else:
-                solution.image_ids = []
             solution.theme = problem.theme
             user.solutions.append(solution)
             problem.solutions.append(solution)
@@ -1067,7 +1085,7 @@ def edit_post(id):
         if post:
             form.title.data = post.title
             form.content.data = post.content
-            # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_images',filename))) for filename in post.image_ids]
+            # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_files',filename))) for filename in post.image_ids]
         else:
             db_sess.close()
             abort(404)
@@ -1087,7 +1105,7 @@ def edit_post(id):
                     if file.filename != '':
                         k += 1
                         try:
-                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                             n = int(f.read())
                             f.close()
                         except Exception as e:
@@ -1097,25 +1115,19 @@ def edit_post(id):
                             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                                 db_sess.close()
                                 abort(400)
-                        filename = f'img{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                        filename = f'{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                                  filename)
                         file.save(file_path)
                         files_filenames.append(filename)
+                        users_file = UsersFile()
+                        users_file.name = file.filename
+                        users_file.extension = file_ext
+                        post.files.append(users_file)
                         n += 1
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                         f.write(str(n))
                         f.close()
-            if form.delete_old_images.data:
-                if k != 0:
-                    post.image_ids = files_filenames
-                else:
-                    post.image_ids = []
-            else:
-                if k != 0:
-                    new_files_filenames = list(post.image_ids) + files_filenames
-                    post.image_ids = new_files_filenames
-                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/post/{id}')
@@ -1133,6 +1145,7 @@ def edit_post(id):
 @login_required
 def edit_problem(id):  # without solution
     form = ProblemEditForm()
+    file_form = FileAddForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
         problem = db_sess.query(Problem).filter(Problem.id == id,
@@ -1159,44 +1172,73 @@ def edit_problem(id):  # without solution
                     if file.filename != '':
                         k += 1
                         try:
-                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                             n = int(f.read())
                             f.close()
                         except Exception as e:
                             n = 0
 
-                            file_ext = os.path.splitext(file.filename)[1]
-                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                                db_sess.close()
-                                abort(400)
-                        filename = f'img{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                        file_ext = os.path.splitext(file.filename)[1]
+                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                            db_sess.close()
+                            abort(400)
+                        filename = f'{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                                  filename)
                         file.save(file_path)
                         files_filenames.append(filename)
+                        users_file = UsersFile()
+                        users_file.name = file.filename
+                        users_file.extension = file_ext
+                        problem.files.append(users_file)
                         n += 1
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                         f.write(str(n))
                         f.close()
-            if form.delete_old_images.data:
-                if k != 0:
-                    problem.image_ids = files_filenames
-                else:
-                    problem.image_ids = []
-            else:
-                if k != 0:
-                    new_files_filenames = list(problem.image_ids) + files_filenames
-                    problem.image_ids = new_files_filenames
-                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/problem/{id}')
         else:
             db_sess.close()
             abort(404)
+    if file_form.files.data:
+        db_sess = db_session.create_session()
+        problem = db_sess.query(Problem).filter(Problem.id == id,
+                                                Problem.user == current_user
+                                                ).first()
+        if not problem:
+            db_sess.close()
+            abort(404)
+        for file in form.images.data:
+            if file.filename != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 0
+
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    db_sess.close()
+                    abort(400)
+                filename = f'{n}.png'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                                         filename)
+                file.save(file_path)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                problem.files.append(users_file)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+        db_sess.commit()
+        db_sess.close()
     res = make_response(render_template('problemedit.html',
                                         title='Редактирование',
-                                        form=form))
+                                        form=form,file_form=file_form))
 
     return res
 
@@ -1269,42 +1311,37 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                     if file.filename != '':
                         k += 1
                         try:
-                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                             n = int(f.read())
                             f.close()
                         except Exception as e:
                             n = 0
 
-                            file_ext = os.path.splitext(file.filename)[1]
-                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                                db_sess.close()
-                                abort(400)
-                        filename = f'img{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                        file_ext = os.path.splitext(file.filename)[1]
+                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                            db_sess.close()
+                            abort(400)
+                        filename = f'{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                                  filename)
                         file.save(file_path)
                         files_filenames.append(filename)
+                        users_file = UsersFile()
+                        users_file.name = file.filename
+                        users_file.extension = file_ext
+                        comment.files.append(users_file)
                         n += 1
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                         f.write(str(n))
                         f.close()
-            if form.delete_old_images.data:
-                if k != 0:
-                    comment.image_ids = files_filenames
-                else:
-                    comment.image_ids = []
-            else:
-                if k != 0:
-                    new_files_filenames = list(comment.image_ids) + files_filenames
-                    comment.image_ids = new_files_filenames
-                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/{place_name}/{place_id}')
     else:
         db_sess.close()
         abort(404)
-    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form))
+    res = make_response(render_template('commentedit.html', title='Редактирование', form=form,
+                                        href=f"/edit_comment/{comment_id}/{place_name}/{place_id}/{par_name}/{par_id}"))
 
     return res
 
@@ -1347,6 +1384,7 @@ def edit_solution(solution_id, problem_id):
     solution = None
     db_sess = db_session.create_session()
     form = SolutionAddForm()
+    file_form = FileAddForm()
     solution = db_sess.query(Solution).filter(Solution.id == solution_id,
                                               Solution.user == current_user,
                                               Solution.problem_id == problem_id).first()
@@ -1354,6 +1392,7 @@ def edit_solution(solution_id, problem_id):
         if request.method == "GET":
             form.content.data = solution.content
         if form.validate_on_submit():
+            print(1)
             solution.content = form.content.data
             k = 0
             files_filenames = []
@@ -1362,42 +1401,72 @@ def edit_solution(solution_id, problem_id):
                     if file.filename != '':
                         k += 1
                         try:
-                            f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'r')
+                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                             n = int(f.read())
                             f.close()
                         except Exception as e:
                             n = 0
 
-                            file_ext = os.path.splitext(file.filename)[1]
-                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                                db_sess.close()
-                                abort(400)
-                        filename = f'img{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_images'),
+                        file_ext = os.path.splitext(file.filename)[1]
+                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                            db_sess.close()
+                            abort(400)
+                        filename = f'{n}.png'
+                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                                  filename)
                         file.save(file_path)
                         files_filenames.append(filename)
+                        users_file = UsersFile()
+                        users_file.name = file.filename
+                        users_file.extension = file_ext
+                        solution.files.append(users_file)
                         n += 1
-                        f = open(os.path.join(basedir, 'static', 'imgcount.txt'), 'w')
+                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                         f.write(str(n))
                         f.close()
-            if form.delete_old_images.data:
-                if k != 0:
-                    solution.image_ids = files_filenames
-                else:
-                    solution.image_ids = []
-            else:
-                if k != 0:
-                    new_files_filenames = list(solution.image_ids) + files_filenames
-                    solution.image_ids = new_files_filenames
-                    db_sess.commit()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/problem/{problem_id}')
+        if file_form.validate_on_submit():
+            print(2)
+            file = file_form.file.data
+            if file.filename != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 0
+
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    db_sess.close()
+                    abort(400)
+                filename = f'{n}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),#TODO fix files!!!
+                                         filename)
+                file.save(file_path)
+                print(123)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                solution.files.append(users_file)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+            db_sess.commit()
+            form.content.data = solution.content
+            res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
+                                                file_form=file_form))
+
+            return res
     else:
         db_sess.close()
         abort(404)
-    res = make_response(render_template('comsoledit.html', title='Редактирование', form=form))
+
+    res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,href=f"$edit_solution${solution_id}${problem_id}",publ=solution,file_form=file_form))
 
     return res
 

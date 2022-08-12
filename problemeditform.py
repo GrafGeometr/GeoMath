@@ -8,6 +8,5 @@ class ProblemEditForm(FlaskForm):
     content = TextAreaField("Условие", validators=[DataRequired()])
     theme = SelectField(choices=[(0, 'Геометрия'), (1, 'Алгебра и ТЧ'), (2, 'Комбинаторика')])
     notauthor = BooleanField("Выберите, если вы не являетесь автором задачи")
-    images = MultipleFileField('Добавьте картинку(и)')
-    delete_old_images = BooleanField("Удалить старые картинки")
+    images = MultipleFileField('Добавьте файлы')
     submit = SubmitField('Применить')
