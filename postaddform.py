@@ -7,6 +7,5 @@ from wtforms.validators import DataRequired
 class PostAddForm(FlaskForm):
     title = StringField('Заголовок', validators=[DataRequired()])
     theme = SelectField(choices=[(0, 'Геометрия'), (1, 'Алгебра и ТЧ'), (2, 'Комбинаторика')])
-    images = MultipleFileField('Добавьте файлы')
     content = TextAreaField("Содержание")
-    submit = SubmitField('Применить')
+    submit = SubmitField('Готово')

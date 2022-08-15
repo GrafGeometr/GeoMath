@@ -28,9 +28,8 @@
         <div class="alert alert-secondary">
             {% if isinstance(publ, Post) %}
                 <h2>{{publ.title}}</h2>
-                {% for image_id in publ.image_ids %}
-                    {% set location = "/static/user_images/"+image_id %}
-                    <img src={{ location }} height="400">
+                {% for users_file in publ.files %}
+                {{ users_file|safe }}
                 {% endfor %}
                 <hr>
                 <div>
@@ -103,9 +102,8 @@
                 {% endif %}
             {% else %}
                 Условие задачи:<br>
-                {% for image_id in publ.image_ids %}
-                    {% set location = "/static/user_images/"+image_id %}
-                    <img src={{ location }} height="400">
+                {% for users_file in publ.files %}
+                {{ users_file|safe }}
                 {% endfor %}
                 <hr>
                 {{ publ.content }}

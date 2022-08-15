@@ -7,9 +7,8 @@
     <div class="alert alert-secondary">
         {% if isinstance(publ, Solution) %}
         Ваше решение считают неверным
-        {% for image_id in publ.image_ids %}
-        {% set location = "/static/user_images/"+image_id %}
-        <img src={{ location }} height="400">
+        {% for users_file in publ.files %}
+        {{ users_file|safe }}
         {% endfor %}
         <hr>
         <div>
@@ -21,9 +20,8 @@
         {% elif isinstance(publ, Problem) %}
         Вашу задачу считают неверной
         <hr>
-        {% for image_id in publ.image_ids %}
-        {% set location = "/static/user_images/"+image_id %}
-        <img src={{ location }} height="400">
+        {% for users_file in publ.files %}
+        {{ users_file|safe }}
         {% endfor %}
         <hr>
         {{ publ.content }}

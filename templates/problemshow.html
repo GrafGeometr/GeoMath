@@ -31,9 +31,8 @@
 {% endif %}
 <div class="{{ problem_class }}">Условие задачи:<br>
     <hr>
-    {% for image_id in problem.image_ids %}
-    {% set location = "/static/user_images/"+image_id %}
-    <img src={{ location }} height="400">
+    {% for users_file in problem.files %}
+    {{ users_file|safe }}
     {% endfor %}
     <hr>
     {{ problem.content }}
@@ -57,6 +56,7 @@
 {% if not problem.author_thinks_false %}
 {% set edit_href = "/edit_problem/"+problem.id|string %}
 {% set delete_href = "/delete_problem/"+problem.id|string %}
+<p>Если вы хотите прикрепить файлы, нажмите:</p>
 <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
 {% if not problem.comments and not problem.solutions %}
 <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
@@ -181,15 +181,15 @@
         {% if solution.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
         {% endif %}
     </font></a><br>
-    {% for image_id in solution.image_ids %}
-    {% set location = "/static/user_images/"+image_id %}
-    <img src={{ location }} height="400">
+    {% for users_file in solution.files %}
+    {{ users_file|safe }}
     {% endfor %}
     {{ solution.content }}
     <hr>
     {% if viewer==solution.user and not solution.author_thinks_false %}
     {% set edit_href = "/edit_solution/"+solution.id|string+"/"+problem.id|string %}
     {% set delete_href = "/delete_solution/"+solution.id|string+"/"+problem.id|string %}
+    <p>Если вы хотите прикрепить файлы, нажмите:</p>
     <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
     {% if not solution.comments %}
     <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
@@ -313,9 +313,8 @@
             {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
             {% endif %}
         </font></a><br>
-        {% for image_id in comment.image_ids %}
-        {% set location = "/static/user_images/"+image_id %}
-        <img src={{ location }} height="400">
+        {% for users_file in comment.files %}
+        {{ users_file|safe }}
         {% endfor %}
         {{ comment.content }}
         <hr>
@@ -325,6 +324,7 @@
         %}
         {% set delete_href =
         "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string %}
+        <p>Если вы хотите прикрепить файлы, нажмите:</p>
         <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
         <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
         {% else %}
@@ -399,9 +399,8 @@
             {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
             {% endif %}
         </font></a><br>
-        {% for image_id in comment.image_ids %}
-        {% set location = "/static/user_images/"+image_id %}
-        <img src={{ location }} height="400">
+        {% for users_file in comment.files %}
+        {{ users_file|safe }}
         {% endfor %}
         {{ comment.content }}
         <hr>
@@ -410,6 +409,7 @@
         "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
         {% set delete_href =
         "/delete_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}
+        <p>Если вы хотите прикрепить файлы, нажмите:</p>
         <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
         <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
         {% else %}

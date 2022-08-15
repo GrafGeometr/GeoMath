@@ -192,9 +192,8 @@
             {% if isinstance(publ, Post) %}
             <h2>{{publ.title}}</h2>
             <hr>
-            {% for image_id in publ.image_ids %}
-            {% set location = "/static/user_images/"+image_id %}
-            <img src={{ location }} height="400">
+            {% for users_file in publ.files %}
+            {{ users_file|safe }}
             {% endfor %}
             <hr>
             <div>
@@ -248,9 +247,8 @@
             {% else %}
             Условие задачи:<br>
             <hr>
-            {% for image_id in publ.image_ids %}
-            {% set location = "/static/user_images/"+image_id %}
-            <img src={{ location }} height="400">
+            {% for users_file in publ.files %}
+            {{ users_file|safe }}
             {% endfor %}
             <hr>
             {{ publ.content }}

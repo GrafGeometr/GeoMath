@@ -31,7 +31,7 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['UPLOAD_FOLDER'] = '/user_files'
-app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jpeg', '.jpg', '.gif', '.ggb']
+app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jpeg', '.jpg', '.gif']
 login_manager = LoginManager()
 login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
@@ -40,6 +40,7 @@ basedir = os.path.abspath(os.curdir)
 @app.route('/jstest')
 def jstest():
     return render_template("jstest.html")
+
 
 @app.route('/delete_file/<int:file_id>/<togo>')
 def delete_file(file_id, togo):
@@ -160,7 +161,6 @@ def check_truth(publ, db_sess):
     else:
         line = f'solution {publ.id}'
     arr = list(publ.user.wrong)
-    print(arr)
     if publ.is_false or publ.is_true or (not publ.think_is_false):
         if line in arr:
             arr.remove(line)
@@ -168,7 +168,6 @@ def check_truth(publ, db_sess):
         if line in arr:
             arr.remove(line)
         arr.append(line)
-    print(arr)
     publ.user.wrong = arr
     db_sess.commit()
 
@@ -412,14 +411,14 @@ def problem_show(problem_id):
                         n = int(f.read())
                         f.close()
                     except Exception as e:
-                        n = 0
+                        n = 1
 
                     file_ext = os.path.splitext(file.filename)[1]
                     if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                         abort(400)
                     filename = f'{n}.png'
                     file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
-                                             filename)  # TODO доделать файлы
+                                             filename)
                     file.save(file_path)
                     users_file = UsersFile()
                     users_file.name = file.filename
@@ -449,7 +448,7 @@ def problem_show(problem_id):
                         n = int(f.read())
                         f.close()
                     except Exception as e:
-                        n = 0
+                        n = 1
 
                     file_ext = os.path.splitext(file.filename)[1]
                     if file_ext not in app.config['UPLOAD_EXTENSIONS']:
@@ -488,7 +487,7 @@ def problem_show(problem_id):
                             n = int(f.read())
                             f.close()
                         except Exception as e:
-                            n = 0
+                            n = 1
 
                         file_ext = os.path.splitext(file.filename)[1]
                         if file_ext not in app.config['UPLOAD_EXTENSIONS']:
@@ -547,7 +546,7 @@ def post_show(post_id):
                     n = int(f.read())
                     f.close()
                 except Exception as e:
-                    n = 0
+                    n = 1
 
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
@@ -906,10 +905,8 @@ def register():
         user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
         db_sess.add(user)
         user_id = user.id
-        print(user_id)
         db_sess.commit()
         user_id = user.id
-        print(user_id)
         db_sess.close()
         return redirect(f'/email_verify/{user_id}')
     res = make_response(render_template('register.html', title='Регистрация', form=form))
@@ -927,42 +924,19 @@ def logout():
 @app.route('/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
+    if not current_user.is_authenticated:
+        return redirect('/login')
     form = PostAddForm()
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == current_user.id).first()
+    user.add_name = 'post'
+    db_sess.commit()
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
         post = Post()
         post.title = form.title.data
         post.content = form.content.data
         post.theme = form.theme.data
-        files_filenames = []
-        k = 0
-        for file in form.images.data:
-            if file.filename != '':
-                k += 1
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 0
-
-                file_ext = os.path.splitext(file.filename)[1]
-                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                    abort(400)
-                filename = f'{n}.png'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
-                file.save(file_path)
-                files_filenames.append(filename)
-                users_file = UsersFile()
-                users_file.name = file.filename
-                users_file.extension = file_ext
-                post.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-        current_user.posts.append(post)
-        user = db_sess.merge(current_user)
+        user.posts.append(post)
         db_sess.commit()
         post = user.posts[-1]
         for reader_id in (user.readers if user.readers is not None else []):
@@ -974,7 +948,7 @@ def add_post():
         post_id = post.id
         db_sess.commit()
         db_sess.close()
-        return redirect(f'/post/{post_id}')
+        return redirect(f'/edit_post/{post_id}')
     res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
                                         form=form))
 
@@ -984,6 +958,8 @@ def add_post():
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
 def add_problem():
+    if not current_user.is_authenticated:
+        return redirect('/login')
     form = ProblemAddForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -991,34 +967,6 @@ def add_problem():
         problem.content = form.content.data
         problem.theme = form.theme.data
         problem.notauthor = form.notauthor.data
-        files_filenames = []
-        k = 0
-        for file in form.images.data:
-            if file.filename != '':
-                k += 1
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 0
-
-                file_ext = os.path.splitext(file.filename)[1]
-                print(file_ext)
-                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                    abort(400)
-                filename = f'{n}.png'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
-                file.save(file_path)
-                files_filenames.append(filename)
-                users_file = UsersFile()
-                users_file.name = file.filename
-                users_file.extension = file_ext
-                problem.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
         current_user.problems.append(problem)
         user = db_sess.merge(current_user)
         problem = user.problems[-1]
@@ -1030,36 +978,9 @@ def add_problem():
             reader.toread = arr
             db_sess.commit()
         db_sess.commit()
-        if not form.nosolution.data and form.original_solution.data:
+        if form.original_solution.data:
             solution = Solution()
             solution.content = form.original_solution.data
-            sol_files_filenames = []
-            k = 0
-            for file in form.solution_images.data:
-                k += 1
-                if file.filename != '':
-                    try:
-                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                        n = int(f.read())
-                        f.close()
-                    except Exception as e:
-                        n = 0
-
-                    file_ext = os.path.splitext(file.filename)[1]
-                    if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                        abort(400)
-                    filename = f'{n}.png'
-                    file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'), filename)
-                    file.save(file_path)
-                    sol_files_filenames.append(filename)
-                    users_file = UsersFile()
-                    users_file.name = file.filename
-                    users_file.extension = file_ext
-                    solution.files.append(users_file)
-                    n += 1
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                    f.write(str(n))
-                    f.close()
             solution.theme = problem.theme
             user.solutions.append(solution)
             problem.solutions.append(solution)
@@ -1076,67 +997,91 @@ def add_problem():
 @app.route('/edit_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     form = PostAddForm()
+    file_form = FileAddForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
         post = db_sess.query(Post).filter(Post.id == id,
                                           Post.user == current_user
                                           ).first()
         if post:
-            form.title.data = post.title
-            form.content.data = post.content
+            if not form.title.data:
+                form.title.data = post.title
+            if not form.content.data:
+                form.content.data = post.content
+            form.theme.data = post.theme
             # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_files',filename))) for filename in post.image_ids]
         else:
             db_sess.close()
             abort(404)
-    if form.validate_on_submit():
+    if request.method == 'POST':
         db_sess = db_session.create_session()
         post = db_sess.query(Post).filter(Post.id == id,
                                           Post.user == current_user
                                           ).first()
-        if post:
+        if not post:
+            db_sess.close()
+            abort(404)
+        if form.validate_on_submit():
             post.title = form.title.data
             post.content = form.content.data
             post.theme = form.theme.data
-            k = 0
-            files_filenames = []
-            if form.images.data:
-                for file in form.images.data:
-                    if file.filename != '':
-                        k += 1
-                        try:
-                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                            n = int(f.read())
-                            f.close()
-                        except Exception as e:
-                            n = 0
-
-                            file_ext = os.path.splitext(file.filename)[1]
-                            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                                db_sess.close()
-                                abort(400)
-                        filename = f'{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
-                                                 filename)
-                        file.save(file_path)
-                        files_filenames.append(filename)
-                        users_file = UsersFile()
-                        users_file.name = file.filename
-                        users_file.extension = file_ext
-                        post.files.append(users_file)
-                        n += 1
-                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                        f.write(str(n))
-                        f.close()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/post/{id}')
-        else:
-            db_sess.close()
-            abort(404)
-    res = make_response(render_template('postedit.html',
-                                        title='Редактирование',
-                                        form=form))
+        if file_form.validate_on_submit():
+            form.title.data = post.title
+            form.content.data = post.content
+            form.theme.data = post.theme
+            file = file_form.file.data
+            if file.filename != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    db_sess.close()
+                    abort(400)
+                filename = f'{n}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                                         filename)
+                file.save(file_path)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                post.files.append(users_file)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+            if file_form.geogebra_link.data != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+                users_file = UsersFile()
+                users_file.extension = '.ggb'
+                users_file.name = file_form.geogebra_link.data
+                post.files.append(users_file)
+            db_sess.commit()
+            res = make_response(render_template('postedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_post${id}", publ=post,
+                                                file_form=file_form))
+            return res
+    res = make_response(render_template('postedit.html', title='Редактирование', form=form,
+                                        href=f"$edit_post${id}", publ=post,
+                                        file_form=file_form))
 
     return res
 
@@ -1144,6 +1089,8 @@ def edit_post(id):
 @app.route('/edit_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_problem(id):  # without solution
+    if not current_user.is_authenticated:
+        return redirect('/login')
     form = ProblemEditForm()
     file_form = FileAddForm()
     if request.method == "GET":
@@ -1152,56 +1099,15 @@ def edit_problem(id):  # without solution
                                                 Problem.user == current_user
                                                 ).first()
         if problem:
-            form.content.data = problem.content
+            if not form.content.data:
+                form.content.data = problem.content
+            form.theme.data = problem.theme
+            form.notauthor.data = problem.notauthor
         else:
             db_sess.close()
             abort(404)
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        problem = db_sess.query(Problem).filter(Problem.id == id,
-                                                Problem.user == current_user
-                                                ).first()
-        if problem:
-            problem.content = form.content.data
-            problem.theme = form.theme.data
-            problem.notauthor = form.notauthor.data
-            k = 0
-            files_filenames = []
-            if form.images.data:
-                for file in form.images.data:
-                    if file.filename != '':
-                        k += 1
-                        try:
-                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                            n = int(f.read())
-                            f.close()
-                        except Exception as e:
-                            n = 0
+    if request.method == "POST":
 
-                        file_ext = os.path.splitext(file.filename)[1]
-                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                            db_sess.close()
-                            abort(400)
-                        filename = f'{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
-                                                 filename)
-                        file.save(file_path)
-                        files_filenames.append(filename)
-                        users_file = UsersFile()
-                        users_file.name = file.filename
-                        users_file.extension = file_ext
-                        problem.files.append(users_file)
-                        n += 1
-                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                        f.write(str(n))
-                        f.close()
-            db_sess.commit()
-            db_sess.close()
-            return redirect(f'/problem/{id}')
-        else:
-            db_sess.close()
-            abort(404)
-    if file_form.files.data:
         db_sess = db_session.create_session()
         problem = db_sess.query(Problem).filter(Problem.id == id,
                                                 Problem.user == current_user
@@ -1209,20 +1115,31 @@ def edit_problem(id):  # without solution
         if not problem:
             db_sess.close()
             abort(404)
-        for file in form.images.data:
+        if form.validate_on_submit():
+            problem.content = form.content.data
+            problem.theme = form.theme.data
+            problem.notauthor = form.notauthor.data
+            db_sess.commit()
+            db_sess.close()
+            return redirect(f'/problem/{id}')  # TODO do files in adding
+        if file_form.validate_on_submit():
+            form.content.data = problem.content
+            form.notauthor.data = problem.notauthor
+            form.theme.data = problem.theme
+            file = file_form.file.data
             if file.filename != '':
                 try:
                     f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
                     n = int(f.read())
                     f.close()
                 except Exception as e:
-                    n = 0
+                    n = 1
 
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
-                filename = f'{n}.png'
+                filename = f'{n}{file_ext}'
                 file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                          filename)
                 file.save(file_path)
@@ -1234,11 +1151,30 @@ def edit_problem(id):  # without solution
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
-        db_sess.commit()
-        db_sess.close()
+            if file_form.geogebra_link.data != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+                users_file = UsersFile()
+                users_file.extension = '.ggb'
+                users_file.name = file_form.geogebra_link.data
+                problem.files.append(users_file)
+            db_sess.commit()
+            form.content.data = problem.content
+            res = make_response(render_template('problemedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_problem${id}", publ=problem,
+                                                file_form=file_form))
+            return res
     res = make_response(render_template('problemedit.html',
                                         title='Редактирование',
-                                        form=form,file_form=file_form))
+                                        form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form))
 
     return res
 
@@ -1246,6 +1182,8 @@ def edit_problem(id):  # without solution
 @app.route('/delete_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_post(id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == id,
                                       Post.user == current_user
@@ -1263,6 +1201,8 @@ def delete_post(id):
 @app.route('/delete_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_problem(id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = db_session.create_session()
     problem = db_sess.query(Problem).filter(Problem.id == id,
                                             Problem.user == current_user
@@ -1281,9 +1221,12 @@ def delete_problem(id):
            methods=["POST", "GET"])
 @login_required
 def edit_comment(comment_id, place_name, place_id, par_name, par_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     comment = None
     db_sess = db_session.create_session()
     form = CommentAddForm()
+    file_form = FileAddForm()
     if par_name == 'post':
         comment = db_sess.query(Comment).filter(Comment.id == comment_id,
                                                 Comment.user == current_user,
@@ -1301,47 +1244,70 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
         abort(404)
     if comment:
         if request.method == "GET":
-            form.content.data = comment.content
+            if not form.content.data:
+                form.content.data = comment.content
         if form.validate_on_submit():
             comment.content = form.content.data
-            k = 0
-            files_filenames = []
-            if form.images.data:
-                for file in form.images.data:
-                    if file.filename != '':
-                        k += 1
-                        try:
-                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                            n = int(f.read())
-                            f.close()
-                        except Exception as e:
-                            n = 0
-
-                        file_ext = os.path.splitext(file.filename)[1]
-                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                            db_sess.close()
-                            abort(400)
-                        filename = f'{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
-                                                 filename)
-                        file.save(file_path)
-                        files_filenames.append(filename)
-                        users_file = UsersFile()
-                        users_file.name = file.filename
-                        users_file.extension = file_ext
-                        comment.files.append(users_file)
-                        n += 1
-                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                        f.write(str(n))
-                        f.close()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/{place_name}/{place_id}')
+        if file_form.validate_on_submit():
+            form.content.data = comment.content
+            file = file_form.file.data
+            if file.filename != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+
+                file_ext = os.path.splitext(file.filename)[1]
+                if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                    db_sess.close()
+                    abort(400)
+                filename = f'{n}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                                         filename)
+                file.save(file_path)
+                users_file = UsersFile()
+                users_file.name = file.filename
+                users_file.extension = file_ext
+                comment.files.append(users_file)
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+            if file_form.geogebra_link.data != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+                users_file = UsersFile()
+                users_file.extension = '.ggb'
+                users_file.name = file_form.geogebra_link.data
+                comment.files.append(users_file)
+            db_sess.commit()
+            form.content.data = comment.content
+            res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_comment${comment_id}${place_name}${place_id}${par_name}${par_id}",
+                                                publ=comment,
+                                                file_form=file_form, ))
+
+            return res
     else:
         db_sess.close()
         abort(404)
     res = make_response(render_template('commentedit.html', title='Редактирование', form=form,
-                                        href=f"/edit_comment/{comment_id}/{place_name}/{place_id}/{par_name}/{par_id}"))
+                                        href=f"$edit_comment${comment_id}${place_name}${place_id}${par_name}${par_id}",
+                                        publ=comment,
+                                        file_form=file_form))
 
     return res
 
@@ -1350,6 +1316,8 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
            methods=["POST", "GET"])
 @login_required
 def delete_comment(comment_id, place_name, place_id, par_name, par_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     comment = None
     db_sess = db_session.create_session()
     if par_name == 'post':
@@ -1377,10 +1345,15 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
         abort(404)
 
 
+# TODO work on adding
+
+
 @app.route('/edit_solution/<int:solution_id>/<int:problem_id>',
            methods=["POST", "GET"])
 @login_required
 def edit_solution(solution_id, problem_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     solution = None
     db_sess = db_session.create_session()
     form = SolutionAddForm()
@@ -1390,45 +1363,15 @@ def edit_solution(solution_id, problem_id):
                                               Solution.problem_id == problem_id).first()
     if solution:
         if request.method == "GET":
-            form.content.data = solution.content
+            if not form.content.data:
+                form.content.data = solution.content
         if form.validate_on_submit():
-            print(1)
             solution.content = form.content.data
-            k = 0
-            files_filenames = []
-            if form.images.data:
-                for file in form.images.data:
-                    if file.filename != '':
-                        k += 1
-                        try:
-                            f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                            n = int(f.read())
-                            f.close()
-                        except Exception as e:
-                            n = 0
-
-                        file_ext = os.path.splitext(file.filename)[1]
-                        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                            db_sess.close()
-                            abort(400)
-                        filename = f'{n}.png'
-                        file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
-                                                 filename)
-                        file.save(file_path)
-                        files_filenames.append(filename)
-                        users_file = UsersFile()
-                        users_file.name = file.filename
-                        users_file.extension = file_ext
-                        solution.files.append(users_file)
-                        n += 1
-                        f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                        f.write(str(n))
-                        f.close()
             db_sess.commit()
             db_sess.close()
             return redirect(f'/problem/{problem_id}')
         if file_form.validate_on_submit():
-            print(2)
+            form.content.data = solution.content
             file = file_form.file.data
             if file.filename != '':
                 try:
@@ -1436,17 +1379,16 @@ def edit_solution(solution_id, problem_id):
                     n = int(f.read())
                     f.close()
                 except Exception as e:
-                    n = 0
+                    n = 1
 
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
                 filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),#TODO fix files!!!
+                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
                                          filename)
                 file.save(file_path)
-                print(123)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
@@ -1455,6 +1397,21 @@ def edit_solution(solution_id, problem_id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+            if file_form.geogebra_link.data != '':
+                try:
+                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
+                    n = int(f.read())
+                    f.close()
+                except Exception as e:
+                    n = 1
+                n += 1
+                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
+                f.write(str(n))
+                f.close()
+                users_file = UsersFile()
+                users_file.extension = '.ggb'
+                users_file.name = file_form.geogebra_link.data
+                solution.files.append(users_file)
             db_sess.commit()
             form.content.data = solution.content
             res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
@@ -1466,7 +1423,9 @@ def edit_solution(solution_id, problem_id):
         db_sess.close()
         abort(404)
 
-    res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,href=f"$edit_solution${solution_id}${problem_id}",publ=solution,file_form=file_form))
+    res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                        href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
+                                        file_form=file_form))
 
     return res
 
@@ -1475,6 +1434,8 @@ def edit_solution(solution_id, problem_id):
            methods=["POST", "GET"])
 @login_required
 def delete_solution(solution_id, problem_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     solution = None
     db_sess = db_session.create_session()
     solution = db_sess.query(Solution).filter(Solution.id == solution_id,

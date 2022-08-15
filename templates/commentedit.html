@@ -13,10 +13,17 @@
     </p>
     {% endfor %}
     </p>
-    {% for users_file in publ.files %}
-        {{ users_file.edit(href) }}
-    {% endfor %}
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {{message}}
+</form>
+Файлы<br>
+{% for users_file in publ.files %}
+{{ users_file.edit(href)|safe }}
+{% endfor %}
+<form class="alert alert-secondary" action="" method="post" enctype="multipart/form-data" id="file_form">
+    {{ file_form.hidden_tag() }}
+    {{ file_form.file.label }} {{ file_form.file(class="btn btn-secondary") }} <br>
+    {{ file_form.geogebra_link.label }} {{ file_form.geogebra_link(class="form-control") }}
+    {{ file_form.submit(type="submit", class="btn btn-primary") }}
 </form>
 {% endblock %}

@@ -13,10 +13,15 @@
     </p>
     {% endfor %}
     </p>
-    <p>{{ form.images.label }} {{ form.images(class="btn btn-secondary") }}</p>
     <p>{{ form.theme(class="btn btn-secondary") }}</p>
     <p>{{ form.notauthor() }}{{ form.notauthor.label }}</p>
     <p>
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
+                aria-expanded="false" aria-controls="collapse1">
+            Прикрепите решение, если оно у вас есть
+        </button>
+    </p>
+    <p class="collapse" id="collapse1">
         {{ form.original_solution.label }}<br>
         {{ form.original_solution(class="form-control") }}<br>
         {% for error in form.content.errors %}
@@ -25,8 +30,6 @@
     </p>
     {% endfor %}
     </p>
-    <p>{{ form.solution_images.label }} {{ form.solution_images(class="btn btn-secondary") }}</p>
-    <p>{{ form.nosolution() }}{{form.nosolution.label }}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {{message}}
 </form>

@@ -12,4 +12,4 @@ class ProblemAddForm(FlaskForm):
     original_solution = TextAreaField("Авторское решение")
     solution_images = MultipleFileField('Добавьте файлы к решению')
     nosolution = BooleanField("Нет решения")
-    submit = SubmitField('Применить')
+    submit = SubmitField('Готово')

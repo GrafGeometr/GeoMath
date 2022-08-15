@@ -4,9 +4,8 @@
 <div class="alert alert-secondary">
     <h1>{{ post.title }}</h1>
     <hr>
-    {% for image_id in post.image_ids %}
-    {% set location = "/static/user_images/"+image_id %}
-    <img src={{ location }} height="400">
+    {% for users_file in post.files %}
+    {{ users_file|safe }}
     {% endfor %}
     <hr>
     {{ post.content }}
@@ -71,7 +70,6 @@
         <p class="alert alert-danger" role="alert">
             {{ error }}
         </p>
-
         {% endfor %}
     </form>
 </div>
@@ -95,15 +93,15 @@
             {% if comment.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
             {% endif %}
         </font></a><br>
-        {% for image_id in comment.image_ids %}
-        {% set location = "/static/user_images/"+image_id %}
-        <img src={{ location }} height="200">
+        {% for users_file in comment.files %}
+        {{ users_file|safe }}
         {% endfor %}
         {{ comment.content }}
         <hr>
         {% if viewer==comment.user %}
         {% set edit_href = "/edit_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
         {% set delete_href = "/delete_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
+        <p>Если вы хотите прикрепить файлы, нажмите:</p>
         <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
         <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
         {% else %}
