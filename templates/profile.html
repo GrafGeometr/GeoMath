@@ -47,7 +47,8 @@
 </div>
 {% endif %}
 {% set edit_profile_href = "/edit_profile/" + user.id|string %}
-<a class="btn btn-secondary" href={{ edit_profile_href }}>Редактировать профиль</a>
+{% set email_reset_href = "/reset_email/"+user.id|string %}
+<a class="btn btn-secondary" href={{ edit_profile_href }}>Редактировать профиль</a> <a class="btn btn-secondary" href={{ email_reset_href }}>Сменить почту</a>
 {% else %}
 {% set subscribe_href = "/subscribe/"+user.id|string+"/"+viewer.id|string %}
 {% set reader_href = "/reader/"+user.id|string+"/"+viewer.id|string %}

@@ -20,6 +20,10 @@ class User(SqlAlchemyBase, UserMixin):
 
     email_code = sqlalchemy.Column(sqlalchemy.String)
 
+    new_email = sqlalchemy.Column(sqlalchemy.String)
+
+    new_email_code = sqlalchemy.Column(sqlalchemy.String,default='')
+
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)

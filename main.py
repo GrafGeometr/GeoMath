@@ -10,6 +10,7 @@ from data.comment import Comment
 from data.solution import Solution
 from registerform import RegisterForm
 from postaddform import PostAddForm
+from resetemailform import ResetEmailForm
 from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
 from problemeditform import ProblemEditForm
@@ -65,13 +66,30 @@ def help():
     return render_template('help.html')
 
 
-def send_email(to, code):
-    text = f"Вы только что зарегистрировались на сайте GeoMath.\nВаш код регистрации:\n{code}"
+def send_email(to, code, message_type="register"): #TODO fix wtf with gmail
+    if message_type=="register":
+        text = random.choice([
+            f'Вы только что зарегистрировались на нашем сайте, вот ваш код подтверждения:\n{code}',
+            f'Сообщаем об успешной регистрации на сайте ge0math, чтобы завершить её введите этот код:\n{code}',
+            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения вашей электронной почты на сайте ge0math.',
+            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить вашу электронную почту на сайте ge0math.',
+            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы завершить регистрацию на сайте ge0math.'
+        ])
+    elif message_type=='email_change':
+        text = random.choice([
+            f'Вы свою электронную почту на нашем сайте и указали {to}, если это вы, введите ваш код подтверждения:\n{code}',
+            f'Сообщаем о смене почты на сайте ge0math на {to}. Чтобы подтвердить смену электронной почты, введите этот код:\n{code}',
+            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения смены вашей электронной почты на сайте ge0math.',
+            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить смену электронной почты на сайте ge0math.',
+        ])
 
     msg = MIMEMultipart()
     msg['From'] = EMAIL
     msg['To'] = to
-    msg['Subject'] = 'Регистрация на сайте'
+    if message_type=='register':
+        msg['Subject'] = 'Регистрация на сайте'
+    elif message_type=='email_change':
+        msg['Subject'] = 'Смена электронной почты'
     message = text
     msg.attach(MIMEText(message))
 
@@ -740,6 +758,91 @@ def profile(user_id):
 
 
 @login_required
+@app.route('/abord_email_reseting/<int:user_id>')
+def abord_email_reseting(user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    user.new_email_code = ''
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f'/profile/{user_id}')
+
+
+@login_required
+@app.route('/reset_new_email_code/<int:user_id>')
+def reset_new_email_code(user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    user.new_email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f'/new_email_verify/{user_id}')
+
+
+@login_required
+@app.route('/new_email_verify/<int:user_id>', methods=['GET', 'POST'])
+def verify_new_email(user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if user.new_email_code == "":
+        return redirect('/login')
+    form = VerifyForm()
+    if form.validate_on_submit():
+        if user.new_email_code == form.code.data:
+            user.new_email_code = ""
+            user.email = user.new_email
+            db_sess.commit()
+            db_sess.close()
+            return redirect('/login')
+        else:
+            return render_template("verifynew.html", form=form, message='Неправильный код', user_id=user_id)
+    send_email(user.new_email, user.new_email_code, message_type="email_change")
+    return render_template("verifynew.html", form=form, user_id=user_id)
+
+
+@login_required
+@app.route('/reset_email/<int:user_id>', methods=['GET', 'POST'])
+def reset_email(user_id):
+    if not current_user.is_authenticated:
+        return redirect('/login') #TODO check if email reseting works + add password reseting
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if not user:
+        db_sess.close()
+        abort(404)
+    form = ResetEmailForm()  # TODO доделать смену емайла и пароля
+    if form.validate_on_submit():
+        if not user.check_password(form.password.data):
+            res = make_response(render_template('resetemail.html', title='Смена электронной почты',
+                                                form=form,
+                                                message="Неверный пароль"))
+            return res
+        if form.email.data != form.email_again.data:
+            res = make_response(render_template('resetemail.html', title='Смена электронной почты',
+                                                form=form,
+                                                message="Адреса электронной почты не совпадают"))
+            return res
+        if db_sess.query(User).filter(User.email == form.email.data).first():
+            db_sess.close()
+            res = make_response(render_template('resetemail.html', title='Смена электронной почты',
+                                                form=form,
+                                                message="Такой пользователь уже есть"))
+            return res
+        user.new_email = form.email.data
+        db_sess.commit()
+        return redirect(f'/reset_new_email_code/{user_id}')
+    res = make_response(render_template('resetemail.html', title='Смена электронной почты',
+                                        form=form))
+    return res
+
+
+@login_required
 @app.route('/edit_profile/<int:user_id>', methods=["POST", "GET"])
 def edit_profile(user_id):
     if not current_user.is_authenticated:
@@ -775,22 +878,12 @@ def edit_profile(user_id):
                                                 message="Пароли не совпадают"))
 
             return res
-        if user.email != form.email.data:
-            if db_sess.query(User).filter(User.email == form.email.data).first():
-                db_sess.close()
-                res = make_response(render_template('profileedit.html', title='Редактирование профиля',
-                                                    form=form,
-                                                    message="Такой пользователь уже есть"))
-
-                return res
-        user.email = form.email.data
         user.name = form.name.data
         user.about = form.about.data
         user.status = status
         user.set_password(form.password.data)
         db_sess.commit()
         return redirect(f'/profile/{user_id}')
-    form.email.data = user.email
     form.name.data = user.name
     form.about.data = user.about
     res = make_response(render_template("profileedit.html", title='Редактирование профиля', form=form))
@@ -826,6 +919,10 @@ def login():
         if user.email_code != "":
             db_sess.close()
             return redirect(f'/email_verify/{user_id}')
+        if user.new_email_code != "":
+            print(user.new_email_code)
+            db_sess.close()
+            return redirect(f'/reset_new_email_code/{user_id}')
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             db_sess.close()
