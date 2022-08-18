@@ -13,5 +13,5 @@ class NavForm(FlaskForm):
     nosolprob = BooleanField("Задачи без решения", default=True)
     time = SelectField(choices=['30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'],
                        default='30 минут')
-    # keywords = StringField("Ключевые слова")
+    tegs = StringField("Теги")
     submit = SubmitField('Искать')

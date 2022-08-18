@@ -191,14 +191,14 @@
     <div class="alert alert-dark">
         <div class="alert alert-secondary">
             {% if isinstance(publ, Post) %}
-            <h2>{{publ.title}}</h2>
+            <h2>{{with_cats_show(publ.title)|safe}}</h2>
             <hr>
             {% for users_file in publ.files %}
             {{ users_file|safe }}
             {% endfor %}
             <hr>
             <div>
-                {{ publ.content }}
+                {{ with_cats_show(publ.content)|safe }}
             </div>
             <div>
                 Автор записи:
@@ -237,6 +237,7 @@
                     </script>
                 {% endif %}
             </div>
+            <div>Рейтинг: {{publ.rank}}</div>
             {% if viewer==publ.user %}
             {% set edit_href = "/edit_post/"+publ.id|string %}
             {% set delete_href = "/delete_post/"+publ.id|string %}
@@ -244,6 +245,27 @@
             {% if not publ.comments %}
             <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
             {% endif %}
+            {% else %}
+            {% set likehref = "/liked/"+viewer.id|string+"/post/"+publ.id|string %}
+            {% set btnid = "#postbtn" + counter|string %}
+            {% set imgid = "#postlikeimg" + counter|string %}
+            <div class="alert alert-light">
+                {% if publ.liked_by and viewer.id in publ.liked_by %}
+                    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+                    </button>
+                    <script>
+                    var btn1 = document.getElementById( "{{ btnid }}" );
+                    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                    </script>
+                {% else %}
+                    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+                    </button>
+                    <script>
+                    var btn1 = document.getElementById( "{{ btnid }}" );
+                    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                    </script>
+                {% endif %}
+            </div>
             {% endif %}
             {% else %}
             Условие задачи:<br>
@@ -252,7 +274,7 @@
             {{ users_file|safe }}
             {% endfor %}
             <hr>
-            {{ publ.content }}
+            {{ with_cats_show(publ.content)|safe }}
             <hr>
 
             Автор задачи:
@@ -310,6 +332,7 @@
                         </script>
                     {% endif %}
                 </div>
+                <div>Рейтинг: {{publ.rank}}</div>
                 {% endif %}
                 {% if viewer==publ.user %}
                 {% set edit_href = "/edit_problem/"+publ.id|string %}
@@ -318,6 +341,27 @@
                 {% if not publ.comments and not publ.solutions %}
                 <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
                 {% endif %}
+                {% else %}
+                {% set likehref = "/liked/"+viewer.id|string+"/problem/"+publ.id|string %}
+                {% set btnid = "#problembtn" + counter|string %}
+                {% set imgid = "#problemlikeimg" + counter|string %}
+                <div class="alert alert-light">
+                    {% if publ.liked_by and viewer.id in publ.liked_by %}
+                        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+                        </button>
+                        <script>
+                        var btn1 = document.getElementById( "{{ btnid }}" );
+                        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                        </script>
+                    {% else %}
+                        <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+                        </button>
+                        <script>
+                        var btn1 = document.getElementById( "{{ btnid }}" );
+                        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+                        </script>
+                    {% endif %}
+                </div>
                 {% endif %}
                 {% endif %}
             </div>

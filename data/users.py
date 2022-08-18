@@ -22,7 +22,7 @@ class User(SqlAlchemyBase, UserMixin):
 
     new_email = sqlalchemy.Column(sqlalchemy.String)
 
-    new_email_code = sqlalchemy.Column(sqlalchemy.String,default='')
+    new_email_code = sqlalchemy.Column(sqlalchemy.String, default='')
 
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,

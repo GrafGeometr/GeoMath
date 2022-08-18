@@ -2,13 +2,13 @@
 
 {% block content %}
 <div class="alert alert-secondary">
-    <h1>{{ post.title }}</h1>
+    <h1>{{ with_cats_show(post.title)|safe }}</h1>
     <hr>
     {% for users_file in post.files %}
     {{ users_file|safe }}
     {% endfor %}
     <hr>
-    {{ post.content }}
+    {{ with_cats_show(post.content)|safe }}
     <hr>
     <a class="badge bg-light" style="margin-left:20px" href={{ post.user.profile_href() }}><font size="3" color="blue">
         {% if post.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -23,6 +23,7 @@
         {% endif %}
     </font></a>
 </div>
+<div>Рейтинг: {{post.rank}}</div>
 {% if viewer==post.user %}
 {% set edit_href = "/edit_post/"+post.id|string %}
 {% set delete_href = "/delete_post/"+post.id|string %}
@@ -35,7 +36,6 @@
 {% set btnid = "#postbtn" %}
 {% set imgid = "#postlikeimg" %}
 <div class="alert alert-light">
-    {{ post.rank }}
     {% if post.liked_by and viewer.id in post.liked_by %}
     <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
     </button>
@@ -96,8 +96,9 @@
         {% for users_file in comment.files %}
         {{ users_file|safe }}
         {% endfor %}
-        {{ comment.content }}
+        {{ with_cats_show(comment.content)|safe }}
         <hr>
+        <div>Рейтинг: {{comment.rank}}</div>
         {% if viewer==comment.user %}
         {% set edit_href = "/edit_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
         {% set delete_href = "/delete_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
@@ -110,7 +111,6 @@
         {% set imgid = "#comlikeimg"+counter|string %}
         {% if comment.liked_by and viewer.id in comment.liked_by %}
         <div class="alert alert-light">
-            {{ comment.rank }}
             <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
             </button>
             <script>

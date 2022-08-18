@@ -6,14 +6,14 @@
 <div class="alert alert-dark">
     <div class="alert alert-secondary">
         {% if isinstance(publ, Post) %}
-        <h2>{{publ.title}}</h2>
+        <h2>{{with_cats_show(publ.title)|safe}}</h2>
         <hr>
         {% for users_file in publ.files %}
         {{ users_file|safe }}
         {% endfor %}
         <hr>
         <div>
-            {{ publ.content }}
+            {{ with_cats_show(publ.content)|safe }}
         </div>
         <div>
             Автор записи:
@@ -35,6 +35,7 @@
         {% set toread_href = "/addtoread/"+viewer.id|string+"/post/"+publ.id|string %}
         <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a> <a
                 href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать</a></div>
+        <div>Рейтинг: {{publ.rank}}</div>
         {% if viewer==publ.user %}
         {% set edit_href = "/edit_post/"+publ.id|string %}
         {% set delete_href = "/delete_post/"+publ.id|string %}
@@ -72,7 +73,7 @@
         {{ users_file|safe }}
         {% endfor %}
         <hr>
-        {{ publ.content }}
+        {{ with_cats_show(publ.content)|safe }}
         <hr>
 
         Автор задачи:
@@ -104,6 +105,7 @@
                     href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать</a></div>
             {% endif %}
         </div>
+        <div>Рейтинг: {{publ.rank}}</div>
         {% if viewer==publ.user %}
         {% set edit_href = "/edit_problem/"+publ.id|string %}
         {% set delete_href = "/delete_problem/"+publ.id|string %}

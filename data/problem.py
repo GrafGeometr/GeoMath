@@ -1,8 +1,28 @@
 import datetime
 import sqlalchemy
 from sqlalchemy import orm
-
 from .db_session import SqlAlchemyBase
+
+
+def get_categories_from_text(text):
+    categories_names = []
+    i = 0
+    n = len(text)
+    while i < n:
+        if text[i] == '#':
+            j = 1
+            name = []
+            while i + j < n:
+                if text[i + j] in '#\n \t,;':
+                    break
+                name.append(text[i + j])
+                j += 1
+            if name:
+                categories_names.append(''.join(name))
+            i += j
+        else:
+            i += 1
+    return categories_names
 
 
 class Problem(SqlAlchemyBase):
@@ -37,3 +57,16 @@ class Problem(SqlAlchemyBase):
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     files = orm.relation("UsersFile", back_populates='problem')
+
+    categories = orm.relation("Category",
+                              secondary="problems_and_cats",
+                              back_populates="problems")
+
+    def get_needed_cats(self):
+        res = []
+        res.extend(get_categories_from_text(self.content))
+        for comment in self.comments:
+            res.extend(get_categories_from_text(comment.content))
+        for solution in self.solutions:
+            res.extend(get_categories_from_text(solution.content))
+        return res

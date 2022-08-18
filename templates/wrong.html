@@ -12,7 +12,7 @@
         {% endfor %}
         <hr>
         <div>
-            {{ publ.content }}
+            {{ with_cats_show(publ.content)|safe }}
         </div>
         {% set publ_href = "/problem/"+publ.problem.id|string %}
         <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Перейти к задаче</a>
@@ -24,7 +24,7 @@
         {{ users_file|safe }}
         {% endfor %}
         <hr>
-        {{ publ.content }}
+        {{ with_cats_show(publ.content)|safe }}
         <hr>
 
         {% set publ_href = "/problem/"+publ.id|string %}
