@@ -28,8 +28,11 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 import smtplib
 from email.mime.text import MIMEText
 import random
-from email_secret_data import EMAIL, PASSWORD
+# from email_secret_data import EMAIL, PASSWORD
 from email.mime.multipart import MIMEMultipart
+
+EMAIL = os.environ["EMAIL"]
+PASSWORD = os.environ["PASSWORD"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -801,9 +804,11 @@ def verify_new_email(user_id):
             db_sess.close()
             return redirect('/login')
         else:
-            return render_template("verifynew.html", title='Проверка почты', form=form, message='Неправильный код', user_id=user_id)
+            return render_template("verifynew.html", title='Проверка почты', form=form, message='Неправильный код',
+                                   user_id=user_id)
     send_email(user.new_email, user.new_email_code, message_type="email_change")
-    return render_template("verifynew.html", title='Проверка почты', form=form, user_id=user_id, with_cats_show=with_cats_show)
+    return render_template("verifynew.html", title='Проверка почты', form=form, user_id=user_id,
+                           with_cats_show=with_cats_show)
 
 
 # Смена электронной почты
@@ -906,7 +911,8 @@ def gen_code(status):
         return redirect('/')
     else:
         res = make_response(
-            render_template('codegen.html', title='Код приглашения', status=status, code=generate_code(status), with_cats_show=with_cats_show))
+            render_template('codegen.html', title='Код приглашения', status=status, code=generate_code(status),
+                            with_cats_show=with_cats_show))
 
         return res
 
