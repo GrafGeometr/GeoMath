@@ -4,7 +4,7 @@ from sqlalchemy import orm
 
 from .db_session import SqlAlchemyBase
 
-
+# Комментарий
 class Comment(SqlAlchemyBase):
     __tablename__ = 'comments'
 

@@ -201,7 +201,7 @@
                 {{ with_cats_show(publ.content)|safe }}
             </div>
             <div>
-                Автор записи:
+                Запись опубликована пользователем:
                 <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
                                                                                                              color="blue">
                     {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -277,7 +277,7 @@
             {{ with_cats_show(publ.content)|safe }}
             <hr>
 
-            Автор задачи:
+            Опубликовано пользователем:
             <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
                                                                                                          color="blue">
                 {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">

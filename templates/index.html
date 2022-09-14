@@ -25,7 +25,9 @@
         <div class="alert alert-dark">{{ form.submit(type="submit", class="btn btn-primary") }}</div>
     </form>
 </header>
-
+{% if message %}
+<div>{{ message }}</div>
+{% endif %}
 {% for counter in range(publications|length) %}
     {% set publ = publications[counter] %}
     <div class="alert alert-dark">

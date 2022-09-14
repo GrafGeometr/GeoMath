@@ -4,7 +4,7 @@ from sqlalchemy import orm
 
 from .db_session import SqlAlchemyBase
 
-
+# Решение
 class Solution(SqlAlchemyBase):
     __tablename__ = 'solutions'
 

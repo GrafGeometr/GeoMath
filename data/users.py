@@ -6,7 +6,7 @@ from sqlalchemy import orm
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
-
+# Пользователь
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
 
@@ -50,15 +50,15 @@ class User(SqlAlchemyBase, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
 
-    def get_rank(self, theme=None, creating_only=False):
+    def get_rank(self, theme=None, creating_only=False): # Умная функция подсчёта рейтинга
         res = 0
         if self.status in ['жюри', 'преподаватель']:
             return 100
         for post in self.posts:
-            if theme == None or post.theme == theme:
+            if theme is None or post.theme == theme:
                 res += post.rank
         for problem in self.problems:
-            if theme == None or problem.theme == theme:
+            if theme is None or problem.theme == theme:
                 res += problem.rank * 0.5
                 if problem.author_thinks_false:
                     res -= 50
@@ -67,7 +67,7 @@ class User(SqlAlchemyBase, UserMixin):
                 elif problem.is_true:
                     res += 150
         for solution in self.solutions:
-            if not creating_only and theme == None or solution.theme == theme:
+            if not creating_only and theme is None or solution.theme == theme:
                 res += solution.rank
                 for other_solution in solution.problem.solutions:
                     if other_solution.id == solution.id and not solution.is_false:
@@ -82,7 +82,7 @@ class User(SqlAlchemyBase, UserMixin):
                     elif not other_solution.is_false:
                         break
         for comment in self.comments:
-            if theme == None or comment.theme == theme:
+            if theme is None or comment.theme == theme:
                 res += comment.rank * 0.3
         timedelta = datetime.datetime.now() - self.created_date
         months = timedelta.seconds / 60 / 60 / 24 / 30

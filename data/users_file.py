@@ -4,7 +4,7 @@ from sqlalchemy import orm
 
 from .db_session import SqlAlchemyBase
 
-
+# Файл
 class UsersFile(SqlAlchemyBase):
     __tablename__ = 'users_files'
 
@@ -30,7 +30,7 @@ class UsersFile(SqlAlchemyBase):
                                    sqlalchemy.ForeignKey("users.id"))
     user = orm.relation('User')
 
-    def __repr__(self):
+    def __repr__(self): # Показываем
         if self.extension=='.ggb':
             return f'<iframe  scrolling="no" src="{self.name}" width="1100px" height="1000px" style="border:0px;"></iframe><br>'
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:
@@ -38,7 +38,7 @@ class UsersFile(SqlAlchemyBase):
         elif self.extension in ['.png', '.jpeg', '.jpg', '.gif']:
             return f'<img src="/static/user_files/{self.id}{self.extension}" height="400"><br>'
 
-    def edit(self, togo):
+    def edit(self, togo): # Показываем при редактировании
         if self.extension=='.ggb':
             return f'<iframe  scrolling="no" src="{self.name}" width="900px" height="700px" style="border:0px;"></iframe><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:

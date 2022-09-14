@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 
-
+# Выделяем теги из текста
 def get_categories_from_text(text):
     categories_names = []
     i = 0
@@ -24,7 +24,7 @@ def get_categories_from_text(text):
             i += 1
     return categories_names
 
-
+# Пост
 class Post(SqlAlchemyBase):
     __tablename__ = 'posts'
 
@@ -52,9 +52,10 @@ class Post(SqlAlchemyBase):
                               secondary="posts_and_cats",
                               back_populates="posts")
 
-    def get_needed_cats(self):
+    def get_needed_cats(self): # Получаем нужные категории
         res = []
         res.extend(get_categories_from_text(self.content))
+        res.extend(get_categories_from_text(self.title))
         for comment in self.comments:
             res.extend(get_categories_from_text(comment.content))
         return res

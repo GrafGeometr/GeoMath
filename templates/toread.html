@@ -16,7 +16,7 @@
             {{ with_cats_show(publ.content)|safe }}
         </div>
         <div>
-            Автор записи:
+            Запись опубликована пользователем:
             <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
                                                                                                          color="blue">
                 {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -34,7 +34,7 @@
         {% set publ_href = "/post/"+publ.id|string %}
         {% set toread_href = "/addtoread/"+viewer.id|string+"/post/"+publ.id|string %}
         <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a> <a
-                href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать</a></div>
+                href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать из отложенных</a></div>
         <div>Рейтинг: {{publ.rank}}</div>
         {% if viewer==publ.user %}
         {% set edit_href = "/edit_post/"+publ.id|string %}
@@ -76,7 +76,7 @@
         {{ with_cats_show(publ.content)|safe }}
         <hr>
 
-        Автор задачи:
+        Опубликовано пользователем:
         <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
                                                                                                      color="blue">
             {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
@@ -95,14 +95,14 @@
             {% set toread_href = "/addtoread/"+viewer.id|string+"/problem/"+publ.id|string %}
             {% if publ.solutions %}
             <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии и решения</a> <a
-                    href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать</a>
+                    href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать из отложенных</a>
             </div>
             {% else %}
             <div class="alert alert-warning">Внимание! У этой задачи пока нет решений. Первый, прикрепивший решение,
                 получит дополнительный рейтинг.
             </div>
             <div><a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a> <a
-                    href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать</a></div>
+                    href={{ toread_href }} target="_blank" class="btn btn-outline-secondary">Убрать из отложенных</a></div>
             {% endif %}
         </div>
         <div>Рейтинг: {{publ.rank}}</div>

@@ -20,7 +20,7 @@ problems_and_cats_table = sqlalchemy.Table(
                       sqlalchemy.ForeignKey('category.id'))
 )
 
-
+# Тег(категория, относится к задаче или посту)
 class Category(SqlAlchemyBase):
     __tablename__ = 'category'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True,

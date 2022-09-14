@@ -22,7 +22,7 @@
         {% if post.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
         {% endif %}
     </font></a>
-</div>
+
 <div>Рейтинг: {{post.rank}}</div>
 {% if viewer==post.user %}
 {% set edit_href = "/edit_post/"+post.id|string %}
@@ -53,6 +53,7 @@
     {% endif %}
 </div>
 {% endif %}
+</div>
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
             aria-expanded="false" aria-controls="collapse1">
@@ -64,18 +65,18 @@
         {{ form.hidden_tag() }}
         <div>{{ form.submit(type="submit", class="btn btn-primary") }}{{
             form.content(class="form-control") }}
-            <p>{{ form.images.label }} {{ form.images(class="btn btn-secondary") }}</p>
         </div>
         {% for error in form.content.errors %}
         <p class="alert alert-danger" role="alert">
             {{ error }}
         </p>
         {% endfor %}
+        <p>К сожалению, сейчас файлы можно прикреплять только, при редактировании.</p>
     </form>
 </div>
 
 {% if post.comments %}
-<div class="alert alert-secondary">Комментарии:
+<div class="alert alert-dark"><font size="4"><b>Комментарии:</b></font>
     <hr>
     {% for counter in range(post.comments|length) %}
     {% set comment = post.comments[counter] %}
@@ -102,7 +103,6 @@
         {% if viewer==comment.user %}
         {% set edit_href = "/edit_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
         {% set delete_href = "/delete_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
-        <p>Если вы хотите прикрепить файлы, нажмите:</p>
         <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
         <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
         {% else %}

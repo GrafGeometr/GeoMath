@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 
-
+# Выделяем категории из текста
 def get_categories_from_text(text):
     categories_names = []
     i = 0
@@ -24,7 +24,7 @@ def get_categories_from_text(text):
             i += 1
     return categories_names
 
-
+# Задача
 class Problem(SqlAlchemyBase):
     __tablename__ = 'problems'
 
@@ -62,7 +62,7 @@ class Problem(SqlAlchemyBase):
                               secondary="problems_and_cats",
                               back_populates="problems")
 
-    def get_needed_cats(self):
+    def get_needed_cats(self): # Получаем нужные категории
         res = []
         res.extend(get_categories_from_text(self.content))
         for comment in self.comments:

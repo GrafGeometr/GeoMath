@@ -1,3 +1,4 @@
+import math
 from flask import Flask, render_template, redirect, request, make_response
 from flask_restful import abort
 from loginform import LoginForm
@@ -39,32 +40,35 @@ login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
 
 
-@app.route('/jstest')
-def jstest():
-    return render_template("jstest.html")
+# @app.route('/jstest')
+# def jstest():
+#    return render_template("jstest.html")
 
+# Выделяем теги из текста и преобразуем их в ссылки
 def with_cats_show(text):
     res = []
     i = 0
     n = len(text)
-    while i<n:
-        if text[i]=='#':
-            j=1
-            teg=[]
-            while i+j<n:
-                if text[i+j] in '#\n \t,;':
+    while i < n:
+        if text[i] == '#':
+            j = 1
+            teg = []
+            while i + j < n:
+                if text[i + j] in '#\n \t,;':
                     break
-                teg.append(text[i+j])
-                j+=1
+                teg.append(text[i + j])
+                j += 1
             res.append(f"<a href='/***/***/неделя/{''.join(teg)}'>#{''.join(teg)}</a>")
-            if i+j<n:
-                res.append(text[i+j])
-            i+=j
+            if i + j < n:
+                res.append(text[i + j])
+            i += j
         else:
             res.append(text[i])
-            i+=1
+            i += 1
     return ''.join(res)
 
+
+# Проверяем, что у публикации категории в базе данных совпадают с теми, что в её тексте(заголовке, тексте, комментариях...)
 def fix_cats(publ, db_sess):
     names = publ.get_needed_cats()
     for name in names:
@@ -83,6 +87,7 @@ def fix_cats(publ, db_sess):
     db_sess.commit()
 
 
+# Удаляем файлы, прикреплённый к чему-то и переходим по ссылке togo
 @app.route('/delete_file/<int:file_id>/<togo>')
 def delete_file(file_id, togo):
     if not current_user.is_authenticated:
@@ -99,21 +104,24 @@ def delete_file(file_id, togo):
     return redirect(togo.replace('$', '/'))
 
 
+# Помощь
 @app.route('/help')
 def help_():
     if not current_user.is_authenticated:
         return redirect('/login')
-    return render_template('help.html', with_cats_show=with_cats_show)
+    return render_template('help.html', title="Помощь", with_cats_show=with_cats_show)
 
 
+# Отправляем письмо по адресу to с кодом code
 def send_email(to, code, message_type="register"):
+    # Придумываем разный текст, чтобы Яндекс не заподозрил нас в рассылке
     if message_type == "register":
         text = random.choice([
-            f'Вы только что зарегистрировались на нашем сайте, вот ваш код подтверждения:\n{code}',
-            f'Сообщаем об успешной регистрации на сайте ge0math, чтобы завершить её введите этот код:\n{code}',
-            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения вашей электронной почты на сайте ge0math.',
-            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить вашу электронную почту на сайте ge0math.',
-            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы завершить регистрацию на сайте ge0math.'
+            f'Вы только что зарегистрировались на нашем сайте, вот ваш код подтверждения:\n{code}. Введите его, а затем войдите.',
+            f'Сообщаем об успешной регистрации на сайте ge0math, чтобы завершить её введите этот код и войдите на сайт с подтверждённой почтой:\n{code}',
+            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения вашей электронной почты на сайте ge0math. Введите его и войдите на сайт.',
+            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить вашу электронную почту на сайте ge0math. После этого вы сможете войти на сайт.',
+            f'Ваш код подтверждения:\n{code}\n Введите его, чтобы завершить регистрацию на сайте ge0math и получить возможность войти.'
         ])
     elif message_type == 'email_change':
         text = random.choice([
@@ -123,6 +131,7 @@ def send_email(to, code, message_type="register"):
             f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить смену электронной почты на сайте ge0math.',
         ])
 
+    # Задаём параметры письма
     msg = MIMEMultipart()
     msg['From'] = EMAIL
     msg['To'] = to
@@ -142,6 +151,7 @@ def send_email(to, code, message_type="register"):
     mailserver.quit()
 
 
+# Показываем задачи и решения пользователя, которые часть людей считают неверными
 @login_required
 @app.route('/wrong')
 def wrong():
@@ -162,9 +172,11 @@ def wrong():
                     problem = db_sess.query(Problem).filter(Problem.id == int(publ_id)).first()
                     publs.append(problem)
     return render_template("wrong.html", title='Неверные задачи и решения', Solution=Solution, Problem=Problem,
-                           publications=publs[::-1], isinstance=isinstance, viewer=current_user, with_cats_show=with_cats_show)
+                           publications=publs[::-1], isinstance=isinstance, viewer=current_user,
+                           with_cats_show=with_cats_show)
 
 
+# Автор признал задачу(решение) неверной раньше, чем это сделали пользователи
 @login_required
 @app.route('/author_false/<name>/<int:publ_id>')
 def author_false(name, publ_id):
@@ -188,6 +200,7 @@ def author_false(name, publ_id):
     return redirect(f'/{name}/{publ_id}')
 
 
+# Проверяем, верная задача или нет
 def check_truth(publ, db_sess):
     rank = sum(
         [db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in list(publ.think_is_true)]) - \
@@ -230,6 +243,7 @@ def check_truth(publ, db_sess):
     db_sess.commit()
 
 
+# Человек нажал на кнопку неверно
 @login_required
 @app.route('/isfalse/<name>/<int:publ_id>/<int:user_id>')
 def make_false(name, publ_id, user_id):
@@ -276,6 +290,7 @@ def make_false(name, publ_id, user_id):
         return render_template("nowindow.html", with_cats_show=with_cats_show)
 
 
+# Человек нажал на кнопку верно
 @login_required
 @app.route('/istrue/<name>/<int:publ_id>/<int:user_id>')
 def make_true(name, publ_id, user_id):
@@ -323,6 +338,7 @@ def make_true(name, publ_id, user_id):
         return render_template("nowindow.html", with_cats_show=with_cats_show)
 
 
+# Подписка на кого-то
 @login_required
 @app.route('/subscribe/<int:user_id>/<int:viewer_id>')
 def subscribe(user_id, viewer_id):
@@ -350,6 +366,7 @@ def subscribe(user_id, viewer_id):
     return render_template("nowindow.html", with_cats_show=with_cats_show)
 
 
+# Пользователь стал постоянным читателем(теперь нужно автоматически добавлять его публикации пользователю)
 @login_required
 @app.route('/reader/<int:user_id>/<int:viewer_id>')
 def become_reader(user_id, viewer_id):
@@ -373,6 +390,7 @@ def become_reader(user_id, viewer_id):
     return render_template("nowindow.html", with_cats_show=with_cats_show)
 
 
+# Добавить к прочтению
 @login_required
 @app.route('/addtoread/<int:user_id>/<name>/<int:cont_id>')
 def add_toread(user_id, name, cont_id):
@@ -396,6 +414,7 @@ def add_toread(user_id, name, cont_id):
     return render_template("nowindow.html", with_cats_show=with_cats_show)
 
 
+# Нравится
 @login_required
 @app.route('/liked/<int:user_id>/<name>/<int:cont_id>')
 def like(user_id, name, cont_id):
@@ -441,6 +460,7 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
+# Показываем задачу
 @login_required
 @app.route('/problem/<int:problem_id>', methods=['GET', 'POST'])
 def problem_show(problem_id):
@@ -456,7 +476,7 @@ def problem_show(problem_id):
     comment_forms = [CommentAddForm(prefix=f'solution_comment_form{i}') for i in range(len(problem.solutions))]
     solform = SolutionAddForm(prefix='problem_solution_form')
     if request.method == 'POST':
-        if form.validate_on_submit():
+        if form.validate_on_submit():  # Кто-то написал комментарий к задаче
             comment = Comment()
             comment.content = form.content.data
             current_user.comments.append(comment)
@@ -467,7 +487,7 @@ def problem_show(problem_id):
             fix_cats(problem, db_sess)
             db_sess.close()
             return redirect(f'/problem/{problem_id}')
-        if solform.validate_on_submit():
+        if solform.validate_on_submit():  # Кто-то написал решение к задаче
             solution = Solution()
             solution.content = solform.content.data
             solution.theme = problem.theme
@@ -480,7 +500,7 @@ def problem_show(problem_id):
             db_sess.close()
             return redirect(f'/problem/{problem_id}')
         for i in range(len(comment_forms)):
-            if comment_forms[i].validate_on_submit():
+            if comment_forms[i].validate_on_submit():  # Кто-то написал комментарий к решению
                 comment = Comment()
                 comment.content = comment_forms[i].content.data
                 current_user.comments.append(comment)
@@ -494,12 +514,14 @@ def problem_show(problem_id):
                 db_sess.close()
                 return redirect(f'/problem/{problem_id}')
     res = make_response(
-        render_template("problemshow.html", problem=problem, form=form, comment_forms=comment_forms, solform=solform,
+        render_template("problemshow.html", title="Задача", problem=problem, form=form, comment_forms=comment_forms,
+                        solform=solform,
                         viewer=current_user, with_cats_show=with_cats_show))
 
     return res
 
 
+# Показываем пост
 @login_required
 @app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def post_show(post_id):
@@ -513,7 +535,7 @@ def post_show(post_id):
 
         return res
     form = CommentAddForm()
-    if form.validate_on_submit():
+    if form.validate_on_submit():  # Кто-то написал комментарий к посту
         comment = Comment()
         comment.content = form.content.data
         comment.theme = post.theme
@@ -525,11 +547,14 @@ def post_show(post_id):
         fix_cats(post, db_sess)
         db_sess.close()
         return redirect(f'/post/{post_id}')
-    res = make_response(render_template("postshow.html", post=post, form=form, viewer=current_user, with_cats_show=with_cats_show))
+    res = make_response(
+        render_template("postshow.html", title="Запись", post=post, form=form, viewer=current_user,
+                        with_cats_show=with_cats_show))
 
     return res
 
 
+# Показываем отложенные
 @login_required
 @app.route('/my')
 def toread():
@@ -550,15 +575,17 @@ def toread():
                     problem = db_sess.query(Problem).filter(Problem.id == int(publ_id)).first()
                     publs.append(problem)
     return render_template("toread.html", title='Отложенные', Post=Post, Problem=Problem,
-                           publications=publs[::-1], isinstance=isinstance, viewer=current_user, with_cats_show=with_cats_show)
+                           publications=publs[::-1], isinstance=isinstance, viewer=current_user,
+                           with_cats_show=with_cats_show)
 
 
 @login_required
 @app.route('/')
 def main_page():
-    return redirect('/***/***/30 минут/NOTEGS')
+    return redirect('/***/***/1 день/NOTEGS')
 
 
+# Главная страница
 # (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'
 @login_required
 @app.route('/<cathegories>/<post_types>/<time>/<tegs>', methods=["POST", "GET"])
@@ -566,7 +593,7 @@ def index(cathegories, post_types, time, tegs: str):
     if not current_user.is_authenticated:
         return redirect('/login')
     form = NavForm()
-    if form.validate_on_submit():
+    if form.validate_on_submit():  # Если кто-то заполнил фарму и нажал искать, мы его переадресовываем
         cats = ''
         if form.geom.data:
             cats += '*'
@@ -597,11 +624,12 @@ def index(cathegories, post_types, time, tegs: str):
             cats = '***'
         if typs == '...':
             typs = '***'
-        tegs_from_form = ','.join([teg.replace(' ', '').replace("#","") for teg in form.tegs.data.split(',')])
+        tegs_from_form = ','.join([teg.replace(' ', '').replace("#", "") for teg in form.tegs.data.split(',')])
         if not tegs_from_form:
             tegs_from_form = "NOTEGS"
         s = f'/{cats}/{typs}/{form.time.data}/{tegs_from_form}'
         return redirect(s)
+    # Заполняем форму в соответствии с адресной строкой
     if tegs != "NOTEGS":
         form.tegs.data = ','.join(['#' + teg.replace(' ', '') for teg in tegs.split(',')])
     else:
@@ -636,6 +664,7 @@ def index(cathegories, post_types, time, tegs: str):
         form.nosolprob.data = True
     else:
         form.nosolprob.data = False
+    # Находим самую раннюю дату возможной публикации
     form.time.data = time
     now = datetime.now()
     timedist = {'30 минут': timedelta(minutes=30), '5 часов': timedelta(hours=5), '1 день': timedelta(days=1),
@@ -643,6 +672,7 @@ def index(cathegories, post_types, time, tegs: str):
                 'всё время': timedelta(days=365 * (now.year - 1))}[time]
     oldest = now - timedist
     db_sess = db_session.create_session()
+    # Подбираем подходящии публикации
     good_themes = [i for i in range(3) if cats[i] == '*']
     if form.posts.data:
         posts = list(db_sess.query(Post).filter(Post.created_date > oldest,
@@ -657,30 +687,47 @@ def index(cathegories, post_types, time, tegs: str):
         elif not problem.solutions and form.nosolprob.data:
             nosolprobs.append(problem)
     publications = posts + solprobs + nosolprobs
+    tegs_found = 0
 
-    def interest(publ):
+    def interest(publ):  # Формируем рейтинг публикации
+        nonlocal tegs_found
         reit = 0
         if publ.user.id in current_user.subscribes:
             reit += 100 + random.randrange(100)
-        reit += publ.rank
+        reit += max(0, math.atan(publ.rank / 2000) / math.pi * 200)
         if (datetime.now() - publ.created_date).seconds < 60 * 15:
-            reit += 100
+            reit += max(24 * 60 * 60 - (datetime.now() - publ.created_date).seconds, 0) / (24 * 6 * 6)
+        reit += publ.user.get_rank()
+        reit += random.randrange(10)
+        k = 0
         if tegs != "NOTEGS":
             for teg_name in tegs.split(","):
                 teg_name.replace(' ', '')
+                print(teg_name)
                 category = db_sess.query(Category).filter(Category.name == teg_name).first()
                 if category and category in publ.categories:
-                    reit += 200
-        reit += random.randrange(50)
+                    k += 1
+                    tegs_found += 1
+        reit += k * 350
+        print(publ.id, reit)
         return reit
 
     publications.sort(key=interest, reverse=True)
-    res = make_response(render_template("index.html", title='Домашняя страница', form=form, Post=Post, Problem=Problem,
-                                        publications=publications, isinstance=isinstance, viewer=current_user, with_cats_show=with_cats_show))
+    if tegs_found or tegs == "NOTEGS":
+        res = make_response(
+            render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
+                            publications=publications, isinstance=isinstance, viewer=current_user,
+                            with_cats_show=with_cats_show))
+    else:
+        res = make_response(
+            render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
+                            publications=publications, isinstance=isinstance, viewer=current_user,
+                            with_cats_show=with_cats_show, message="Таких тегов не существует"))
 
     return res
 
 
+# Профиль
 @login_required
 @app.route('/profile/<int:user_id>')
 def profile(user_id):
@@ -694,7 +741,8 @@ def profile(user_id):
     publs = sorted(list(user.posts) + list(user.problems), key=lambda x: x.created_date)[
             ::-1]
     res = make_response(
-        render_template("profile.html", user=user, viewer=current_user, publications=publs, isinstance=isinstance,
+        render_template("profile.html", title=user.name, user=user, viewer=current_user, publications=publs,
+                        isinstance=isinstance,
                         Post=Post, Problem=Problem,
                         subscribers=user.subscribers_count, readers=(0 if not user.readers else len(user.readers)),
                         geom1=user.get_rank('0', creating_only=True),
@@ -706,6 +754,7 @@ def profile(user_id):
     return res
 
 
+# Отмена смены электронной почты
 @login_required
 @app.route('/abord_email_reseting/<int:user_id>')
 def abord_email_reseting(user_id):
@@ -719,6 +768,7 @@ def abord_email_reseting(user_id):
     return redirect(f'/profile/{user_id}')
 
 
+# Новый код смены почты
 @login_required
 @app.route('/reset_new_email_code/<int:user_id>')
 def reset_new_email_code(user_id):
@@ -732,6 +782,7 @@ def reset_new_email_code(user_id):
     return redirect(f'/new_email_verify/{user_id}')
 
 
+# Подтверждение электронной почты
 @login_required
 @app.route('/new_email_verify/<int:user_id>', methods=['GET', 'POST'])
 def verify_new_email(user_id):
@@ -750,11 +801,12 @@ def verify_new_email(user_id):
             db_sess.close()
             return redirect('/login')
         else:
-            return render_template("verifynew.html", form=form, message='Неправильный код', user_id=user_id)
+            return render_template("verifynew.html", title='Проверка почты', form=form, message='Неправильный код', user_id=user_id)
     send_email(user.new_email, user.new_email_code, message_type="email_change")
-    return render_template("verifynew.html", form=form, user_id=user_id, with_cats_show=with_cats_show)
+    return render_template("verifynew.html", title='Проверка почты', form=form, user_id=user_id, with_cats_show=with_cats_show)
 
 
+# Смена электронной почты
 @login_required
 @app.route('/reset_email/<int:user_id>', methods=['GET', 'POST'])
 def reset_email(user_id):
@@ -775,7 +827,8 @@ def reset_email(user_id):
         if form.email.data != form.email_again.data:
             res = make_response(render_template('resetemail.html', title='Смена электронной почты',
                                                 form=form,
-                                                message="Адреса электронной почты не совпадают", with_cats_show=with_cats_show))
+                                                message="Адреса электронной почты не совпадают",
+                                                with_cats_show=with_cats_show))
             return res
         if db_sess.query(User).filter(User.email == form.email.data).first():
             db_sess.close()
@@ -791,6 +844,7 @@ def reset_email(user_id):
     return res
 
 
+# Редактирование профиля
 @login_required
 @app.route('/edit_profile/<int:user_id>', methods=["POST", "GET"])
 def edit_profile(user_id):
@@ -835,11 +889,13 @@ def edit_profile(user_id):
         return redirect(f'/profile/{user_id}')
     form.name.data = user.name
     form.about.data = user.about
-    res = make_response(render_template("profileedit.html", title='Редактирование профиля', form=form, with_cats_show=with_cats_show))
+    res = make_response(
+        render_template("profileedit.html", title='Редактирование профиля', form=form, with_cats_show=with_cats_show))
 
     return res
 
 
+# Генерация кода регистрации
 @login_required
 @app.route('/generate_code/<status>')
 def gen_code(status):
@@ -849,11 +905,13 @@ def gen_code(status):
     if statuses.get(status, 1000) > statuses[current_user.status]:
         return redirect('/')
     else:
-        res = make_response(render_template('codegen.html', status=status, code=generate_code(status), with_cats_show=with_cats_show))
+        res = make_response(
+            render_template('codegen.html', title='Код приглашения', status=status, code=generate_code(status), with_cats_show=with_cats_show))
 
         return res
 
 
+# Вход
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -861,7 +919,7 @@ def login():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if not user:
-            return make_response(render_template('login.html',
+            return make_response(render_template('login.html', title='Авторизация',
                                                  message="Неправильный логин или пароль",
                                                  form=form, with_cats_show=with_cats_show))
         user_id = user.id
@@ -877,7 +935,7 @@ def login():
             db_sess.close()
             return redirect(f"/profile/{user.id}")
         db_sess.close()
-        res = make_response(render_template('login.html',
+        res = make_response(render_template('login.html', title='Авторизация',
                                             message="Неправильный логин или пароль",
                                             form=form, with_cats_show=with_cats_show))
 
@@ -887,6 +945,7 @@ def login():
     return res
 
 
+# Смена кода подтверждения почты
 @app.route('/reset_email_code/<int:user_id>')
 def reset_email_code(user_id):
     db_sess = db_session.create_session()
@@ -897,6 +956,7 @@ def reset_email_code(user_id):
     return redirect(f'/email_verify/{user_id}')
 
 
+# Подтверждение почты
 @app.route('/email_verify/<int:user_id>', methods=['GET', 'POST'])
 def verify_email(user_id):
     db_sess = db_session.create_session()
@@ -911,11 +971,15 @@ def verify_email(user_id):
             db_sess.close()
             return redirect('/login')
         else:
-            return render_template("verify.html", form=form, message='Неправильный код', user_id=user_id, with_cats_show=with_cats_show)
+            return render_template("verify.html", title="Проверка почты", form=form, message='Неправильный код',
+                                   user_id=user_id,
+                                   with_cats_show=with_cats_show)
     send_email(user.email, user.email_code)
-    return render_template("verify.html", form=form, user_id=user_id, with_cats_show=with_cats_show)
+    return render_template("verify.html", title="Проверка почты", form=form, user_id=user_id,
+                           with_cats_show=with_cats_show)
 
 
+# Регистрация
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -960,6 +1024,7 @@ def register():
     return res
 
 
+# Выход
 @app.route('/logout')
 @login_required
 def logout():
@@ -967,6 +1032,7 @@ def logout():
     return redirect("/")
 
 
+# Добавление поста
 @app.route('/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
@@ -995,13 +1061,14 @@ def add_post():
         post_id = post.id
         db_sess.commit()
         db_sess.close()
-        return redirect(f'/edit_post/{post_id}')
+        return redirect(f'/post/{post_id}')
     res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
                                         form=form, with_cats_show=with_cats_show))
 
     return res
 
 
+# Добавление задачи
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
 def add_problem():
@@ -1042,6 +1109,7 @@ def add_problem():
     return res
 
 
+# Редактирование поста
 @app.route('/edit_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
@@ -1135,6 +1203,7 @@ def edit_post(id):
     return res
 
 
+# Редактирование задачи
 @app.route('/edit_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_problem(id):  # without solution
@@ -1224,11 +1293,13 @@ def edit_problem(id):  # without solution
             return res
     res = make_response(render_template('problemedit.html',
                                         title='Редактирование',
-                                        form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form, with_cats_show=with_cats_show))
+                                        form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form,
+                                        with_cats_show=with_cats_show))
 
     return res
 
 
+# Удаление поста
 @app.route('/delete_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_post(id):
@@ -1248,6 +1319,7 @@ def delete_post(id):
     return redirect(current_user.profile_href())
 
 
+# Удаление задачи
 @app.route('/delete_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_problem(id):
@@ -1267,6 +1339,7 @@ def delete_problem(id):
     return redirect(current_user.profile_href())
 
 
+# Редактирование комментария
 @app.route('/edit_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
            methods=["POST", "GET"])
 @login_required
@@ -1368,6 +1441,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
     return res
 
 
+# Удаление комментария
 @app.route('/delete_comment/<int:comment_id>/<place_name>/<int:place_id>/<par_name>/<int:par_id>',
            methods=["POST", "GET"])
 @login_required
@@ -1401,6 +1475,7 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
         abort(404)
 
 
+# Редактирование решения
 @app.route('/edit_solution/<int:solution_id>/<int:problem_id>',
            methods=["POST", "GET"])
 @login_required
@@ -1484,6 +1559,7 @@ def edit_solution(solution_id, problem_id):
     return res
 
 
+# Удаление решения
 @app.route('/delete_solution/<int:solution_id>/<int:problem_id>',
            methods=["POST", "GET"])
 @login_required
