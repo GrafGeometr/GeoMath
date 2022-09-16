@@ -906,7 +906,7 @@ def edit_profile(user_id):
 def gen_code(status):
     if not current_user.is_authenticated:
         return redirect('/login')
-    statuses = {'админ': 3, 'жюри': 2, 'преподаватель': 1, 'участник': 0}
+    statuses = {'администратор': 3, 'жюри': 2, 'преподаватель': 1, 'участник': 0}
     if statuses.get(status, 1000) > statuses[current_user.status]:
         return redirect('/')
     else:
