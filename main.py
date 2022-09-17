@@ -29,11 +29,11 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 import smtplib
 from email.mime.text import MIMEText
 import random
-from email_secret_data import EMAIL, PASSWORD
+# from email_secret_data import EMAIL, PASSWORD
 from email.mime.multipart import MIMEMultipart
 
-# EMAIL = os.environ["EMAIL"]
-# PASSWORD = os.environ["PASSWORD"]
+EMAIL = os.environ["EMAIL"]
+PASSWORD = os.environ["PASSWORD"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
