@@ -1,5 +1,5 @@
 import math
-from flask import Flask, render_template, redirect, request, make_response
+from flask import Flask, render_template, redirect, request, make_response, current_app, send_from_directory
 from flask_restful import abort
 from loginform import LoginForm
 from data import db_session
@@ -12,6 +12,7 @@ from data.solution import Solution
 from data.category import Category
 from registerform import RegisterForm
 from postaddform import PostAddForm
+from admin_message_form import AdminForm
 from resetemailform import ResetEmailForm
 from commentaddform import CommentAddForm
 from problemaddform import ProblemAddForm
@@ -28,11 +29,11 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 import smtplib
 from email.mime.text import MIMEText
 import random
-# from email_secret_data import EMAIL, PASSWORD
+from email_secret_data import EMAIL, PASSWORD
 from email.mime.multipart import MIMEMultipart
 
-EMAIL = os.environ["EMAIL"]
-PASSWORD = os.environ["PASSWORD"]
+# EMAIL = os.environ["EMAIL"]
+# PASSWORD = os.environ["PASSWORD"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -41,6 +42,8 @@ app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jp
 login_manager = LoginManager()
 login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
+
+admin_message = ''
 
 
 # @app.route('/jstest')
@@ -90,7 +93,32 @@ def fix_cats(publ, db_sess):
     db_sess.commit()
 
 
-# Удаляем файлы, прикреплённый к чему-то и переходим по ссылке togo
+@app.route('/get_db', methods=['GET', 'POST'])
+def download():
+    # Appending app path to upload folder path within app root folder
+    uploads = os.path.join(current_app.root_path, "db")
+    # Returning file from appended path
+    return send_from_directory(uploads, "blogs.db")
+
+
+@app.route('/admin_message', methods=['POST', 'GET'])
+def change_admin_message():
+    global admin_message
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if current_user.status != 'администратор':
+        return redirect('/')
+    form = AdminForm()
+    if request.method == 'GET':
+        form.content.data = admin_message
+    if form.validate_on_submit():
+        admin_message = form.content.data
+        return redirect('/')
+    return render_template('adminmessage.html', title='Сообщение администратора', form=form,
+                           admin_message=admin_message)
+
+
+# Удаляем файлы, прикреплённые к чему-то и переходим по ссылке togo
 @app.route('/delete_file/<int:file_id>/<togo>')
 def delete_file(file_id, togo):
     if not current_user.is_authenticated:
@@ -112,7 +140,7 @@ def delete_file(file_id, togo):
 def help_():
     if not current_user.is_authenticated:
         return redirect('/login')
-    return render_template('help.html', title="Помощь", with_cats_show=with_cats_show)
+    return render_template('help.html', title="Помощь", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Отправляем письмо по адресу to с кодом code
@@ -176,7 +204,7 @@ def wrong():
                     publs.append(problem)
     return render_template("wrong.html", title='Неверные задачи и решения', Solution=Solution, Problem=Problem,
                            publications=publs[::-1], isinstance=isinstance, viewer=current_user,
-                           with_cats_show=with_cats_show)
+                           with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Автор признал задачу(решение) неверной раньше, чем это сделали пользователи
@@ -272,7 +300,7 @@ def make_false(name, publ_id, user_id):
         db_sess.commit()
         check_truth(problem, db_sess)
         db_sess.close()
-        return render_template("nowindow.html", with_cats_show=with_cats_show)
+        return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
     else:
         solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
         if not solution:
@@ -290,7 +318,7 @@ def make_false(name, publ_id, user_id):
         db_sess.commit()
         check_truth(solution, db_sess)
         db_sess.close()
-        return render_template("nowindow.html", with_cats_show=with_cats_show)
+        return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Человек нажал на кнопку верно
@@ -319,7 +347,7 @@ def make_true(name, publ_id, user_id):
         db_sess.commit()
         check_truth(problem, db_sess)
         db_sess.close()
-        return render_template("nowindow.html", with_cats_show=with_cats_show)
+        return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
     else:
         solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
         if not solution:
@@ -338,7 +366,7 @@ def make_true(name, publ_id, user_id):
         db_sess.commit()
         check_truth(solution, db_sess)
         db_sess.close()
-        return render_template("nowindow.html", with_cats_show=with_cats_show)
+        return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Подписка на кого-то
@@ -366,7 +394,7 @@ def subscribe(user_id, viewer_id):
         user.subscribers_count += 1
     db_sess.commit()
     db_sess.close()
-    return render_template("nowindow.html", with_cats_show=with_cats_show)
+    return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Пользователь стал постоянным читателем(теперь нужно автоматически добавлять его публикации пользователю)
@@ -390,7 +418,7 @@ def become_reader(user_id, viewer_id):
         user.readers = [viewer_id]
     db_sess.commit()
     db_sess.close()
-    return render_template("nowindow.html", with_cats_show=with_cats_show)
+    return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Добавить к прочтению
@@ -414,7 +442,7 @@ def add_toread(user_id, name, cont_id):
         user.toread = [f'{name} {cont_id}']
     db_sess.commit()
     db_sess.close()
-    return render_template("nowindow.html", with_cats_show=with_cats_show)
+    return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Нравится
@@ -454,7 +482,7 @@ def like(user_id, name, cont_id):
         publ.liked_by = arr
     db_sess.commit()
     db_sess.close()
-    return render_template("nowindow.html", with_cats_show=with_cats_show)
+    return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 @login_manager.user_loader
@@ -519,7 +547,7 @@ def problem_show(problem_id):
     res = make_response(
         render_template("problemshow.html", title="Задача", problem=problem, form=form, comment_forms=comment_forms,
                         solform=solform,
-                        viewer=current_user, with_cats_show=with_cats_show))
+                        viewer=current_user, with_cats_show=with_cats_show, admin_message=admin_message))
 
     return res
 
@@ -552,7 +580,7 @@ def post_show(post_id):
         return redirect(f'/post/{post_id}')
     res = make_response(
         render_template("postshow.html", title="Запись", post=post, form=form, viewer=current_user,
-                        with_cats_show=with_cats_show))
+                        with_cats_show=with_cats_show, admin_message=admin_message))
 
     return res
 
@@ -579,7 +607,7 @@ def toread():
                     publs.append(problem)
     return render_template("toread.html", title='Отложенные', Post=Post, Problem=Problem,
                            publications=publs[::-1], isinstance=isinstance, viewer=current_user,
-                           with_cats_show=with_cats_show)
+                           with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 @login_required
@@ -720,12 +748,13 @@ def index(cathegories, post_types, time, tegs: str):
         res = make_response(
             render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
                             publications=publications, isinstance=isinstance, viewer=current_user,
-                            with_cats_show=with_cats_show))
+                            with_cats_show=with_cats_show, admin_message=admin_message))
     else:
         res = make_response(
             render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
                             publications=publications, isinstance=isinstance, viewer=current_user,
-                            with_cats_show=with_cats_show, message="Таких тегов не существует"))
+                            with_cats_show=with_cats_show, message="Таких тегов не существует",
+                            admin_message=admin_message))
 
     return res
 
@@ -751,7 +780,9 @@ def profile(user_id):
                         geom1=user.get_rank('0', creating_only=True),
                         alg1=user.get_rank('1', creating_only=True), comb1=user.get_rank('2', creating_only=True),
                         geom2=user.get_rank('0'),
-                        alg2=user.get_rank('1'), comb2=user.get_rank('2'), with_cats_show=with_cats_show
+                        alg2=user.get_rank('1'), comb2=user.get_rank('2'), with_cats_show=with_cats_show,
+                        admin_message=admin_message, users_count=db_sess.query(User).count(),
+                        publ_count=db_sess.query(Post).count() + db_sess.query(Problem).count()
                         ))
 
     return res
@@ -805,10 +836,10 @@ def verify_new_email(user_id):
             return redirect('/login')
         else:
             return render_template("verifynew.html", title='Проверка почты', form=form, message='Неправильный код',
-                                   user_id=user_id)
+                                   user_id=user_id, admin_message=admin_message)
     send_email(user.new_email, user.new_email_code, message_type="email_change")
     return render_template("verifynew.html", title='Проверка почты', form=form, user_id=user_id,
-                           with_cats_show=with_cats_show)
+                           with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Смена электронной почты
@@ -827,25 +858,27 @@ def reset_email(user_id):
         if not user.check_password(form.password.data):
             res = make_response(render_template('resetemail.html', title='Смена электронной почты',
                                                 form=form,
-                                                message="Неверный пароль", with_cats_show=with_cats_show))
+                                                message="Неверный пароль", with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
             return res
         if form.email.data != form.email_again.data:
             res = make_response(render_template('resetemail.html', title='Смена электронной почты',
                                                 form=form,
                                                 message="Адреса электронной почты не совпадают",
-                                                with_cats_show=with_cats_show))
+                                                with_cats_show=with_cats_show, admin_message=admin_message))
             return res
         if db_sess.query(User).filter(User.email == form.email.data).first():
             db_sess.close()
             res = make_response(render_template('resetemail.html', title='Смена электронной почты',
                                                 form=form,
-                                                message="Такой пользователь уже есть", with_cats_show=with_cats_show))
+                                                message="Такой пользователь уже есть", with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
             return res
         user.new_email = form.email.data
         db_sess.commit()
         return redirect(f'/reset_new_email_code/{user_id}')
     res = make_response(render_template('resetemail.html', title='Смена электронной почты',
-                                        form=form, with_cats_show=with_cats_show))
+                                        form=form, with_cats_show=with_cats_show, admin_message=admin_message))
     return res
 
 
@@ -867,7 +900,8 @@ def edit_profile(user_id):
     if form.validate_on_submit():
         if not user.check_password(form.old_password.data):
             res = make_response(render_template('profileedit.html', form=form, title='Редактирование профиля',
-                                                message='Неверный пароль', with_cats_show=with_cats_show))
+                                                message='Неверный пароль', with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
         if form.change_status.data:
@@ -875,7 +909,8 @@ def edit_profile(user_id):
             if not res:
                 res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                     form=form,
-                                                    code_message=status, with_cats_show=with_cats_show))
+                                                    code_message=status, with_cats_show=with_cats_show,
+                                                    admin_message=admin_message))
 
                 return res
         else:
@@ -883,7 +918,8 @@ def edit_profile(user_id):
         if form.password.data != form.password_again.data:
             res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                 form=form,
-                                                message="Пароли не совпадают", with_cats_show=with_cats_show))
+                                                message="Пароли не совпадают", with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
         user.name = form.name.data
@@ -895,7 +931,8 @@ def edit_profile(user_id):
     form.name.data = user.name
     form.about.data = user.about
     res = make_response(
-        render_template("profileedit.html", title='Редактирование профиля', form=form, with_cats_show=with_cats_show))
+        render_template("profileedit.html", title='Редактирование профиля', form=form, with_cats_show=with_cats_show,
+                        admin_message=admin_message))
 
     return res
 
@@ -912,7 +949,7 @@ def gen_code(status):
     else:
         res = make_response(
             render_template('codegen.html', title='Код приглашения', status=status, code=generate_code(status),
-                            with_cats_show=with_cats_show))
+                            with_cats_show=with_cats_show, admin_message=admin_message))
 
         return res
 
@@ -927,7 +964,7 @@ def login():
         if not user:
             return make_response(render_template('login.html', title='Авторизация',
                                                  message="Неправильный логин или пароль",
-                                                 form=form, with_cats_show=with_cats_show))
+                                                 form=form, with_cats_show=with_cats_show, admin_message=admin_message))
         user_id = user.id
         if user.email_code != "":
             db_sess.close()
@@ -943,10 +980,11 @@ def login():
         db_sess.close()
         res = make_response(render_template('login.html', title='Авторизация',
                                             message="Неправильный логин или пароль",
-                                            form=form, with_cats_show=with_cats_show))
+                                            form=form, with_cats_show=with_cats_show, admin_message=admin_message))
 
         return res
-    res = make_response(render_template('login.html', title='Авторизация', form=form, with_cats_show=with_cats_show))
+    res = make_response(render_template('login.html', title='Авторизация', form=form, with_cats_show=with_cats_show,
+                                        admin_message=admin_message))
 
     return res
 
@@ -979,10 +1017,10 @@ def verify_email(user_id):
         else:
             return render_template("verify.html", title="Проверка почты", form=form, message='Неправильный код',
                                    user_id=user_id,
-                                   with_cats_show=with_cats_show)
+                                   with_cats_show=with_cats_show, admin_message=admin_message)
     send_email(user.email, user.email_code)
     return render_template("verify.html", title="Проверка почты", form=form, user_id=user_id,
-                           with_cats_show=with_cats_show)
+                           with_cats_show=with_cats_show, admin_message=admin_message)
 
 
 # Регистрация
@@ -994,13 +1032,15 @@ def register():
         if not res:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                code_message=status, with_cats_show=with_cats_show))
+                                                code_message=status, with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
         if form.password.data != form.password_again.data:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                message="Пароли не совпадают", with_cats_show=with_cats_show))
+                                                message="Пароли не совпадают", with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
         db_sess = db_session.create_session()
@@ -1008,7 +1048,8 @@ def register():
             db_sess.close()
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
-                                                message="Такой пользователь уже есть", with_cats_show=with_cats_show))
+                                                message="Такой пользователь уже есть", with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
         user = User(
@@ -1025,7 +1066,8 @@ def register():
         user_id = user.id
         db_sess.close()
         return redirect(f'/email_verify/{user_id}')
-    res = make_response(render_template('register.html', title='Регистрация', form=form, with_cats_show=with_cats_show))
+    res = make_response(render_template('register.html', title='Регистрация', form=form, with_cats_show=with_cats_show,
+                                        admin_message=admin_message))
 
     return res
 
@@ -1069,7 +1111,7 @@ def add_post():
         db_sess.close()
         return redirect(f'/post/{post_id}')
     res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
-                                        form=form, with_cats_show=with_cats_show))
+                                        form=form, with_cats_show=with_cats_show, admin_message=admin_message))
 
     return res
 
@@ -1110,7 +1152,7 @@ def add_problem():
         db_sess.close()
         return redirect(f'/problem/{problem_id}')
     res = make_response(render_template('problemadd.html', title='Добавление информации для размышления',
-                                        form=form, with_cats_show=with_cats_show))
+                                        form=form, with_cats_show=with_cats_show, admin_message=admin_message))
 
     return res
 
@@ -1200,11 +1242,13 @@ def edit_post(id):
             db_sess.commit()
             res = make_response(render_template('postedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_post${id}", publ=post,
-                                                file_form=file_form, with_cats_show=with_cats_show))
+                                                file_form=file_form, with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
             return res
     res = make_response(render_template('postedit.html', title='Редактирование', form=form,
                                         href=f"$edit_post${id}", publ=post,
-                                        file_form=file_form, with_cats_show=with_cats_show))
+                                        file_form=file_form, with_cats_show=with_cats_show,
+                                        admin_message=admin_message))
 
     return res
 
@@ -1295,12 +1339,13 @@ def edit_problem(id):  # without solution
             form.content.data = problem.content
             res = make_response(render_template('problemedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_problem${id}", publ=problem,
-                                                file_form=file_form, with_cats_show=with_cats_show))
+                                                file_form=file_form, with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
             return res
     res = make_response(render_template('problemedit.html',
                                         title='Редактирование',
                                         form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form,
-                                        with_cats_show=with_cats_show))
+                                        with_cats_show=with_cats_show, admin_message=admin_message))
 
     return res
 
@@ -1433,7 +1478,8 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
             res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_comment${comment_id}${place_name}${place_id}${par_name}${par_id}",
                                                 publ=comment,
-                                                file_form=file_form, with_cats_show=with_cats_show))
+                                                file_form=file_form, with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
     else:
@@ -1442,7 +1488,8 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
     res = make_response(render_template('commentedit.html', title='Редактирование', form=form,
                                         href=f"$edit_comment${comment_id}${place_name}${place_id}${par_name}${par_id}",
                                         publ=comment,
-                                        file_form=file_form, with_cats_show=with_cats_show))
+                                        file_form=file_form, with_cats_show=with_cats_show,
+                                        admin_message=admin_message))
 
     return res
 
@@ -1551,7 +1598,8 @@ def edit_solution(solution_id, problem_id):
             form.content.data = solution.content
             res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
-                                                file_form=file_form, with_cats_show=with_cats_show))
+                                                file_form=file_form, with_cats_show=with_cats_show,
+                                                admin_message=admin_message))
 
             return res
     else:
@@ -1560,7 +1608,8 @@ def edit_solution(solution_id, problem_id):
 
     res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
                                         href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
-                                        file_form=file_form, with_cats_show=with_cats_show))
+                                        file_form=file_form, with_cats_show=with_cats_show,
+                                        admin_message=admin_message))
 
     return res
 
@@ -1589,7 +1638,7 @@ def delete_solution(solution_id, problem_id):
 
 def main():
     db_session.global_init("db/blogs.db")
-    print(generate_code('админ'))
+    print(generate_code('администратор'))
     print(generate_code('жюри'))
     print(generate_code('преподаватель'))
     # socketio.init_app(app, debug=True)

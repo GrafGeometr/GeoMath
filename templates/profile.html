@@ -13,17 +13,21 @@
     {% endif %}
     {% if viewer.id==user.id and user.status=="участник" %}, участник
     {% endif %}
-    {% if viewer.id==user.id and user.status=="админ" %}, администратор
+    {% if viewer.id==user.id and user.status=="администратор" %}, администратор<br> Пользователей: {{users_count}}<br>Публикаций: {{publ_count}}
     {% endif %}
-    <hr>
+    <br>
     Адрес электронной почты: {{ user.email }}
 </font></div>
 {% if user.about %}
+{% if user.status=="администратор" %}
+<div class="alert alert-secondary">Информация о себе <br> {{ user.about|safe }}</div>
+{% else %}
 <div class="alert alert-secondary">Информация о себе <br> {{ user.about }}</div>
+{% endif %}
 {% endif %}
 {% if viewer.id==user.id %}
 Сгенерировать код доступа для других участников<br>
-{% if user.status=="админ" %}
+{% if user.status=="администратор" %}
 <div class="btn-group" role="group" aria-label="Basic example">
     <a href="/generate_code/участник" class="btn btn-primary">Участник</a>
     <a href="/generate_code/преподаватель" class="btn btn-primary">Преподаватель</a>

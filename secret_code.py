@@ -1,7 +1,7 @@
 from random import choice
 from datetime import datetime, timedelta
 
-# жюри преподаватель админ участник
+# жюри преподаватель администратор участник
 
 symbols = '1234567890!@#&*()_+№?*-=[]{}\\/|<>qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
 

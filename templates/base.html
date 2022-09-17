@@ -143,6 +143,9 @@
 </header>
 
 <main role="main">
+    {% if admin_message %}
+    {{admin_message|safe}}
+    {%endif%}
     {% block content %}{% endblock %}
 </main>
 
@@ -153,6 +156,10 @@
             <a href="/add_post" class="btn btn-outline-secondary">Добавить заметку</a>
             <a href="/add_problem" class="btn btn-outline-secondary">Добавить задачу</a>
             <a class="btn btn-outline-secondary" href="/my">Перейти к отложенным</a>
+            {% if current_user.status == "администратор" %}
+            <a class="btn btn-outline-secondary" href="/admin_message">Сделать объявление</a>
+            <a class="btn btn-outline-secondary" href="/get_db">Скачать базу данных</a>
+            {% endif %}
             {% if current_user.wrong %}
             <a class="btn btn-danger" href="/wrong">Некоторые ваши решения или задачи считают неверными</a>
             {% endif %}
