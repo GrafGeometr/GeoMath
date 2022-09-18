@@ -117,7 +117,7 @@
 
 
 <header>
-    <nav class="navbar navbar-secondary bg-light flex-column">
+    <nav class="navbar navbar-secondary bg-light flex-column sticky-top">
         <div><img src="/static/images/icon.png" height="50" style="vertical-align: middle"><font size="6"
                                                                                                 style="vertical-align: middle">GeoMath</font>
         </div>
@@ -150,7 +150,7 @@
 </main>
 
 <header>
-    <nav class="navbar navbar bg-light flex-column">
+    <nav class="navbar navbar bg-light flex-column  sticky-top">
         <div class="btn-group-vertical" role="group">
             {% if current_user.is_authenticated %}
             <a href="/add_post" class="btn btn-outline-secondary">Добавить заметку</a>
