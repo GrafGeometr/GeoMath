@@ -1,4 +1,5 @@
 import math
+from db_location import SQLALCHEMY_DATABASE_URI
 from flask import Flask, render_template, redirect, request, make_response, current_app, send_from_directory
 from flask_restful import abort
 from loginform import LoginForm
@@ -1650,7 +1651,7 @@ def delete_solution(solution_id, problem_id):
 
 
 def main():
-    db_session.global_init("db/blogs.db")
+    db_session.global_init(SQLALCHEMY_DATABASE_URI)
     print(generate_code('администратор'))
     print(generate_code('жюри'))
     print(generate_code('преподаватель'))
