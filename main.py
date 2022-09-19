@@ -719,16 +719,18 @@ def index(cathegories, post_types, time, tegs: str):
     # Подбираем подходящии публикации
     good_themes = [i for i in range(3) if cats[i] == '*']
     if form.posts.data:
-        posts = list(db_sess.query(Post).filter(Post.created_date > oldest,
-                                                Post.theme.in_(good_themes)).all())
+        posts = []
+        for post in list(db_sess.query(Post).filter(Post.created_date > oldest).all()):
+            if post.theme in good_themes:
+                posts.append(post)
     else:
         posts = []
     solprobs = []
     nosolprobs = []
-    for problem in db_sess.query(Problem).filter(Problem.created_date > oldest, Problem.theme.in_(good_themes)).all():
-        if problem.solutions and form.solprob.data:
+    for problem in db_sess.query(Problem).filter(Problem.created_date > oldest).all():
+        if problem.theme in good_themes and (problem.solutions and form.solprob.data):
             solprobs.append(problem)
-        elif not problem.solutions and form.nosolprob.data:
+        elif problem.theme in good_themes and (not problem.solutions and form.nosolprob.data):
             nosolprobs.append(problem)
     publications = posts + solprobs + nosolprobs
     tegs_found = 0
