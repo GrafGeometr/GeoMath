@@ -40,7 +40,7 @@
     <a class="btn btn-danger" href="/wrong">Некоторые ваши решения или задачи считают неверными</a>
     {% endif %}
     {% endif %}
-</div>
+</div><br>
 
 {% if viewer.id==user.id %}
 Сгенерировать код доступа для других участников<br>
@@ -85,6 +85,7 @@
         var btn = document.getElementById("subscribebtn");
         btn.onclick = function(){ toread("subscribebtn", "{{ subscribe_href }}"); };
 
+
     </script>
 
     {% if user.readers and viewer.id in user.readers %}
@@ -95,6 +96,7 @@
     <script>
         var btn = document.getElementById("readerbtn");
         btn.onclick = function(){ toread("readerbtn", "{{ reader_href }}"); };
+
 
     </script>
 </div>
@@ -254,12 +256,14 @@
                         btn = document.getElementById("{{toreadbtnid}}");
                         btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
 
+
                 </script>
                 {% else %}
                 <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
                 <script>
                         btn = document.getElementById("{{toreadbtnid}}");
                         btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+
 
                 </script>
                 {% endif %}
@@ -285,6 +289,7 @@
                     var btn1 = document.getElementById( "{{ btnid }}" );
                     btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
 
+
                 </script>
                 {% else %}
                 <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png"
@@ -293,6 +298,7 @@
                 <script>
                     var btn1 = document.getElementById( "{{ btnid }}" );
                     btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
 
                 </script>
                 {% endif %}
@@ -335,12 +341,14 @@
                             btn = document.getElementById("{{toreadbtnid}}");
                             btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
 
+
                     </script>
                     {% else %}
                     <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
                     <script>
                             btn = document.getElementById("{{toreadbtnid}}");
                             btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+
 
                     </script>
                     {% endif %}
@@ -357,12 +365,14 @@
                             btn = document.getElementById("{{toreadbtnid}}");
                             btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
 
+
                     </script>
                     {% else %}
                     <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
                     <script>
                             btn = document.getElementById("{{toreadbtnid}}");
                             btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+
 
                     </script>
                     {% endif %}
@@ -389,6 +399,7 @@
                         var btn1 = document.getElementById( "{{ btnid }}" );
                         btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
 
+
                     </script>
                     {% else %}
                     <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png"
@@ -397,6 +408,7 @@
                     <script>
                         var btn1 = document.getElementById( "{{ btnid }}" );
                         btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+
 
                     </script>
                     {% endif %}
