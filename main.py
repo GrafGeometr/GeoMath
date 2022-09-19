@@ -732,8 +732,10 @@ def index(cathegories, post_types, time, tegs: str):
         print(problem.theme, problem.solutions)
         print(good_themes, form.solprob.data, form.nosolprob.data)
         if problem.theme in good_themes and (problem.solutions and form.solprob.data):
+            print(1)
             solprobs.append(problem)
         elif problem.theme in good_themes and (not problem.solutions and form.nosolprob.data):
+            print(2)
             nosolprobs.append(problem)
         print(solprobs, nosolprobs)
     publications = posts + solprobs + nosolprobs
