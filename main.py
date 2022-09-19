@@ -761,6 +761,7 @@ def index(cathegories, post_types, time, tegs: str):
         return reit
 
     publications.sort(key=interest, reverse=True)
+    print(publications)
     if tegs_found or tegs == "NOTEGS":
         res = make_response(
             render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
