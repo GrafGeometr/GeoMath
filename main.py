@@ -730,7 +730,7 @@ def index(cathegories, post_types, time, tegs: str):
     nosolprobs = []
     for problem in db_sess.query(Problem).filter(Problem.created_date > oldest).all():
         print(problem.theme, problem.solutions)
-        print(good_themes)
+        print(good_themes, form.solprob.data, form.nosolprob.data)
         if problem.theme in good_themes and (problem.solutions and form.solprob.data):
             solprobs.append(problem)
         elif problem.theme in good_themes and (not problem.solutions and form.nosolprob.data):
