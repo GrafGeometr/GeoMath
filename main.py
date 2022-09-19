@@ -721,6 +721,7 @@ def index(cathegories, post_types, time, tegs: str):
     if form.posts.data:
         posts = []
         for post in list(db_sess.query(Post).filter(Post.created_date > oldest).all()):
+            print(post)
             if post.theme in good_themes:
                 posts.append(post)
     else:
@@ -728,6 +729,7 @@ def index(cathegories, post_types, time, tegs: str):
     solprobs = []
     nosolprobs = []
     for problem in db_sess.query(Problem).filter(Problem.created_date > oldest).all():
+        print(problem.theme, problem.solutions)
         if problem.theme in good_themes and (problem.solutions and form.solprob.data):
             solprobs.append(problem)
         elif problem.theme in good_themes and (not problem.solutions and form.nosolprob.data):
