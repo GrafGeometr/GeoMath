@@ -110,7 +110,6 @@
         {% set btnid = "#combtn"+counter|string %}
         {% set imgid = "#comlikeimg"+counter|string %}
         {% if comment.liked_by and viewer.id in comment.liked_by %}
-        <div class="alert alert-light">
             <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
             </button>
             <script>
@@ -125,7 +124,6 @@
                 btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
             </script>
             {% endif %}
-        </div>
         {% endif %}
     </div>
 

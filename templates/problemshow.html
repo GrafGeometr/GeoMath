@@ -114,7 +114,6 @@
     {% set likehref = "/liked/"+viewer.id|string+"/problem/"+problem.id|string %}
     {% set btnid = "#problembtn" %}
     {% set imgid = "#problemlikeimg" %}
-    <div class="alert alert-light">
         {% if problem.liked_by and viewer.id in problem.liked_by %}
         <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
         </button>
@@ -130,7 +129,6 @@
             btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
         </script>
         {% endif %}
-    </div>
 </div>
 {% endif %}
 </div>
@@ -249,7 +247,6 @@
         {% set likehref = "/liked/"+viewer.id|string+"/solution/"+solution.id|string %}
         {% set btnid = "#problemsolbtn" + counter|string %}
         {% set imgid = "#problemsollikeimg" + counter|string %}
-        <div class="alert alert-light">
             {% if solution.liked_by and viewer.id in solution.liked_by %}
             <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
             </button>
@@ -267,7 +264,6 @@
 
             </script>
             {% endif %}
-        </div>
     </div>
     {% endif %}
 
@@ -331,7 +327,6 @@
         {% set likehref = "/liked/"+viewer.id|string+"/comment/"+comment.id|string %}
         {% set btnid = "#commentsolbtn" + counter2|string %}
         {% set imgid = "#commentsollikeimg" + counter2|string %}
-        <div class="alert alert-light">
             {% if comment.liked_by and viewer.id in comment.liked_by %}
             <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
             </button>
@@ -347,7 +342,6 @@
                 btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
             </script>
             {% endif %}
-        </div>
         {% endif %}
     </div>
     {% endfor %}
@@ -417,7 +411,6 @@
         {% set likehref = "/liked/"+viewer.id|string+"/comment/"+comment.id|string %}
         {% set btnid = "#commentprbtn" + counter3|string %}
         {% set imgid = "#commentprlikeimg" + counter3|string %}
-        <div class="alert alert-light">
             {% if comment.liked_by and viewer.id in comment.liked_by %}
             <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
             </button>
@@ -433,7 +426,6 @@
             btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
             </script>
             {% endif %}
-        </div>
         {% endif %}
     </div>
     {% endfor %}
