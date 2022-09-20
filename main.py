@@ -989,7 +989,7 @@ def gen_code(status):
         db_sess.close()
 
         res = make_response(
-            render_template('codegen.html', title='Код приглашения', status=status, code=reg_code.code,
+            render_template('codegen.html', title='Код приглашения', status=status, code=code,
                             with_cats_show=with_cats_show, admin_message=get_adminmessage()))
 
         return res
