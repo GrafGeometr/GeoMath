@@ -4,7 +4,7 @@
 {% for counter in range(publications|length) %}
 {% set publ = publications[counter] %}
 <div class="alert alert-dark">
-    <div class="alert alert-secondary">
+    <div class="alert alert-light">
         {% if isinstance(publ, Solution) %}
         Ваше решение считают неверным
         {% for users_file in publ.files %}

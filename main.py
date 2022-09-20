@@ -1,6 +1,6 @@
 import math
 from db_location import SQLALCHEMY_DATABASE_URI
-from flask import Flask, render_template, redirect, request, make_response, current_app, send_from_directory
+from flask import Flask, render_template, redirect, request, make_response, current_app
 from flask_restful import abort
 from loginform import LoginForm
 from data import db_session
@@ -23,7 +23,8 @@ from data.users_file import UsersFile
 from fileform import FileAddForm
 from verifyform import VerifyForm
 from navform import NavForm
-from secret_code import generate_code, check_code
+from secret_code import generate_code
+from data.codes import RegCode
 from datetime import datetime, timedelta
 import os
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -104,14 +105,6 @@ def fix_cats(publ, db_sess):
             publ.categories.remove(category)
     print(publ.categories)
     db_sess.commit()
-
-
-@app.route('/get_db', methods=['GET', 'POST'])
-def download():
-    # Appending app path to upload folder path within app root folder
-    uploads = os.path.join(current_app.root_path, "db")
-    # Returning file from appended path
-    return send_from_directory(uploads, "blogs.db")
 
 
 @app.route('/admin_message', methods=['POST', 'GET'])
@@ -717,11 +710,10 @@ def index(cathegories, post_types, time, tegs: str):
     oldest = now - timedist
     db_sess = db_session.create_session()
     # Подбираем подходящии публикации
-    good_themes = [i for i in range(3) if cats[i] == '*']
+    good_themes = [str(i) for i in range(3) if cats[i] == '*']
     if form.posts.data:
         posts = []
         for post in list(db_sess.query(Post).filter(Post.created_date > oldest).all()):
-            print(post)
             if post.theme in good_themes:
                 posts.append(post)
     else:
@@ -729,17 +721,10 @@ def index(cathegories, post_types, time, tegs: str):
     solprobs = []
     nosolprobs = []
     for problem in db_sess.query(Problem).filter(Problem.created_date > oldest).all():
-        print(problem.theme, problem.solutions)
-        print(good_themes, form.solprob.data, form.nosolprob.data)
-        if problem.theme in good_themes:
-            print(123)
-            if problem.solutions and form.solprob.data:
-                print(1)
-                solprobs.append(problem)
-            elif not problem.solutions and form.nosolprob.data:
-                print(2)
-                nosolprobs.append(problem)
-        print(solprobs, nosolprobs)
+        if problem.theme in good_themes and (problem.solutions and form.solprob.data):
+            solprobs.append(problem)
+        elif problem.theme in good_themes and (not problem.solutions and form.nosolprob.data):
+            nosolprobs.append(problem)
     publications = posts + solprobs + nosolprobs
     tegs_found = 0
 
@@ -929,7 +914,8 @@ def edit_profile(user_id):
 
             return res
         if form.change_status.data:
-            res, status = check_code(form.secret_code.data)
+            db_sess = db_session.create_session()
+            res, status = check_code(form.secret_code.data, db_sess)
             if not res:
                 res = make_response(render_template('profileedit.html', title='Редактирование профиля',
                                                     form=form,
@@ -961,6 +947,22 @@ def edit_profile(user_id):
     return res
 
 
+def check_code(code, db_sess):
+    reg_code = db_sess.query(RegCode).filter(RegCode.code == code).first()
+    if not reg_code:
+        return False, "Код недействителен"
+    if datetime.now() - reg_code.created_date <= timedelta(days=1):
+        db_sess.delete(reg_code)
+        db_sess.commit()
+        db_sess.close()
+        return False, "Время действи кода истекло"
+    result = reg_code.status
+    db_sess.delete(reg_code)
+    db_sess.commit()
+    db_sess.close()
+    return True, result
+
+
 # Генерация кода регистрации
 @login_required
 @app.route('/generate_code/<status>')
@@ -971,8 +973,23 @@ def gen_code(status):
     if statuses.get(status, 1000) > statuses[current_user.status]:
         return redirect('/')
     else:
+        code = None
+        db_sess = db_session.create_session()
+        while True:
+            code = generate_code(status)
+            reg_code = db_sess.query(RegCode).filter(RegCode.code == code).first()
+            if not reg_code:
+                break
+            if datetime.now() - reg_code.created_date <= timedelta(days=1):
+                db_sess.delete(reg_code)
+                break
+        reg_code = RegCode(code=code, status=status)
+        db_sess.add(reg_code)
+        db_sess.commit()
+        db_sess.close()
+
         res = make_response(
-            render_template('codegen.html', title='Код приглашения', status=status, code=generate_code(status),
+            render_template('codegen.html', title='Код приглашения', status=status, code=reg_code.code,
                             with_cats_show=with_cats_show, admin_message=get_adminmessage()))
 
         return res
@@ -1053,7 +1070,8 @@ def verify_email(user_id):
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        res, status = check_code(form.secret_code.data)
+        db_sess = db_session.create_session()
+        res, status = check_code(form.secret_code.data, db_sess)
         if not res:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,

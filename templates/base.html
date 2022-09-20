@@ -158,7 +158,6 @@
             <a class="btn btn-outline-secondary" href="/my">Перейти к отложенным</a>
             {% if current_user.status == "администратор" %}
             <a class="btn btn-outline-secondary" href="/admin_message">Сделать объявление</a>
-            <a class="btn btn-outline-secondary" href="/get_db">Скачать базу данных</a>
             {% endif %}
             {% if current_user.wrong %}
             <a class="btn btn-danger" href="/wrong">Некоторые ваши решения или задачи считают неверными</a>

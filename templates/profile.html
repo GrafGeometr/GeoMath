@@ -34,7 +34,6 @@
     <a class="btn btn-outline-secondary" href="/my">Перейти к отложенным</a>
     {% if current_user.status == "администратор" %}
     <a class="btn btn-outline-secondary" href="/admin_message">Сделать объявление</a>
-    <a class="btn btn-outline-secondary" href="/get_db">Скачать базу данных</a>
     {% endif %}
     {% if current_user.wrong %}
     <a class="btn btn-danger" href="/wrong">Некоторые ваши решения или задачи считают неверными</a>
@@ -212,11 +211,11 @@
 </div>
 
 {% endif %}
-<div class="alert alert-dark">Публикации пользователя:
+<div class="alert alert-secondary">Публикации пользователя:
     {% for counter in range(publications|length) %}
     {% set publ = publications[counter] %}
-    <div class="alert alert-dark">
-        <div class="alert alert-secondary">
+    <div class="alert alert-secondary">
+        <div class="alert alert-light">
             {% if isinstance(publ, Post) %}
             <h2>{{with_cats_show(publ.title)|safe}}</h2>
             <hr>
@@ -280,7 +279,6 @@
             {% set likehref = "/liked/"+viewer.id|string+"/post/"+publ.id|string %}
             {% set btnid = "#postbtn" + counter|string %}
             {% set imgid = "#postlikeimg" + counter|string %}
-            <div class="alert alert-light">
                 {% if publ.liked_by and viewer.id in publ.liked_by %}
                 <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png"
                                                                   width="20">Нравится
@@ -302,7 +300,6 @@
 
                 </script>
                 {% endif %}
-            </div>
             {% endif %}
             {% else %}
             Условие задачи:<br>
@@ -390,7 +387,6 @@
                 {% set likehref = "/liked/"+viewer.id|string+"/problem/"+publ.id|string %}
                 {% set btnid = "#problembtn" + counter|string %}
                 {% set imgid = "#problemlikeimg" + counter|string %}
-                <div class="alert alert-light">
                     {% if publ.liked_by and viewer.id in publ.liked_by %}
                     <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png"
                                                                       width="20">Нравится
@@ -412,7 +408,6 @@
 
                     </script>
                     {% endif %}
-                </div>
                 {% endif %}
                 {% endif %}
             </div>
