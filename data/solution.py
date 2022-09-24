@@ -38,3 +38,8 @@ class Solution(SqlAlchemyBase):
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     files = orm.relation("UsersFile", back_populates='solution')
+
+    def get_rank(self):
+        if self.rank<0:
+            self.rank = 0
+        return self.rank

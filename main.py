@@ -2,6 +2,7 @@ import math
 from db_location import SQLALCHEMY_DATABASE_URI
 from flask import Flask, render_template, redirect, request, make_response, current_app
 from flask_restful import abort
+from github import Github
 from loginform import LoginForm
 from data import db_session
 from data.users import User
@@ -31,11 +32,12 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 import smtplib
 from email.mime.text import MIMEText
 import random
-# from email_secret_data import EMAIL, PASSWORD
+# from email_secret_data import EMAIL, PASSWORD, GITHUB_TOKEN
 from email.mime.multipart import MIMEMultipart
 
 EMAIL = os.environ["EMAIL"]
 PASSWORD = os.environ["PASSWORD"]
+GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -44,6 +46,24 @@ app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jp
 login_manager = LoginManager()
 login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
+
+
+def push_file_to_GitHub(filename):
+    github = Github(GITHUB_TOKEN)
+    repository = github.get_user().get_repo('Ge0MathStoarge')
+    # create with commit message
+    with open(f'/static/{filename}', 'r') as file:
+        content = file.read()
+    f = repository.create_file(filename, "some_file", content)
+
+
+def get_file_from_GitHub(filename):
+    github = Github(GITHUB_TOKEN)
+    repository = github.get_user().get_repo('Ge0MathStoarge')
+    # path in the repository
+    f = repository.get_contents(filename)
+    with open(f'/static/{filename}', 'w') as file:
+        file.write(f.decoded_content.decode())
 
 
 def get_adminmessage():
@@ -58,6 +78,7 @@ def get_adminmessage():
 def set_adminmessage(text):
     with open('/static/adminmessage.txt', 'w') as f:
         f.write(text)
+    push_file_to_GitHub('adminmessage.txt')
 
 
 # @app.route('/jstest')
@@ -951,7 +972,7 @@ def check_code(code, db_sess):
     reg_code = db_sess.query(RegCode).filter(RegCode.code == code).first()
     if not reg_code:
         return False, "Код недействителен"
-    if datetime.now() - reg_code.created_date <= timedelta(days=1):
+    if datetime.now() - reg_code.created_date > timedelta(days=1):
         db_sess.delete(reg_code)
         db_sess.commit()
         db_sess.close()
@@ -1256,9 +1277,10 @@ def edit_post(id):
                     db_sess.close()
                     abort(400)
                 filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
                 file.save(file_path)
+                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
@@ -1267,6 +1289,7 @@ def edit_post(id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
             if file_form.geogebra_link.data != '':
                 try:
                     f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
@@ -1278,6 +1301,7 @@ def edit_post(id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount,txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1352,9 +1376,10 @@ def edit_problem(id):  # without solution
                     db_sess.close()
                     abort(400)
                 filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
                 file.save(file_path)
+                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
@@ -1363,6 +1388,7 @@ def edit_problem(id):  # without solution
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
             if file_form.geogebra_link.data != '':
                 try:
                     f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
@@ -1374,6 +1400,7 @@ def edit_problem(id):  # without solution
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1490,9 +1517,10 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                     db_sess.close()
                     abort(400)
                 filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
                 file.save(file_path)
+                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
@@ -1501,6 +1529,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
             if file_form.geogebra_link.data != '':
                 try:
                     f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
@@ -1512,6 +1541,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1611,9 +1641,10 @@ def edit_solution(solution_id, problem_id):
                     db_sess.close()
                     abort(400)
                 filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static', 'user_files'),
+                file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
                 file.save(file_path)
+                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
@@ -1622,6 +1653,7 @@ def edit_solution(solution_id, problem_id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
             if file_form.geogebra_link.data != '':
                 try:
                     f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
@@ -1633,6 +1665,7 @@ def edit_solution(solution_id, problem_id):
                 f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
                 f.write(str(n))
                 f.close()
+                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1687,6 +1720,10 @@ def main():
     # socketio.init_app(app, debug=True)
 
     db_sess = db_session.create_session()
+
+    for users_file in db_sess.query(UsersFile).all():
+        get_file_from_GitHub(UsersFile.name)
+
     db_sess.close()
 
     port = int(os.environ.get("PORT", 5000))

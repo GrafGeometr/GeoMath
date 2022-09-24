@@ -6,6 +6,7 @@ from sqlalchemy import orm
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
+
 # Пользователь
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
@@ -50,7 +51,7 @@ class User(SqlAlchemyBase, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
 
-    def get_rank(self, theme=None, creating_only=False): # Умная функция подсчёта рейтинга
+    def get_rank(self, theme=None, creating_only=False):  # Умная функция подсчёта рейтинга
         res = 0
         if self.status in ['жюри', 'преподаватель']:
             return 100
@@ -87,5 +88,5 @@ class User(SqlAlchemyBase, UserMixin):
         timedelta = datetime.datetime.now() - self.created_date
         months = timedelta.seconds / 60 / 60 / 24 / 30
         res -= months
-        rank = max(1, math.atan(res / 2000) / math.pi * 200)
+        rank = 1 + math.atan(res / 2000) / math.pi * 2 * 99
         return rank

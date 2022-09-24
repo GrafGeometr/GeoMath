@@ -52,6 +52,11 @@ class Post(SqlAlchemyBase):
                               secondary="posts_and_cats",
                               back_populates="posts")
 
+    def get_rank(self):
+        if self.rank<0:
+            self.rank = 0
+        return self.rank
+
     def get_needed_cats(self): # Получаем нужные категории
         res = []
         res.extend(get_categories_from_text(self.content))

@@ -33,3 +33,8 @@ class Comment(SqlAlchemyBase):
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
     files = orm.relation("UsersFile", back_populates='comment')
+
+    def get_rank(self):
+        if self.rank<0:
+            self.rank = 0
+        return self.rank
