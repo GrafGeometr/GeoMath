@@ -60,9 +60,12 @@ def get_file_from_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # path in the repository
-    f = repository.get_contents(filename)
-    with open(f'/static/{filename}', 'w') as file:
-        file.write(f.decoded_content.decode())
+    try:
+        f = repository.get_contents(filename)
+        with open(f'/static/{filename}', 'w') as file:
+            file.write(f.decoded_content.decode())
+    except Exception as e:
+        print(e)
 
 
 def get_adminmessage():
