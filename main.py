@@ -41,7 +41,6 @@ GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-app.config['UPLOAD_FOLDER'] = '/user_files'
 app.config['UPLOAD_EXTENSIONS'] = ['.txt', '.pdf', '.doc', '.docx', '.png', '.jpeg', '.jpg', '.gif']
 login_manager = LoginManager()
 login_manager.init_app(app)
