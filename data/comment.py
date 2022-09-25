@@ -18,17 +18,17 @@ class Comment(SqlAlchemyBase):
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
-    user = orm.relation('User')
+    user = orm.relation('User', back_populates='comments')
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
     post_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("posts.id"))
-    post = orm.relation('Post')
+    post = orm.relation('Post', back_populates='comments')
     problem_id = sqlalchemy.Column(sqlalchemy.Integer,
                                    sqlalchemy.ForeignKey("problems.id"))
-    problem = orm.relation('Problem')
+    problem = orm.relation('Problem', back_populates='comments')
     solution_id = sqlalchemy.Column(sqlalchemy.Integer,
                                     sqlalchemy.ForeignKey("solutions.id"))
-    solution = orm.relation('Solution')
+    solution = orm.relation('Solution', back_populates='comments')
 
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 

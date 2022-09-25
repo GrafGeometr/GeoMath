@@ -48,7 +48,7 @@ class Problem(SqlAlchemyBase):
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
-    user = orm.relation('User')
+    user = orm.relation('User', back_populates='problems')
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
     comments = orm.relation("Comment", back_populates='problem')
 

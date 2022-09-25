@@ -27,11 +27,11 @@ class Solution(SqlAlchemyBase):
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
-    user = orm.relation('User')
+    user = orm.relation('User', back_populates='solutions')
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
     problem_id = sqlalchemy.Column(sqlalchemy.Integer,
                                    sqlalchemy.ForeignKey("problems.id"))
-    problem = orm.relation('Problem')
+    problem = orm.relation('Problem', back_populates='solutions')
 
     comments = orm.relation("Comment", back_populates='solution')
 

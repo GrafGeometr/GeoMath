@@ -40,7 +40,7 @@ class Post(SqlAlchemyBase):
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
-    user = orm.relation('User')
+    user = orm.relation('User', back_populates='posts')
     # image_id = sqlalchemy.Column(sqlalchemy.Integer)
     comments = orm.relation("Comment", back_populates='post')
 
