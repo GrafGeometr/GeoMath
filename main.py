@@ -1280,42 +1280,21 @@ def edit_post(id):
             form.theme.data = post.theme
             file = file_form.file.data
             if file.filename != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
-                filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static'),
-                                         filename)
-                file.save(file_path)
-                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 post.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
+
+                filename = f'{users_file.id}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static'),
+                                         filename)
+                file.save(file_path)
+                push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount,txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1378,43 +1357,21 @@ def edit_problem(id):  # without solution
             form.theme.data = problem.theme
             file = file_form.file.data
             if file.filename != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
-                filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static'),
-                                         filename)
-                file.save(file_path)
-                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 problem.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
+
+                filename = f'{users_file.id}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static'),
+                                         filename)
+                file.save(file_path)
+                push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1519,43 +1476,21 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
             form.content.data = comment.content
             file = file_form.file.data
             if file.filename != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
-                filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static'),
-                                         filename)
-                file.save(file_path)
-                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 comment.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
+
+                filename = f'{users_file.id}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static'),
+                                         filename)
+                file.save(file_path)
+                push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
@@ -1643,44 +1578,21 @@ def edit_solution(solution_id, problem_id):
             form.content.data = solution.content
             file = file_form.file.data
             if file.filename != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-
                 file_ext = os.path.splitext(file.filename)[1]
                 if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                     db_sess.close()
                     abort(400)
-                filename = f'{n}{file_ext}'
-                file_path = os.path.join(os.path.join(basedir, 'static'),
-                                         filename)
-                file.save(file_path)
-                print(file_path)
-                push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 solution.files.append(users_file)
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
+
+                filename = f'{users_file.id}{file_ext}'
+                file_path = os.path.join(os.path.join(basedir, 'static'),
+                                         filename)
+                file.save(file_path)
+                push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
-                try:
-                    f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'r')
-                    n = int(f.read())
-                    f.close()
-                except Exception as e:
-                    n = 1
-                n += 1
-                f = open(os.path.join(basedir, 'static', 'filecount.txt'), 'w')
-                f.write(str(n))
-                f.close()
-                push_file_to_GitHub('filecount.txt')
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
                 users_file.name = file_form.geogebra_link.data
