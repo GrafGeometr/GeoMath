@@ -1,5 +1,5 @@
 import os
-from main import basedir
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 if os.environ.get('DATABASE_URL') is None:
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/blogs.db')
