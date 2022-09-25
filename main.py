@@ -1649,7 +1649,7 @@ def main():
     db_sess = db_session.create_session()
 
     for users_file in db_sess.query(UsersFile).all():
-        get_file_from_GitHub(UsersFile.name)
+        get_file_from_GitHub(users_file.name)
 
     db_sess.close()
 
