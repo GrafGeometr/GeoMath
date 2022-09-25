@@ -57,7 +57,7 @@ def push_file_to_GitHub(filename):
     with open(file_path, 'rb') as file:
         our_bytes = file.read()
         bytes_count = len(our_bytes)
-        content = int.from_bytes(our_bytes, byteorder=sys.byteorder)
+        content = ' '.join(str(byte) for byte in our_bytes)
     try:
         f = repository.get_contents(f"{filename.split('.')[0]}.txt")
     except Exception as e:
@@ -73,8 +73,9 @@ def get_file_from_GitHub(filename):
     try:
         f = repository.get_contents(f"{filename.split('.')[0]}.txt")
         with open(file_path, 'wb') as file:
-            bytes_count_sts, content = f.decoded_content.decode().split()
-            file.write(int(content).to_bytes(int(bytes_count_sts), byteorder=sys.byteorder))
+            bytes_count_sts, *content = f.decoded_content.decode().split()
+            our_bytes = bytearray(list(map(int, content)))
+            file.write(our_bytes)
     except Exception as e:
         print(e)
 
