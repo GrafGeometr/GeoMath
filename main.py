@@ -51,7 +51,9 @@ def push_file_to_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # create with commit message
-    with open(f'/static/{filename}', 'r') as file:
+    file_path = os.path.join(os.path.join(basedir, 'static'),
+                             filename)
+    with open(file_path, 'r') as file:
         content = file.read()
     f = repository.create_file(filename, "some_file", content)
 
@@ -60,9 +62,11 @@ def get_file_from_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # path in the repository
+    file_path = os.path.join(os.path.join(basedir, 'static'),
+                             filename)
     try:
         f = repository.get_contents(filename)
-        with open(f'/static/{filename}', 'w') as file:
+        with open(file_path, 'w') as file:
             file.write(f.decoded_content.decode())
     except Exception as e:
         print(e)
@@ -1646,6 +1650,7 @@ def edit_solution(solution_id, problem_id):
                 file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
                 file.save(file_path)
+                print(file_path)
                 push_file_to_GitHub(filename)
                 users_file = UsersFile()
                 users_file.name = file.filename
