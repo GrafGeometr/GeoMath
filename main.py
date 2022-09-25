@@ -1,7 +1,6 @@
 import math
-import sys
 from db_location import SQLALCHEMY_DATABASE_URI
-from flask import Flask, render_template, redirect, request, make_response, current_app
+from flask import Flask, render_template, redirect, request, make_response, current_app, url_for
 from flask_restful import abort
 from github import Github
 from loginform import LoginForm
@@ -53,7 +52,7 @@ def push_file_to_GitHub(filename):
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # create with commit message
     file_path = os.path.join(os.path.join(basedir, 'static'),
-                             filename)
+                             filename) #FIX THIS WTF!!!
     with open(file_path, 'rb') as file:
         our_bytes = file.read()
         bytes_count = len(our_bytes)
@@ -68,6 +67,7 @@ def get_file_from_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # path in the repository
+    print(basedir, type(basedir))
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              filename)
     try:
