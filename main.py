@@ -1288,7 +1288,7 @@ def edit_post(id):
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 post.files.append(users_file)
-
+                users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
                 file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
@@ -1365,7 +1365,7 @@ def edit_problem(id):  # without solution
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 problem.files.append(users_file)
-
+                users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
                 file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
@@ -1484,7 +1484,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 comment.files.append(users_file)
-
+                users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
                 file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
@@ -1586,7 +1586,7 @@ def edit_solution(solution_id, problem_id):
                 users_file.name = file.filename
                 users_file.extension = file_ext
                 solution.files.append(users_file)
-
+                users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
                 file_path = os.path.join(os.path.join(basedir, 'static'),
                                          filename)
