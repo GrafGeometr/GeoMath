@@ -1,4 +1,5 @@
 import math
+import sys
 from db_location import SQLALCHEMY_DATABASE_URI
 from flask import Flask, render_template, redirect, request, make_response, current_app
 from flask_restful import abort
@@ -53,9 +54,14 @@ def push_file_to_GitHub(filename):
     # create with commit message
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              filename)
-    with open(file_path, 'r') as file:
-        content = file.read()
-    f = repository.create_file(filename, "some_file", content)
+    with open(file_path, 'rb') as file:
+        our_bytes = file.read()
+        bytes_count = len(our_bytes)
+        content = int.from_bytes(our_bytes, byteorder=sys.byteorder)
+    try:
+        f = repository.get_contents(f"{filename.split('.')[0].txt}")
+    except Exception as e:
+        f = repository.create_file(f"{filename.split('.')[0].txt}", "some_file", content=f'{bytes_count}\n{content}')
 
 
 def get_file_from_GitHub(filename):
@@ -65,9 +71,10 @@ def get_file_from_GitHub(filename):
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              filename)
     try:
-        f = repository.get_contents(filename)
-        with open(file_path, 'w') as file:
-            file.write(f.decoded_content.decode())
+        f = repository.get_contents(f"{filename.split('.')[0].txt}")
+        with open(file_path, 'wb') as file:
+            bytes_count_sts, content = f.decoded_content.decode().split()
+            file.write(int(content).to_bytes(int(bytes_count_sts), byteorder=sys.byteorder))
     except Exception as e:
         print(e)
 
