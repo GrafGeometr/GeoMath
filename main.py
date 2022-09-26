@@ -144,6 +144,21 @@ def fix_cats(publ, db_sess):
     db_sess.commit()
 
 
+@app.route('admin_debug', methods=['POST','GET'])
+def admin_debug():
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if current_user.status != 'администратор':
+        return redirect('/')
+    form = AdminForm()
+    if form.validate_on_submit():
+        eval(form.content.data)
+        return redirect('/admin_debug')
+    return render_template('adminmessage.html', title='Админская дичь', form=form,
+                           admin_message=get_adminmessage())
+
+
+
 @app.route('/admin_message', methods=['POST', 'GET'])
 def change_admin_message():
     global admin_message
