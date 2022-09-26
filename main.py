@@ -1558,6 +1558,13 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
         db_sess.close()
         abort(404)
     if comment:
+        if comment.post:
+            comment.post.comments.pop(comment)
+        if comment.solution:
+            comment.solution.comments.pop(comment)
+        if comment.problem:
+            comment.solution.comments.pop(comment)
+        comment.user.comments.pop(comment)
         db_sess.delete(comment)
         db_sess.commit()
         db_sess.close()
@@ -1647,6 +1654,8 @@ def delete_solution(solution_id, problem_id):
                                               Solution.user == current_user,
                                               Solution.problem_id == problem_id).first()
     if solution and not solution.comments:
+        solution.user.solutions.pop(solution)
+        solution.problem.solutions.pop(solution)
         db_sess.delete(solution)
         db_sess.commit()
         db_sess.close()
