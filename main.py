@@ -152,7 +152,7 @@ def admin_debug():
         return redirect('/')
     form = AdminForm()
     if form.validate_on_submit():
-        eval(form.content.data)
+        exec(form.content.data)
         return redirect('/admin_debug')
     return render_template('adminmessage.html', title='Админская дичь', form=form,
                            admin_message=get_adminmessage())
