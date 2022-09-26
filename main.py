@@ -144,7 +144,7 @@ def fix_cats(publ, db_sess):
     db_sess.commit()
 
 
-@app.route('admin_debug', methods=['POST','GET'])
+@app.route('/admin_debug', methods=['POST','GET'])
 def admin_debug():
     if not current_user.is_authenticated:
         return redirect('/login')
