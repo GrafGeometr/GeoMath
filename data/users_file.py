@@ -30,6 +30,9 @@ class UsersFile(SqlAlchemyBase):
                                    sqlalchemy.ForeignKey("users.id"))
     user = orm.relation('User')
 
+    def filename(self):
+        return f'{self.id}{self.extension}'
+
     def __repr__(self): # Показываем
         if self.extension=='.ggb':
             return f'<iframe  scrolling="no" src="{self.name}" width="1100px" height="1000px" style="border:0px;"></iframe><br>'
