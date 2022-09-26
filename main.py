@@ -71,7 +71,9 @@ def get_file_from_GitHub(filename):
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              filename)
     try:
-        f = repository.get_contents(f"{filename.split('.')[0]}.txt")
+        name = f"{filename.split('.')[0]}.txt"
+        print(name)
+        f = repository.get_contents(name)
         with open(file_path, 'wb') as file:
             bytes_count_sts, *content = f.decoded_content.decode().split()
             our_bytes = bytearray(list(map(int, content)))
