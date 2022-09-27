@@ -115,7 +115,7 @@ def with_cats_show(text):
                     break
                 teg.append(text[i + j])
                 j += 1
-            res.append(f"<a href='/***/***/неделя/{''.join(teg)}'>#{''.join(teg)}</a>")
+            res.append(f"<a href='/***/***/год/{''.join(teg)}'>#{''.join(teg)}</a>")
             if i + j < n:
                 res.append(text[i + j])
             i += j
@@ -671,7 +671,7 @@ def toread():
 @login_required
 @app.route('/')
 def main_page():
-    return redirect('/***/***/1 день/NOTEGS')
+    return redirect('/***/***/месяц/NOTEGS')
 
 
 # Главная страница
