@@ -1419,6 +1419,10 @@ def delete_post(id):
                                       Post.user == current_user
                                       ).first()
     if post and not post.comments:
+        for i in range(len(post.user.posts)):
+            if post.user.posts[i].id == post.id:
+                post.user.posts.pop(i)
+                break
         db_sess.delete(post)
         db_sess.commit()
         db_sess.close()
@@ -1439,6 +1443,10 @@ def delete_problem(id):
                                             Problem.user == current_user
                                             ).first()
     if problem and not problem.comments and not problem.solutions:
+        for i in range(len(problem.user.problems)):
+            if problem.user.problems[i].id == problem.id:
+                problem.user.problems.pop(i)
+                break
         db_sess.delete(problem)
         db_sess.commit()
         db_sess.close()
@@ -1559,12 +1567,24 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
         abort(404)
     if comment:
         if comment.post:
-            comment.post.comments.remove(comment)
+            for i in range(len(comment.post.comments)):
+                if comment.post.comments[i].id == comment.id:
+                    comment.post.comments.pop(i)
+                    break
         if comment.solution:
-            comment.solution.comments.remove(comment)
+            for i in range(len(comment.solution.comments)):
+                if comment.solution.comments[i].id == comment.id:
+                    comment.solution.comments.pop(i)
+                    break
         if comment.problem:
-            comment.solution.comments.remove(comment)
-        comment.user.comments.remove(comment)
+            for i in range(len(comment.problem.comments)):
+                if comment.problem.comments[i].id == comment.id:
+                    comment.problem.comments.pop(i)
+                    break
+        for i in range(len(comment.user.comments)):
+            if comment.user.comments[i].id == comment.id:
+                comment.user.comments.pop(i)
+                break
         db_sess.delete(comment)
         db_sess.commit()
         db_sess.close()
@@ -1654,8 +1674,14 @@ def delete_solution(solution_id, problem_id):
                                               Solution.user == current_user,
                                               Solution.problem_id == problem_id).first()
     if solution and not solution.comments:
-        solution.user.solutions.remove(solution)
-        solution.problem.solutions.remove(solution)
+        for i in range(len(solution.user.solutions)):
+            if solution.user.solutions[i].id==solution.id:
+                solution.user.solutions.pop(i)
+                break
+        for i in range(len(solution.problem.solutions)):
+            if solution.problem.solutions[i].id==solution.id:
+                solution.problem.solutions.pop(i)
+                break
         db_sess.delete(solution)
         db_sess.commit()
         db_sess.close()
