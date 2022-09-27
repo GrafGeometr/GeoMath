@@ -39,7 +39,7 @@ class UsersFile(SqlAlchemyBase):
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:
             return f'<a class="btn btn-primary" target="_blank" href="/static/{self.id}{self.extension}">{self.name}</a><br>'
         elif self.extension in ['.png', '.jpeg', '.jpg', '.gif']:
-            return f'<img src="/static/{self.id}{self.extension}" height="400"><br>'
+            return f'<img src="/static/{self.id}{self.extension}" width="380"><br>'
 
     def edit(self, togo): # Показываем при редактировании
         if self.extension=='.ggb':

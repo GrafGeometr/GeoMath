@@ -68,6 +68,8 @@ class User(SqlAlchemyBase, UserMixin):
                 elif problem.is_true:
                     res += 150
         for solution in self.solutions:
+            if not solution.problem:
+                continue
             if not creating_only and theme is None or solution.theme == theme:
                 res += solution.rank
                 for other_solution in solution.problem.solutions:
@@ -83,6 +85,8 @@ class User(SqlAlchemyBase, UserMixin):
                     elif not other_solution.is_false:
                         break
         for comment in self.comments:
+            if not comment.problem and not comment.solution and not comment.post:
+                continue
             if theme is None or comment.theme == theme:
                 res += comment.rank * 0.3
         timedelta = datetime.datetime.now() - self.created_date

@@ -1709,57 +1709,11 @@ def main():
     app.run(host='0.0.0.0', port=port)
     # app.run(port=8080, host='127.0.0.1')
 
-    """db_sess = db_session.create_session()
-
-
+    """
+    db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id==1).first()
-    problem = Problem()
-    problem.content = 'условие'
-    user.problems.append(problem)
-    db_sess.commit()
-
-
-    user = db_sess.query(User).filter(User.id == 2).first()
-    problem = db_sess.query(Problem).filter(Problem.id==1).first()
-    comment = Comment()
-    comment.content = 'tekst2'
-    user.comments.append(comment)
-    problem.comments.append(comment)
-
-    user = db_sess.query(User).filter(User.id == 1).first()
-    problem = db_sess.query(Problem).filter(Problem.id == 1).first()
-    comment = Comment()
-    comment.content = 'tekst1'
-    user.comments.append(comment)
-    problem.comments.append(comment)
-
-    user1 = db_sess.query(User).filter(User.id==1).first()
-    user2 = db_sess.query(User).filter(User.id==2).first()
-    solution = Solution()
-    solution.content = 'решение'
-    user1.solutions.append(solution)
-    problem.solutions.append(solution)
-    comment = Comment()
-    comment.content = 'tekst3'
-    user2.comments.append(comment)
-    solution.comments.append(comment)
-
-
-    db_sess.commit()"""
-
-    """db_sess = db_session.create_session()
-    user1 = db_sess.query(User).filter(User.id == 1).first()
-    user2 = db_sess.query(User).filter(User.id == 2).first()
-    post = Post()
-    post.title = "Геома"
-    post.content = "Больше геомы"
-    user1.posts.append(post)
-    comment = Comment()
-    comment.content = 'Да, согласен'
-    user2.comments.append(comment)
-    post.comments.append(comment)
-
-    db_sess.commit()"""
+    print(user.comments, user.solutions)
+    """
 
 
 if __name__ == '__main__':
