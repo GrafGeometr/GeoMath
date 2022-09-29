@@ -67,12 +67,10 @@ def get_file_from_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # path in the repository
-    print(basedir, type(basedir))
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              filename)
     try:
         name = f"{filename.split('.')[0]}.txt"
-        print(name)
         f = repository.get_contents(name)
         with open(file_path, 'wb') as file:
             bytes_count_sts, *content = f.decoded_content.decode().split()
@@ -140,7 +138,6 @@ def fix_cats(publ, db_sess):
     for category in publ.categories:
         if category.name not in names:
             publ.categories.remove(category)
-    print(publ.categories)
     db_sess.commit()
 
 
@@ -152,9 +149,12 @@ def admin_debug():
         return redirect('/')
     form = AdminForm()
     if form.validate_on_submit():
+        result=''
         exec(form.content.data)
-        return redirect('/admin_debug')
-    return render_template('adminmessage.html', title='Админская дичь', form=form,
+        form.content.data = form.content.data
+        return render_template('admindebug.html', title='Админская дичь', form=form,
+                           admin_message=get_adminmessage(), result=result)
+    return render_template('admindebug.html', title='Админская дичь', form=form,
                            admin_message=get_adminmessage())
 
 
@@ -525,7 +525,10 @@ def like(user_id, name, cont_id):
     if not publ:
         db_sess.close()
         abort(404)
+    print(publ.rank, publ.liked_by, user_id)
+    print(user.get_rank())
     if publ.liked_by is None or user_id not in publ.liked_by:
+        print(123)
         publ.rank += user.get_rank()
         if not publ.liked_by:
             arr = []
@@ -534,10 +537,12 @@ def like(user_id, name, cont_id):
         arr.append(user_id)
         publ.liked_by = arr
     else:
+        print(456)
         publ.rank -= user.get_rank()
         arr = list(publ.liked_by)
         arr.remove(user_id)
         publ.liked_by = arr
+    print(publ.liked_by, publ.rank)
     db_sess.commit()
     db_sess.close()
     return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=get_adminmessage())
@@ -794,17 +799,14 @@ def index(cathegories, post_types, time, tegs: str):
         if tegs != "NOTEGS":
             for teg_name in tegs.split(","):
                 teg_name.replace(' ', '')
-                print(teg_name)
                 category = db_sess.query(Category).filter(Category.name == teg_name).first()
                 if category and category in publ.categories:
                     k += 1
                     tegs_found += 1
         reit += k * 350
-        print(publ.id, reit)
         return reit
 
     publications.sort(key=interest, reverse=True)
-    print(publications)
     if tegs_found or tegs == "NOTEGS":
         res = make_response(
             render_template("index.html", title='Лента', form=form, Post=Post, Problem=Problem,
@@ -1064,7 +1066,6 @@ def login():
             db_sess.close()
             return redirect(f'/email_verify/{user_id}')
         if user.new_email_code != "":
-            print(user.new_email_code)
             db_sess.close()
             return redirect(f'/reset_new_email_code/{user_id}')
         if user and user.check_password(form.password.data):
