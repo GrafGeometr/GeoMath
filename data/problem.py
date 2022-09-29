@@ -63,9 +63,7 @@ class Problem(SqlAlchemyBase):
                               back_populates="problems")
 
     def get_rank(self):
-        if self.rank<0:
-            self.rank = 0
-        return self.rank
+        return int(self.rank * 1000) / 1000
 
     def get_needed_cats(self): # Получаем нужные категории
         res = []

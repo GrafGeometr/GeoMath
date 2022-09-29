@@ -149,11 +149,11 @@ def admin_debug():
         return redirect('/')
     form = AdminForm()
     if form.validate_on_submit():
-        result=''
+        # result=''
         exec(form.content.data)
         form.content.data = form.content.data
         return render_template('admindebug.html', title='Админская дичь', form=form,
-                           admin_message=get_adminmessage(), result=result)
+                           admin_message=get_adminmessage())
     return render_template('admindebug.html', title='Админская дичь', form=form,
                            admin_message=get_adminmessage())
 

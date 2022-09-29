@@ -93,4 +93,4 @@ class User(SqlAlchemyBase, UserMixin):
         months = timedelta.seconds / 60 / 60 / 24 / 30
         res -= months
         rank = 1 + math.atan(res / 2000) / math.pi * 2 * 99
-        return rank
+        return int(rank*1000)/1000

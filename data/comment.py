@@ -35,6 +35,4 @@ class Comment(SqlAlchemyBase):
     files = orm.relation("UsersFile", back_populates='comment')
 
     def get_rank(self):
-        if self.rank<0:
-            self.rank = 0
-        return self.rank
+        return int(self.rank*1000)/1000

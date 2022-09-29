@@ -267,7 +267,7 @@
                 </script>
                 {% endif %}
             </div>
-            <div>Рейтинг: {{publ.rank}}</div>
+            <div>Рейтинг: {{publ.get_rank()}}</div>
             {% if viewer==publ.user %}
             {% set edit_href = "/edit_post/"+publ.id|string %}
             {% set delete_href = "/delete_post/"+publ.id|string %}
@@ -374,7 +374,7 @@
                     </script>
                     {% endif %}
                 </div>
-                <div>Рейтинг: {{publ.rank}}</div>
+                <div>Рейтинг: {{publ.get_rank()}}</div>
                 {% endif %}
                 {% if viewer==publ.user %}
                 {% set edit_href = "/edit_problem/"+publ.id|string %}

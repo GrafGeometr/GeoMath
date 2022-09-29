@@ -52,7 +52,7 @@
         {% endif %}
     </font></a>
 
-<div>Рейтинг: {{problem.rank}}</div>
+<div>Рейтинг: {{problem.get_rank()}}</div>
 {% if viewer==problem.user %}
 {% if not problem.author_thinks_false %}
 {% set edit_href = "/edit_problem/"+problem.id|string %}
@@ -184,7 +184,7 @@
     {% endfor %}
     {{ with_cats_show(solution.content)|safe }}
     <hr>
-    <div>Рейтинг: {{solution.rank}}</div>
+    <div>Рейтинг: {{solution.get_rank()}}</div>
     {% if viewer==solution.user and not solution.author_thinks_false %}
     {% set edit_href = "/edit_solution/"+solution.id|string+"/"+problem.id|string %}
     {% set delete_href = "/delete_solution/"+solution.id|string+"/"+problem.id|string %}
@@ -314,7 +314,7 @@
         {% endfor %}
         {{ with_cats_show(comment.content)|safe }}
         <hr>
-        <div>Рейтинг: {{comment.rank}}</div>
+        <div>Рейтинг: {{comment.get_rank()}}</div>
         {% if viewer==comment.user %}
         {% set edit_href =
         "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/solution/"+solution.id|string
@@ -399,7 +399,7 @@
         {% endfor %}
         {{ with_cats_show(comment.content)|safe }}
         <hr>
-        <div>Рейтинг: {{comment.rank}}</div>
+        <div>Рейтинг: {{comment.get_rank()}}</div>
         {% if viewer==comment.user %}
         {% set edit_href =
         "/edit_comment/"+comment.id|string+"/problem/"+problem.id|string+"/problem/"+problem.id|string %}

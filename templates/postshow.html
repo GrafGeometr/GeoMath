@@ -23,7 +23,7 @@
         {% endif %}
     </font></a>
 
-<div>Рейтинг: {{post.rank}}</div>
+<div>Рейтинг: {{post.get_rank()}}</div>
 {% if viewer==post.user %}
 {% set edit_href = "/edit_post/"+post.id|string %}
 {% set delete_href = "/delete_post/"+post.id|string %}
@@ -99,7 +99,7 @@
         {% endfor %}
         {{ with_cats_show(comment.content)|safe }}
         <hr>
-        <div>Рейтинг: {{comment.rank}}</div>
+        <div>Рейтинг: {{comment.get_rank()}}</div>
         {% if viewer==comment.user %}
         {% set edit_href = "/edit_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
         {% set delete_href = "/delete_comment/"+comment.id|string+"/post/"+post.id|string+"/post/"+post.id|string %}
