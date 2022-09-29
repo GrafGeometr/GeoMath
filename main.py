@@ -1702,6 +1702,7 @@ def main():
     print(generate_code('жюри'))
     print(generate_code('преподаватель'))
     # socketio.init_app(app, debug=True)
+    get_file_from_GitHub("adminmessage.txt")
 
     db_sess = db_session.create_session()
 
