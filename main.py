@@ -81,8 +81,10 @@ def get_file_from_GitHub(filename):
 
 
 def get_adminmessage():
+    file_path = os.path.join(os.path.join(basedir, 'static'),
+                             "adminmessage.txt")
     try:
-        with open('/static/adminmessage.txt', 'r') as f:
+        with open(file_path, 'r') as f:
             message = f.read()
     except Exception as e:
         message = ''
@@ -90,7 +92,9 @@ def get_adminmessage():
 
 
 def set_adminmessage(text):
-    with open('/static/adminmessage.txt', 'w') as f:
+    file_path = os.path.join(os.path.join(basedir, 'static'),
+                             "adminmessage.txt")
+    with open(file_path, 'w') as f:
         f.write(text)
     push_file_to_GitHub('adminmessage.txt')
 
