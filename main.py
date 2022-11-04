@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import math
 from db_location import SQLALCHEMY_DATABASE_URI
-from flask import Flask, render_template, redirect, request, make_response, current_app, url_for
+from flask import Flask, render_template, redirect, request, make_response
 from flask_restful import abort
 from github import Github
 from loginform import LoginForm
@@ -32,12 +33,12 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 import smtplib
 from email.mime.text import MIMEText
 import random
-# from email_secret_data import EMAIL, PASSWORD, GITHUB_TOKEN
+from email_secret_data import EMAIL, PASSWORD, GITHUB_TOKEN
 from email.mime.multipart import MIMEMultipart
 
-EMAIL = os.environ["EMAIL"]
-PASSWORD = os.environ["PASSWORD"]
-GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+#EMAIL = os.environ["EMAIL"]
+#PASSWORD = os.environ["PASSWORD"]
+#GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -52,7 +53,7 @@ def push_file_to_GitHub(filename):
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # create with commit message
     file_path = os.path.join(os.path.join(basedir, 'static'),
-                             filename) #FIX THIS WTF!!!
+                             filename)  # FIX THIS WTF!!!
     with open(file_path, 'rb') as file:
         our_bytes = file.read()
         bytes_count = len(our_bytes)
@@ -72,7 +73,7 @@ def get_file_from_GitHub(filename):
     try:
         name = f"{filename.split('.')[0]}.txt"
         f = repository.get_contents(name)
-        with open(file_path, 'wb') as file:
+        with open(file_path, 'wb', encoding="utf-8") as file:
             bytes_count_sts, *content = f.decoded_content.decode().split()
             our_bytes = bytearray(list(map(int, content)))
             file.write(our_bytes)
@@ -84,7 +85,7 @@ def get_adminmessage():
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              "adminmessage.txt")
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding="utf-8") as f:
             message = f.read()
     except Exception as e:
         message = ''
@@ -94,7 +95,7 @@ def get_adminmessage():
 def set_adminmessage(text):
     file_path = os.path.join(os.path.join(basedir, 'static'),
                              "adminmessage.txt")
-    with open(file_path, 'w') as f:
+    with open(file_path, 'w', encoding="utf-8") as f:
         f.write(text)
     push_file_to_GitHub('adminmessage.txt')
 
@@ -145,7 +146,7 @@ def fix_cats(publ, db_sess):
     db_sess.commit()
 
 
-@app.route('/admin_debug', methods=['POST','GET'])
+@app.route('/admin_debug', methods=['POST', 'GET'])
 def admin_debug():
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -157,10 +158,9 @@ def admin_debug():
         exec(form.content.data)
         form.content.data = form.content.data
         return render_template('admindebug.html', title='Админская дичь', form=form,
-                           admin_message=get_adminmessage())
+                               admin_message=get_adminmessage())
     return render_template('admindebug.html', title='Админская дичь', form=form,
                            admin_message=get_adminmessage())
-
 
 
 @app.route('/admin_message', methods=['POST', 'GET'])
@@ -294,30 +294,18 @@ def author_false(name, publ_id):
 
 
 # Проверяем, верная задача или нет
-def check_truth(publ, db_sess):
+def check_truth(publ, db_sess):  # TODO fix wtf
     rank = sum(
         [db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in list(publ.think_is_true)]) - \
            sum([db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in
                 list(publ.think_is_false)])
     if rank < -400:
-        if publ.is_true:
-            publ.rank -= 100
-        if not publ.is_false:
-            publ.rank -= 100
         publ.is_false = True
         publ.is_true = False
     if -400 <= rank <= 400:
-        if publ.is_false:
-            publ.rank += 100
-        if publ.is_true:
-            publ.rank -= 100
         publ.is_true = False
         publ.is_false = False
     if rank > 400:
-        if not publ.is_true:
-            publ.rank += 100
-        if publ.is_false:
-            publ.rank += 100
         publ.is_false = False
         publ.is_true = True
     if isinstance(publ, Problem):
@@ -1128,7 +1116,10 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
+        users_count = db_sess.query(User).count()
         res, status = check_code(form.secret_code.data, db_sess)
+        if not users_count:
+            res, status = True, "администратор"
         if not res:
             res = make_response(render_template('register.html', title='Регистрация',
                                                 form=form,
@@ -1680,11 +1671,11 @@ def delete_solution(solution_id, problem_id):
                                               Solution.problem_id == problem_id).first()
     if solution and not solution.comments:
         for i in range(len(solution.user.solutions)):
-            if solution.user.solutions[i].id==solution.id:
+            if solution.user.solutions[i].id == solution.id:
                 solution.user.solutions.pop(i)
                 break
         for i in range(len(solution.problem.solutions)):
-            if solution.problem.solutions[i].id==solution.id:
+            if solution.problem.solutions[i].id == solution.id:
                 solution.problem.solutions.pop(i)
                 break
         db_sess.delete(solution)
@@ -1719,6 +1710,14 @@ def main():
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id==1).first()
     print(user.comments, user.solutions)
+    
+    
+    db_sess = db_session.create_session()
+    solution = db_sess.query(Solution).filter(Solution.id==14).first()
+    solution.rank = 0
+    solution.liked_by = []
+    db_sess.commit()
+    db_sess.close()
     """
 
 
