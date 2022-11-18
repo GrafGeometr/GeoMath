@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Дейтсвия пользователей</h1>
+{% for action in actions %}
+<p>{{action.created_date}} - {{action.message}}</p>
+{% endfor %}
+{% endblock %}
