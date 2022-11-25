@@ -3,7 +3,7 @@ import math
 from db_location import SQLALCHEMY_DATABASE_URI
 from flask import Flask, render_template, redirect, request, make_response
 from flask_restful import abort
-from github import Github
+# from github import Github
 from loginform import LoginForm
 from data import db_session
 from data.users import User
@@ -68,8 +68,8 @@ def add_log(text, db_sess=None):
     if new_session:
         db_sess.close()
 
-
-def push_file_to_GitHub(filename):
+# ненужный гитхаб
+"""def push_file_to_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
     # create with commit message
@@ -105,7 +105,7 @@ def get_file_from_GitHub(filename):
             add_log(f"Файл {filename} скачан с GitHub и сохранён в {file_path}")
     except Exception as e:
         add_log(f"Файл {filename} должен был быть скачан с GitHub, но что-то пошло не так: {e}")
-        print(e)
+        print(e)"""
 
 
 def get_adminmessage():
@@ -125,8 +125,8 @@ def set_adminmessage(text):
     with open(file_path, 'w', encoding="utf-8") as f:
         f.write(text)
     add_log(f"Админское сообщение: \n{text}")
-    push_file_to_GitHub('adminmessage.txt')
-    add_log(f"Изменения в файле {file_path} сохранены в GitHub")
+    # push_file_to_GitHub('adminmessage.txt')
+    # add_log(f"Изменения в файле {file_path} сохранены в GitHub")
 
 
 # @app.route('/jstest')
@@ -1636,7 +1636,7 @@ def edit_post(id):
                 add_log(
                     f"Пользователь с id={current_user.id} добавил файл с именем {file.filename} к посту с id={id}",
                     db_sess=db_sess)
-                push_file_to_GitHub(filename)
+                # push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
@@ -1731,7 +1731,7 @@ def edit_problem(id):  # without solution
                 add_log(
                     f"Пользователь с id={current_user.id} добавил файл с именем {file.filename} к задаче с id={id}",
                     db_sess=db_sess)
-                push_file_to_GitHub(filename)
+                # push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
@@ -1884,7 +1884,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                 add_log(
                     f"Пользователь с id={current_user.id} добавил файл с именем {file.filename} к комментарию по ссылке /edit_comment/comment_id:{comment_id}/place_name:{place_name}/place_id:{place_id}/par_name:{par_name}/par_id:{par_id}",
                     db_sess=db_sess)
-                push_file_to_GitHub(filename)
+                # push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
@@ -2032,7 +2032,7 @@ def edit_solution(solution_id, problem_id):
                 add_log(
                     f"Пользователь с id={current_user.id} добавил файл с именем {file.filename} к решению с id={solution_id} у задачи с id={problem_id}",
                     db_sess=db_sess)
-                push_file_to_GitHub(filename)
+                # push_file_to_GitHub(filename)
             if file_form.geogebra_link.data != '':
                 users_file = UsersFile()
                 users_file.extension = '.ggb'
@@ -2105,12 +2105,12 @@ def main():
     print(generate_code('жюри'))
     print(generate_code('преподаватель'))
     # socketio.init_app(app, debug=True)
-    get_file_from_GitHub("adminmessage.txt")
+    #get_file_from_GitHub("adminmessage.txt")
 
     db_sess = db_session.create_session()
 
-    for users_file in db_sess.query(UsersFile).all():
-        get_file_from_GitHub(users_file.filename())
+    #for users_file in db_sess.query(UsersFile).all():
+    #    get_file_from_GitHub(users_file.filename())
 
     db_sess.close()
 
