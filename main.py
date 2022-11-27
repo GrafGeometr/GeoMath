@@ -68,6 +68,7 @@ def add_log(text, db_sess=None):
     if new_session:
         db_sess.close()
 
+
 # ненужный гитхаб
 """def push_file_to_GitHub(filename):
     github = Github(GITHUB_TOKEN)
@@ -2101,15 +2102,15 @@ def delete_solution(solution_id, problem_id):
 
 def main():
     db_session.global_init(SQLALCHEMY_DATABASE_URI)
-    print(generate_code('администратор'))
-    print(generate_code('жюри'))
-    print(generate_code('преподаватель'))
+    # print(generate_code('администратор'))
+    # print(generate_code('жюри'))
+    # print(generate_code('преподаватель'))
     # socketio.init_app(app, debug=True)
-    #get_file_from_GitHub("adminmessage.txt")
+    # get_file_from_GitHub("adminmessage.txt")
 
     # db_sess = db_session.create_session()
 
-    #for users_file in db_sess.query(UsersFile).all():
+    # for users_file in db_sess.query(UsersFile).all():
     #    get_file_from_GitHub(users_file.filename())
 
     # db_sess.close()
