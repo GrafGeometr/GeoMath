@@ -64,7 +64,7 @@ def add_log(text, db_sess=None):
         first_log = db_sess.query(Log).first()
         db_sess.delete(first_log)
     db_sess.commit()
-    print(db_sess.query(Log).all())
+    # print(db_sess.query(Log).all())
     if new_session:
         db_sess.close()
 
@@ -184,12 +184,12 @@ def show_last_logs():
     if current_user.status != 'администратор':
         add_log(f"Не администратор с id={current_user.id} пытался проникнуть в /show_last_logs")
         return redirect('/')
-    print(124)
+    # print(124)
     add_log(f"Администратор с id={current_user.id} решил посмотреть логи")
-    print(1356)
+    # print(1356)
     db_sess = db_session.create_session()
     actions = db_sess.query(Log).all()[::-1]
-    print(actions)
+    # print(actions)
     return render_template("showlogs.html", actions=actions)
 
 
@@ -1703,7 +1703,7 @@ def edit_problem(id):  # without solution
             db_sess.commit()
             fix_cats(problem, db_sess)
             add_log(
-                f"Пользователь{'(не автор)' if form.notauthor.data else ''} с id={current_user.id} отредактировал задачу '{problem.title}'({problem.theme})с id={id}. Содержание:\n{problem.content}\n",
+                f"Пользователь{'(не автор)' if form.notauthor.data else ''} с id={current_user.id} отредактировал задачу ({problem.theme}) с id={id}. Содержание:\n{problem.content}\n",
                 db_sess=db_sess)
             db_sess.close()
             return redirect(f'/problem/{id}')

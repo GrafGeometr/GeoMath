@@ -47,5 +47,5 @@ class UsersFile(SqlAlchemyBase):
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:
             return f'<a class="btn btn-primary" target="_blank" href="/static/{self.id}{self.extension}">{self.name}</a><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
         elif self.extension in ['.png', '.jpeg', '.jpg', '.gif']:
-            print(self.name,self.extension,self.id)
+            # print(self.name,self.extension,self.id)
             return f'<img src="/static/{self.id}{self.extension}" height="50"><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
