@@ -60,7 +60,7 @@ def add_log(text, db_sess=None):
     log = Log()
     log.message = text
     db_sess.add(log)
-    while db_sess.query(Log).count() > 300:
+    while db_sess.query(Log).count() > 10000:
         first_log = db_sess.query(Log).first()
         db_sess.delete(first_log)
     db_sess.commit()
@@ -187,7 +187,7 @@ def show_last_logs():
     add_log(f"Администратор с id={current_user.id} решил посмотреть логи")
     print(1356)
     db_sess = db_session.create_session()
-    actions = db_sess.query(Log).all()
+    actions = db_sess.query(Log).all()[::-1]
     print(actions)
     return render_template("showlogs.html", actions=actions)
 
@@ -2107,12 +2107,12 @@ def main():
     # socketio.init_app(app, debug=True)
     #get_file_from_GitHub("adminmessage.txt")
 
-    db_sess = db_session.create_session()
+    # db_sess = db_session.create_session()
 
     #for users_file in db_sess.query(UsersFile).all():
     #    get_file_from_GitHub(users_file.filename())
 
-    db_sess.close()
+    # db_sess.close()
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
