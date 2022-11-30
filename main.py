@@ -88,8 +88,6 @@ def add_log(text, db_sess=None):
     except Exception as e:
         f = repository.create_file(f"{filename.split('.')[0]}.txt", "some_file", content=f'{bytes_count}\n{content}')
         add_log(f"Файл {filename} создан в GitHub")
-
-
 def get_file_from_GitHub(filename):
     github = Github(GITHUB_TOKEN)
     repository = github.get_user().get_repo('Ge0MathStoarge')
@@ -161,6 +159,8 @@ def with_cats_show(text):
 # Проверяем, что у публикации категории в базе данных совпадают с теми, что в её тексте(заголовке, тексте, комментариях...)
 def fix_cats(publ, db_sess):
     names = publ.get_needed_cats()
+    publ_name = str(type(publ)) + str(publ.id)
+    add_log(f"У публикации {publ_name} были теги {[teg.name for teg in publ.categories]}", db_sess=db_sess)
     for name in names:
         if not db_sess.query(Category).filter(Category.name == name).first():
             category = Category()
@@ -173,6 +173,7 @@ def fix_cats(publ, db_sess):
     for category in publ.categories:
         if category.name not in names:
             publ.categories.remove(category)
+    add_log(f"Теперь у публикации {publ_name} теги {[teg.name for teg in publ.categories]}", db_sess=db_sess)
     db_sess.commit()
 
 
@@ -744,12 +745,12 @@ def problem_show(problem_id):
             solution = Solution()
             solution.content = solform.content.data
             solution.theme = problem.theme
-            current_user.solutions.append(solution)
-            db_sess.merge(current_user)
+            fake_user = db_sess.merge(current_user)
+            fake_user.solutions.append(solution)
             solution = db_sess.merge(solution)
             problem.solutions.append(solution)
-            db_sess.commit()
             fix_cats(problem, db_sess)
+            db_sess.commit()
             db_sess.close()
             add_log(
                 f"Пользователь с id={current_user.id} добавил решение с содержанием:\n {solform.content.data}\n к задаче {problem_id}.")
@@ -1440,17 +1441,23 @@ def register():
             about=form.about.data,
             status=status
         )
+        print(form.password.data)
         user.set_password(form.password.data)
-        user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
+        if users_count:
+            user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
+        else:
+            user.email_code = ''
         db_sess.add(user)
-        user_id = user.id
         db_sess.commit()
         user_id = user.id
         add_log(
             f"Чувак с почтой {form.email.data}, логином {form.name.data}, about={form.about.data} зарегистрировался и получил статус {status}",
             db_sess=db_sess)
         db_sess.close()
-        return redirect(f'/email_verify/{user_id}')
+        if users_count:
+            return redirect(f'/email_verify/{user_id}')
+        else:
+            return redirect('/login')
     add_log(f"Чувак пришёл зарегистрироваться")
     res = make_response(render_template('register.html', title='Регистрация', form=form, with_cats_show=with_cats_show,
                                         admin_message=get_adminmessage()))
@@ -1535,7 +1542,6 @@ def add_problem():
             arr = (list(reader.toread) if reader.toread is not None else [])
             arr.append('problem ' + str(problem.id))
             reader.toread = arr
-            db_sess.commit()
             readers.append((reader.id, reader.name))
         db_sess.commit()
         if form.original_solution.data:
@@ -1553,14 +1559,13 @@ def add_problem():
             add_log(
                 f"Пользователь{'(не автор)' if form.notauthor.data else ''} с id={current_user.id} добавил задачу({problem.theme}) с содержанием:\n{problem.content}\nИ не прикрепил к ней решение. Она автоматически добавлена к прочтению пользователям {readers}",
                 db_sess=db_sess)
-        db_sess.commit()
         fix_cats(problem, db_sess)
-
+        db_sess.commit()
         db_sess.close()
         return redirect(f'/problem/{problem_id}')
     add_log(
         f"Пользователь с id={current_user.id} пришёл добавить задачу")
-    res = make_response(render_template('problemadd.html', title='Добавление информации для размышления',
+    res = make_response(render_template('problemadd.html', title='Добавление задачи',
                                         form=form, with_cats_show=with_cats_show, admin_message=get_adminmessage()))
 
     return res
@@ -2008,7 +2013,7 @@ def edit_solution(solution_id, problem_id):
             fix_cats(solution.problem, db_sess)
             db_sess.close()
             add_log(
-                f"Неавторизованный пользователь отредактировал решение с id={solution_id} у задачи с id={problem_id}. Содержание:\n{form.content.data}")
+                f"Пользователь с id={current_user.id} отредактировал решение с id={solution_id} у задачи с id={problem_id}. Содержание:\n{form.content.data}")
             return redirect(f'/problem/{problem_id}')
         if file_form.validate_on_submit():
             form.content.data = solution.content
@@ -2123,8 +2128,8 @@ def main():
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id==1).first()
     print(user.comments, user.solutions)
-    
-    
+
+
     db_sess = db_session.create_session()
     solution = db_sess.query(Solution).filter(Solution.id==14).first()
     solution.rank = 0
