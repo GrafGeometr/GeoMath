@@ -243,7 +243,10 @@ def delete_file(file_id, togo):
         return redirect('/login')
     db_sess = db_session.create_session()
     users_file = db_sess.query(UsersFile).filter(UsersFile.id == file_id).first()
-    # TODO добавить в будущем проверку на пользователя, удаляющего чужой файл
+    if users_file.user_id != current_user.id:
+        add_log(f"Пользователь с id={current_user.id} пытался удалить чужой файл с id={users_file.id}")
+        db_sess.commit()
+        db_sess.close()
     if users_file:
         add_log(
             f"Пользователь с id={current_user.id} удалил файл {users_file.name} с id={users_file.id} и перешёл по ссылке {togo}",
@@ -356,17 +359,30 @@ def author_false(name, publ_id):
         abort(404)
     publ.author_thinks_false = True
     arr = list(current_user.wrong)
+    print(f"{name} {publ_id}", arr)
     if f"{name} {publ_id}" in arr:
         arr.remove(f"{name} {publ_id}")
     current_user.wrong = arr
+    db_sess.merge(current_user)
+    if name=="post" or name=="problem":
+        href = f"/{name}/{publ_id}"
+    elif name=="solution":
+        href = f"/problem/{publ.problem_id}"
+    else:
+        if publ.solution_id is not None:
+            href = f"/problem/{publ.solution.problem_id}"
+        elif publ.problem_id is not None:
+            href = f"/problem/{publ.problem_id}"
+        else:
+            href = f"/post/{publ.post_id}"
     db_sess.commit()
     db_sess.close()
     add_log(f"Автор считает {name} {publ_id} неверным")
-    return redirect(f'/{name}/{publ_id}')
+    return redirect(href)
 
 
 # Проверяем, верная задача или нет
-def check_truth(publ, db_sess):  # TODO fix wtf
+def check_truth(publ, db_sess):
     rank = sum(
         [db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in list(publ.think_is_true)]) - \
            sum([db_sess.query(User).filter(User.id == user_id).first().get_rank() for user_id in
@@ -1807,6 +1823,12 @@ def delete_problem(id):
             if problem.user.problems[i].id == problem.id:
                 problem.user.problems.pop(i)
                 break
+        arr = list(current_user.wrong)
+        print(f"problem {id}", arr)
+        if f"problem {id}" in arr:
+            arr.remove(f"problem {id}")
+        current_user.wrong = arr
+        db_sess.merge(current_user)
         db_sess.delete(problem)
         db_sess.commit()
         db_sess.close()
@@ -2093,6 +2115,12 @@ def delete_solution(solution_id, problem_id):
             if solution.problem.solutions[i].id == solution.id:
                 solution.problem.solutions.pop(i)
                 break
+        arr = list(current_user.wrong)
+        print(f"solution {solution_id}", arr)
+        if f"solution {solution_id}" in arr:
+            arr.remove(f"solution {solution_id}")
+        current_user.wrong = arr
+        db_sess.merge(current_user)
         db_sess.delete(solution)
         db_sess.commit()
         db_sess.close()
