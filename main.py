@@ -247,6 +247,7 @@ def delete_file(file_id, togo):
         add_log(f"Пользователь с id={current_user.id} пытался удалить чужой файл с id={users_file.id}")
         db_sess.commit()
         db_sess.close()
+        return redirect(togo.replace('$', '/'))
     if users_file:
         add_log(
             f"Пользователь с id={current_user.id} удалил файл {users_file.name} с id={users_file.id} и перешёл по ссылке {togo}",
@@ -257,7 +258,7 @@ def delete_file(file_id, togo):
     else:
 
         db_sess.close()
-        add_log(f"Пользователь с id={current_user.id} фотел удалить файл с id={file_id}, но файл не нашёлся")
+        add_log(f"Пользователь с id={current_user.id} хотел удалить файл с id={file_id}, но файл не нашёлся")
         abort(404)
     return redirect(togo.replace('$', '/'))
 
@@ -1649,6 +1650,8 @@ def edit_post(id):
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
+                fake_user = db_sess.merge(current_user)
+                fake_user.files.append(users_file)
                 post.files.append(users_file)
                 users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
@@ -1744,6 +1747,8 @@ def edit_problem(id):  # without solution
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
+                fake_user = db_sess.merge(current_user)
+                fake_user.files.append(users_file)
                 problem.files.append(users_file)
                 users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
@@ -1903,6 +1908,8 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
+                fake_user = db_sess.merge(current_user)
+                fake_user.files.append(users_file)
                 comment.files.append(users_file)
                 users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'
@@ -2051,6 +2058,8 @@ def edit_solution(solution_id, problem_id):
                 users_file = UsersFile()
                 users_file.name = file.filename
                 users_file.extension = file_ext
+                fake_user = db_sess.merge(current_user)
+                fake_user.files.append(users_file)
                 solution.files.append(users_file)
                 users_file = db_sess.merge(users_file)
                 filename = f'{users_file.id}{file_ext}'

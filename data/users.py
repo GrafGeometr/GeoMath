@@ -41,6 +41,7 @@ class User(SqlAlchemyBase, UserMixin):
     problems = orm.relation("Problem", back_populates='user')
     solutions = orm.relation("Solution", back_populates='user')
     comments = orm.relation("Comment", back_populates='user')
+    files = orm.relation("UsersFile", back_populates='user')
 
     def profile_href(self):
         return f"/profile/{self.id}"
