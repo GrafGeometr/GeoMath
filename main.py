@@ -1243,12 +1243,15 @@ def edit_profile(user_id):
         user.name = form.name.data
         user.about = form.about.data
         user.status = status
+        user_name = user.name
+        user_about = user.about
+        user_status = user.status
         if form.password.data:
             user.set_password(form.password.data)
         db_sess.commit()
         db_sess.close()
         add_log(
-            f"Пользователь с id={current_user.id} изменил профиль: name='{user.name}', about='{user.about}', status='{user.status}'")
+            f"Пользователь с id={user_id} изменил профиль: name='{user_name}', about='{user_about}', status='{user_status}'")
         return redirect(f'/profile/{user_id}')
     form.name.data = user.name
     form.about.data = user.about
@@ -1267,11 +1270,11 @@ def check_code(code, db_sess):
         add_log(
             f"Код {reg_code} не существует", db_sess=db_sess)
         return False, "Код недействителен"
-    if datetime.now() - reg_code.created_date > timedelta(days=1):
+    if datetime.now() - reg_code.created_date > timedelta(days=2):
         db_sess.delete(reg_code)
         db_sess.commit()
         add_log(
-            f"Код {reg_code} существует, но создан больше дня назад", db_sess=db_sess)
+            f"Код {reg_code} существует, но создан давно", db_sess=db_sess)
         db_sess.close()
         return False, "Время действи кода истекло"
     result = reg_code.status
