@@ -1128,7 +1128,7 @@ def reset_email(user_id):
             f"Неавторизованный пользователь хотел изменить электронную почту пользователя с id={user_id}")
         return redirect('/login')
     db_sess = db_session.create_session()
-    if current_user.id != User.id:
+    if current_user.id != user_id:
         db_sess.close()
         add_log(
             f"Пользователь с id={current_user.id}!={user_id} хотел изменить электронную почту пользователя с id={user_id}")
