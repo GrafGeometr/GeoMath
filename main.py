@@ -181,7 +181,7 @@ def fix_cats(publ, db_sess):
 def show_last_logs():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /show_last_logs")
-        return redirect('/login')
+        return redirect('/login/$show_last_logs')
     if current_user.status != 'администратор':
         add_log(f"Не администратор с id={current_user.id} пытался проникнуть в /show_last_logs")
         return redirect('/')
@@ -198,7 +198,7 @@ def show_last_logs():
 def admin_debug():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /admin_debug")
-        return redirect('/login')
+        return redirect('/login/$admin_debug')
     if current_user.status != 'администратор':
         add_log(f"Не администратор с id={current_user.id} пытался проникнуть в /admin_debug")
         return redirect('/')
@@ -219,7 +219,7 @@ def change_admin_message():
     global admin_message
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /admin_message")
-        return redirect('/login')
+        return redirect('/login/$admin_message')
     if current_user.status != 'администратор':
         add_log(f"Не администратор с id={current_user.id} хотел проникнуть в /admin_message")
         return redirect('/')
@@ -240,7 +240,7 @@ def change_admin_message():
 def delete_file(file_id, togo):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить файл с id={file_id} и перейти по ссылке {togo}")
-        return redirect('/login')
+        return redirect(f'/login/delete_file${file_id}${togo}')
     db_sess = db_session.create_session()
     users_file = db_sess.query(UsersFile).filter(UsersFile.id == file_id).first()
     if users_file.user_id != current_user.id:
@@ -268,7 +268,7 @@ def delete_file(file_id, togo):
 def help_():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /help")
-        return redirect('/login')
+        return redirect('/login/$help')
     add_log(f"Пользователь с id={current_user.id} перешёл в помощь")
     return render_template('help.html', title="Помощь", with_cats_show=with_cats_show, admin_message=get_adminmessage())
 
@@ -319,7 +319,7 @@ def send_email(to, code, message_type="register"):
 def wrong():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /wrong")
-        return redirect('/login')
+        return redirect('/login/$wrong')
     publs = []
     used = set()
     if current_user.wrong:
@@ -347,7 +347,7 @@ def author_false(name, publ_id):
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел попасть в /author_false и сказать, что автор считает {name} {publ_id} неверным")
-        return redirect('/login')
+        return redirect(f'/login/$author_false${name}${publ_id}')
     db_sess = db_session.create_session()
     if name == "problem":
         publ = db_sess.query(Problem).filter(Problem.id == publ_id).first()
@@ -428,7 +428,7 @@ def check_truth(publ, db_sess):
 def make_false(name, publ_id, user_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /isfalse и сказать, что {name} {publ_id} неверно")
-        return redirect('/login')
+        return redirect(f'/login/$isfalse${name}${publ_id}$user_id')
     if user_id != current_user.id:
         add_log(
             f"Пользователь с id={current_user.id}!={user_id} хотел попасть в /isfalse и сказать, что {name} {publ_id} неверно")
@@ -494,7 +494,7 @@ def make_false(name, publ_id, user_id):
 def make_true(name, publ_id, user_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /istrue и сказать, что {name} {publ_id} верно")
-        return redirect('/login')
+        return redirect(f'/login/$istrue${name}${publ_id}${user_id}')
     if user_id != current_user.id:
         add_log(
             f"Пользователь с id={current_user.id}!={user_id} хотел попасть в /istrue и сказать, что {name} {publ_id} верно")
@@ -561,7 +561,7 @@ def make_true(name, publ_id, user_id):
 def subscribe(user_id, viewer_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел стать подписчиком пользователя с id={user_id}")
-        return redirect('/login')
+        return redirect(f'/login/$subscribe${user_id}${viewer_id}')
     if viewer_id != current_user.id:
         add_log(f"Пользователь с id={current_user.id}!={viewer_id} хотел стать подписчиком пользователя с id={user_id}")
         abort(404)
@@ -600,7 +600,7 @@ def subscribe(user_id, viewer_id):
 def become_reader(user_id, viewer_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел стать читателем пользователя с id={user_id}")
-        return redirect('/login')
+        return redirect(f'/login/$reader${user_id}${viewer_id}')
     if viewer_id != current_user.id:
         add_log(f"Пользователь с id={current_user.id}!={viewer_id} хотел стать читателем пользователя с id={user_id}")
         abort(404)
@@ -635,7 +635,7 @@ def become_reader(user_id, viewer_id):
 def add_toread(user_id, name, cont_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел почитать {name} {cont_id} попозже")
-        return redirect('/login')
+        return redirect(f'/login/$addtoread${user_id}${name}${cont_id}')
     if user_id != current_user.id:
         add_log(f"Пользователь с id={current_user.id}!={user_id} хотел почитать {name} {cont_id} попозже")
         abort(404)
@@ -670,7 +670,7 @@ def add_toread(user_id, name, cont_id):
 def like(user_id, name, cont_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел лайкнуть {name} {cont_id}")
-        return redirect('/login')
+        return redirect(f'/login/$liked${user_id}${name}${cont_id}')
     if user_id != current_user.id:
         add_log(f"Пользователь с id={current_user.id}!={user_id} хотел лайкнуть {name} {cont_id}")
         abort(404)
@@ -733,7 +733,7 @@ def load_user(user_id):
 def problem_show(problem_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть задачу {problem_id}")
-        return redirect('/login')
+        return redirect(f'/login/$problem${problem_id}')
     db_sess = db_session.create_session()
     problem = db_sess.query(Problem).filter(Problem.id == problem_id).first()
     if not problem:
@@ -805,7 +805,7 @@ def problem_show(problem_id):
 def post_show(post_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть пост {post_id}")
-        return redirect('/login')
+        return redirect(f'/login/$post${post_id}')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == post_id).first()
     if not post:
@@ -844,7 +844,7 @@ def post_show(post_id):
 def toread():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /my")
-        return redirect('/login')
+        return redirect('/login/$my')
     publs = []
     db_sess = None
     used = set()
@@ -880,7 +880,7 @@ def main_page():
 def index(cathegories, post_types, time, tegs: str):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть на главную")
-        return redirect('/login')
+        return redirect(f'/login/${cathegories}${post_types}${time}${tegs}')
     form = NavForm()
     if form.validate_on_submit():  # Если кто-то заполнил фарму и нажал искать, мы его переадресовываем
         cats = ''
@@ -1027,7 +1027,7 @@ def index(cathegories, post_types, time, tegs: str):
 def profile(user_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть профиль пользователя с id={user_id}")
-        return redirect('/login')
+        return redirect(f'/login/$profile${user_id}')
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     if not user:
@@ -1213,7 +1213,7 @@ def edit_profile(user_id):
 
             return res
         if form.change_status.data:
-            res, status = check_code(form.secret_code.data, db_sess)
+            res, status, reg_code = check_code(form.secret_code.data, db_sess)
             if not res:
                 add_log(
                     f"Пользователь с id={current_user.id} хотел изменить профиль и статус, но ввёл неправильный код",
@@ -1228,6 +1228,8 @@ def edit_profile(user_id):
                 add_log(
                     f"Пользователь с id={current_user.id} изменил статус на {status}",
                     db_sess=db_sess)
+            if reg_code is not None:
+                db_sess.delete(reg_code)
         else:
             status = user.status
         if form.password.data != form.password_again.data:
@@ -1269,21 +1271,19 @@ def check_code(code, db_sess):
     if not reg_code:
         add_log(
             f"Код {reg_code} не существует", db_sess=db_sess)
-        return False, "Код недействителен"
+        return False, "Код недействителен", None
     if datetime.now() - reg_code.created_date > timedelta(days=2):
         db_sess.delete(reg_code)
         db_sess.commit()
         add_log(
             f"Код {reg_code} существует, но создан давно", db_sess=db_sess)
         db_sess.close()
-        return False, "Время действи кода истекло"
+        return False, "Время действи кода истекло", None
     result = reg_code.status
-    db_sess.delete(reg_code)
-    db_sess.commit()
     add_log(
         f"Код {reg_code} существует, его статус: {result}", db_sess=db_sess)
     db_sess.close()
-    return True, result
+    return True, result, reg_code
 
 
 # Генерация кода регистрации
@@ -1293,7 +1293,7 @@ def gen_code(status):
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел сгенерировать код регистрации")
-        return redirect('/login')
+        return redirect('/login/$generate_code')
     statuses = {'администратор': 3, 'жюри': 2, 'преподаватель': 1, 'участник': 0}
     if statuses.get(status, 1000) > statuses[current_user.status]:
         add_log(
@@ -1321,6 +1321,55 @@ def gen_code(status):
                             with_cats_show=with_cats_show, admin_message=get_adminmessage()))
 
         return res
+
+
+@app.route('/login/<togo>', methods=['GET','POST'])
+def login_with_link(togo):
+    form = LoginForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if not user:
+            add_log(
+                f"Чувак хотел войти, но пользователя с email={form.email.data} не существует", db_sess=db_sess)
+            return make_response(render_template('login.html', title='Авторизация',
+                                                 message="Неправильный логин или пароль",
+                                                 form=form, with_cats_show=with_cats_show,
+                                                 admin_message=get_adminmessage()))
+        user_id = user.id
+        if user.email_code != "":
+            add_log(
+                f"Чувак хотел войти, но он не подтвердил email={form.email.data}", db_sess=db_sess)
+            db_sess.close()
+            return redirect(f'/email_verify/{user_id}')
+        if user.new_email_code != "":
+            add_log(
+                f"Чувак хотел войти, но он изменил email с {user.email} на {user.new_email} и не подтвердил второй",
+                db_sess=db_sess)
+            db_sess.close()
+            return redirect(f'/reset_new_email_code/{user_id}')
+        if user and user.check_password(form.password.data):
+            add_log(
+                f"Чувак с email={user.email} вошёл",
+                db_sess=db_sess)
+            login_user(user, remember=form.remember_me.data)
+            db_sess.close()
+            return redirect(togo.replace('$', '/'))
+        db_sess.close()
+        add_log(
+            f"Чувак с email={user.email} ввёл неправильный пароль",
+            db_sess=db_sess)
+        res = make_response(render_template('login.html', title='Авторизация',
+                                            message="Неправильный логин или пароль",
+                                            form=form, with_cats_show=with_cats_show, admin_message=get_adminmessage()))
+
+        return res
+    add_log(
+        f"Чувак с попал в /login")
+    res = make_response(render_template('login.html', title='Авторизация', form=form, with_cats_show=with_cats_show,
+                                        admin_message=get_adminmessage()))
+
+    return res
 
 
 # Вход
@@ -1425,7 +1474,7 @@ def register():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         users_count = db_sess.query(User).count()
-        res, status = check_code(form.secret_code.data, db_sess)
+        res, status, reg_code = check_code(form.secret_code.data, db_sess)
         if not users_count:
             res, status = True, "администратор"
             add_log(f"Чувак пришёл зарегистрироваться. Это первый пользователь => это админ", db_sess=db_sess)
@@ -1468,6 +1517,8 @@ def register():
         else:
             user.email_code = ''
         db_sess.add(user)
+        if reg_code is not None:
+            db_sess.delete(reg_code)
         db_sess.commit()
         user_id = user.id
         add_log(
@@ -1500,7 +1551,7 @@ def logout():
 def add_post():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел добавить пост")
-        return redirect('/login')
+        return redirect('/login/$add_post')
     form = PostAddForm()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == current_user.id).first()
@@ -1544,7 +1595,7 @@ def add_post():
 def add_problem():
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел добавить задачу")
-        return redirect('/login')
+        return redirect('/login/$add_problem')
     form = ProblemAddForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -1597,7 +1648,7 @@ def add_problem():
 def edit_post(id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел отредактировать пост с id={id}")
-        return redirect('/login')
+        return redirect(f'/login/$edit_post${id}')
     form = PostAddForm()
     file_form = FileAddForm()
     if request.method == "GET":
@@ -1695,7 +1746,7 @@ def edit_post(id):
 def edit_problem(id):  # without solution
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел отредактировать задачу с id={id}")
-        return redirect('/login')
+        return redirect(f'/login/$edit_problem/{id}')
     form = ProblemEditForm()
     file_form = FileAddForm()
     if request.method == "GET":
@@ -1793,7 +1844,7 @@ def edit_problem(id):  # without solution
 def delete_post(id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить пост с id={id}")
-        return redirect('/login')
+        return redirect(f'/login/$delete_post${id}')
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == id,
                                       Post.user == current_user
@@ -1821,7 +1872,7 @@ def delete_post(id):
 def delete_problem(id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить задачу с id={id}")
-        return redirect('/login')
+        return redirect(f'/login/$delete_problem${id}')
     db_sess = db_session.create_session()
     problem = db_sess.query(Problem).filter(Problem.id == id,
                                             Problem.user == current_user
@@ -1857,7 +1908,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел отредактировать комментарий по ссылке /edit_comment/comment_id:{comment_id}/place_name:{place_name}/place_id:{place_id}/par_name:{par_name}/par_id:{par_id}")
-        return redirect('/login')
+        return redirect(f'/login/$edit_comment${comment_id}${place_name}${place_id}${par_name}${par_id}')
     comment = None
     db_sess = db_session.create_session()
     form = CommentAddForm()
@@ -1966,7 +2017,7 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел удалить комментарий по ссылке /edit_comment/comment_id:{comment_id}/place_name:{place_name}/place_id:{place_id}/par_name:{par_name}/par_id:{par_id}")
-        return redirect('/login')
+        return redirect(f'/login/$delete_comment${comment_id}${place_name}${place_id}${par_name}${par_id}')
     comment = None
     db_sess = db_session.create_session()
     if par_name == 'post':
@@ -2027,7 +2078,7 @@ def edit_solution(solution_id, problem_id):
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел отредактировать решение с id={solution_id} у задачи с id={problem_id}")
-        return redirect('/login')
+        return redirect(f'/login/$edit_solution${solution_id}${problem_id}')
     solution = None
     db_sess = db_session.create_session()
     form = SolutionAddForm()
@@ -2112,7 +2163,7 @@ def edit_solution(solution_id, problem_id):
 def delete_solution(solution_id, problem_id):
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить решение с id={solution_id} у задачи с id={problem_id}")
-        return redirect('/login')
+        return redirect(f'/login/$delete_solution${solution_id}${problem_id}')
     solution = None
     db_sess = db_session.create_session()
     solution = db_sess.query(Solution).filter(Solution.id == solution_id,
