@@ -55,6 +55,7 @@ class Problem(SqlAlchemyBase):
     solutions = orm.relation("Solution", back_populates='problem')
 
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+    are_interested = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     files = orm.relation("UsersFile", back_populates='problem')
 

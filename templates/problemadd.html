@@ -25,10 +25,10 @@
         {{ form.original_solution.label }}<br>
         {{ form.original_solution(class="form-control") }}<br>
         {% for error in form.content.errors %}
-    <p content="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
+        <p content="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
     </p>
     <p>К сожалению, сейчас файлы можно прикреплять только, при редактировании.</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>

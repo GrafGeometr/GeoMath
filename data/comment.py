@@ -30,7 +30,7 @@ class Comment(SqlAlchemyBase):
                                     sqlalchemy.ForeignKey("solutions.id"))
     solution = orm.relation('Solution', back_populates='comments')
 
-    liked_by = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
+    liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     files = orm.relation("UsersFile", back_populates='comment')
 

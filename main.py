@@ -1,43 +1,48 @@
 # -*- coding: utf-8 -*-
+import json
 import math
-from db_location import SQLALCHEMY_DATABASE_URI
+import os
+import random
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from set_bot_message import *
+from submit_bots_changes import submit_changes
+
 from flask import Flask, render_template, redirect, request, make_response
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_restful import abort
-# from github import Github
-from loginform import LoginForm
+
 from data import db_session
-from data.users import User
+from data.category import Category
+from data.codes import RegCode
+from data.comment import Comment
+from data.logmessage import Log
 from data.post import Post
 from data.problem import Problem
-from solutionaddform import SolutionAddForm
-from data.comment import Comment
 from data.solution import Solution
-from data.category import Category
-from registerform import RegisterForm
-from postaddform import PostAddForm
-from admin_message_form import AdminForm
-from resetemailform import ResetEmailForm
-from commentaddform import CommentAddForm
-from problemaddform import ProblemAddForm
-from problemeditform import ProblemEditForm
-from profileeditform import ProfileEditForm
+from data.users import User
 from data.users_file import UsersFile
-from data.logmessage import Log
-from fileform import FileAddForm
-from verifyform import VerifyForm
-from navform import NavForm
+from db_location import SQLALCHEMY_DATABASE_URI
+from forms.admin_message_form import AdminForm
+from forms.commentaddform import CommentAddForm
+from forms.fileform import FileAddForm
+from forms.loginform import LoginForm
+from forms.navform import NavForm
+from forms.postaddform import PostAddForm
+from forms.problemaddform import ProblemAddForm
+from forms.problemeditform import ProblemEditForm
+from forms.profileeditform import ProfileEditForm
+from forms.registerform import RegisterForm
+from forms.resetemailform import ResetEmailForm
+from forms.solutionaddform import SolutionAddForm
+from forms.verifyform import VerifyForm
+from forms.simpleform import SimpleForm
 from secret_code import generate_code
-from data.codes import RegCode
-from datetime import datetime, timedelta
-import os
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-import smtplib
-from email.mime.text import MIMEText
-import random
-from email.mime.multipart import MIMEMultipart
 
 try:
-    from email_secret_data import EMAIL, PASSWORD, GITHUB_TOKEN
+    from email_secret_data import EMAIL, PASSWORD
 except Exception:
     EMAIL = os.environ["EMAIL"]
     PASSWORD = os.environ["PASSWORD"]
@@ -179,6 +184,7 @@ def fix_cats(publ, db_sess):
 
 @app.route('/show_last_logs')
 def show_last_logs():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /show_last_logs")
         return redirect('/login/$show_last_logs')
@@ -196,6 +202,7 @@ def show_last_logs():
 
 @app.route('/admin_debug', methods=['POST', 'GET'])
 def admin_debug():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /admin_debug")
         return redirect('/login/$admin_debug')
@@ -216,6 +223,7 @@ def admin_debug():
 
 @app.route('/admin_message', methods=['POST', 'GET'])
 def change_admin_message():
+    submit_changes()
     global admin_message
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел проникнуть в /admin_message")
@@ -238,6 +246,7 @@ def change_admin_message():
 # Удаляем файлы, прикреплённые к чему-то и переходим по ссылке togo
 @app.route('/delete_file/<int:file_id>/<togo>')
 def delete_file(file_id, togo):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить файл с id={file_id} и перейти по ссылке {togo}")
         return redirect(f'/login/delete_file${file_id}${togo}')
@@ -266,6 +275,7 @@ def delete_file(file_id, togo):
 # Помощь
 @app.route('/help')
 def help_():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /help")
         return redirect('/login/$help')
@@ -280,7 +290,7 @@ def send_email(to, code, message_type="register"):
         text = random.choice([
             f'Вы только что зарегистрировались на нашем сайте, вот ваш код подтверждения:\n{code}. Введите его, а затем войдите.',
             f'Сообщаем об успешной регистрации на сайте ge0math, чтобы завершить её введите этот код и войдите на сайт с подтверждённой почтой:\n{code}',
-            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения вашей электронной почты на сайте ge0math. Введите его и войдите на сайт.',
+            f'{code}\n Это код подтверждения, который мы отправили вам на почту для подтверждения вашей электронной почты на сайте ge0math. Введите его и войдите на сайт.',
             f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить вашу электронную почту на сайте ge0math. После этого вы сможете войти на сайт.',
             f'Ваш код подтверждения:\n{code}\n Введите его, чтобы завершить регистрацию на сайте ge0math и получить возможность войти.'
         ])
@@ -288,7 +298,7 @@ def send_email(to, code, message_type="register"):
         text = random.choice([
             f'Вы свою электронную почту на нашем сайте и указали {to}, если это вы, введите ваш код подтверждения:\n{code}',
             f'Сообщаем о смене почты на сайте ge0math на {to}. Чтобы подтвердить смену электронной почты, введите этот код:\n{code}',
-            f'{code}\n Это код потверждения, который мы отправили вам на почту для подтверждения смены вашей электронной почты на сайте ge0math.',
+            f'{code}\n Это код подтверждения, который мы отправили вам на почту для подтверждения смены вашей электронной почты на сайте ge0math.',
             f'Ваш код подтверждения:\n{code}\n Введите его, чтобы подтвердить смену электронной почты на сайте ge0math.',
         ])
     # Задаём параметры письма
@@ -317,6 +327,7 @@ def send_email(to, code, message_type="register"):
 @login_required
 @app.route('/wrong')
 def wrong():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /wrong")
         return redirect('/login/$wrong')
@@ -344,6 +355,7 @@ def wrong():
 @login_required
 @app.route('/author_false/<name>/<int:publ_id>')
 def author_false(name, publ_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел попасть в /author_false и сказать, что автор считает {name} {publ_id} неверным")
@@ -365,9 +377,9 @@ def author_false(name, publ_id):
         arr.remove(f"{name} {publ_id}")
     current_user.wrong = arr
     db_sess.merge(current_user)
-    if name=="post" or name=="problem":
+    if name == "post" or name == "problem":
         href = f"/{name}/{publ_id}"
-    elif name=="solution":
+    elif name == "solution":
         href = f"/problem/{publ.problem_id}"
     else:
         if publ.solution_id is not None:
@@ -379,6 +391,10 @@ def author_false(name, publ_id):
     db_sess.commit()
     db_sess.close()
     add_log(f"Автор считает {name} {publ_id} неверным")
+    if name == "problem":
+        problem_author_false(publ_id)
+    if name == "solution":
+        solution_author_false(publ_id)
     return redirect(href)
 
 
@@ -426,6 +442,7 @@ def check_truth(publ, db_sess):
 @login_required
 @app.route('/isfalse/<name>/<int:publ_id>/<int:user_id>')
 def make_false(name, publ_id, user_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /isfalse и сказать, что {name} {publ_id} неверно")
         return redirect(f'/login/$isfalse${name}${publ_id}$user_id')
@@ -433,6 +450,7 @@ def make_false(name, publ_id, user_id):
         add_log(
             f"Пользователь с id={current_user.id}!={user_id} хотел попасть в /isfalse и сказать, что {name} {publ_id} неверно")
         abort(404)
+    flag = False
     db_sess = db_session.create_session()
     if name == "problem":
         problem = db_sess.query(Problem).filter(Problem.id == publ_id).first()
@@ -456,9 +474,11 @@ def make_false(name, publ_id, user_id):
                 problem.think_is_true = arr
             problem.think_is_false = list(problem.think_is_false) + [user_id]
             add_log(f"Пользователь с id={current_user.id} считает {name} {publ_id} неверным", db_sess=db_sess)
+            flag = True
         db_sess.commit()
         check_truth(problem, db_sess)
         db_sess.close()
+        problem_false(publ_id, user_id)
         return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=get_adminmessage())
     else:
         solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
@@ -482,9 +502,11 @@ def make_false(name, publ_id, user_id):
                 solution.think_is_true = arr
             solution.think_is_false = list(solution.think_is_false) + [user_id]
             add_log(f"Пользователь с id={current_user.id} считает {name} {publ_id} неверным", db_sess=db_sess)
+            flag = True
         db_sess.commit()
         check_truth(solution, db_sess)
         db_sess.close()
+        solution_false(publ_id, user_id)
         return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=get_adminmessage())
 
 
@@ -492,6 +514,7 @@ def make_false(name, publ_id, user_id):
 @login_required
 @app.route('/istrue/<name>/<int:publ_id>/<int:user_id>')
 def make_true(name, publ_id, user_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /istrue и сказать, что {name} {publ_id} верно")
         return redirect(f'/login/$istrue${name}${publ_id}${user_id}')
@@ -499,6 +522,7 @@ def make_true(name, publ_id, user_id):
         add_log(
             f"Пользователь с id={current_user.id}!={user_id} хотел попасть в /istrue и сказать, что {name} {publ_id} верно")
         abort(404)
+    flag = False
     db_sess = db_session.create_session()
     if name == "problem":
         problem = db_sess.query(Problem).filter(Problem.id == publ_id).first()
@@ -522,9 +546,12 @@ def make_true(name, publ_id, user_id):
                     db_sess=db_sess)
             problem.think_is_true = list(problem.think_is_true) + [user_id]
             add_log(f"Пользователь с id={current_user.id} считает {name} {publ_id} верным", db_sess=db_sess)
+            flag = True
         db_sess.commit()
         check_truth(problem, db_sess)
         db_sess.close()
+        if flag:
+            problem_true(publ_id, user_id)
         return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=get_adminmessage())
     else:
         solution = db_sess.query(Solution).filter(Solution.id == publ_id).first()
@@ -552,6 +579,8 @@ def make_true(name, publ_id, user_id):
         db_sess.commit()
         check_truth(solution, db_sess)
         db_sess.close()
+        if flag:
+            solution_true(publ_id, user_id)
         return render_template("nowindow.html", with_cats_show=with_cats_show, admin_message=get_adminmessage())
 
 
@@ -559,6 +588,7 @@ def make_true(name, publ_id, user_id):
 @login_required
 @app.route('/subscribe/<int:user_id>/<int:viewer_id>')
 def subscribe(user_id, viewer_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел стать подписчиком пользователя с id={user_id}")
         return redirect(f'/login/$subscribe${user_id}${viewer_id}')
@@ -570,22 +600,27 @@ def subscribe(user_id, viewer_id):
     user = db_sess.query(User).filter(User.id == user_id).first()
     if viewer.subscribes:
         arr = list(viewer.subscribes)
+        arr1 = list(user.subscribers)
         if user_id in arr:
             arr.remove(user_id)
             user.subscribers_count -= 1
+            arr1.remove(viewer_id)
             add_log(
                 f"Пользователь с id={current_user.id} перестал быть подписчиком пользователя с id={user_id}",
                 db_sess=db_sess)
         else:
             arr.append(user_id)
+            arr1.append(viewer_id)
             user.subscribers_count += 1
             add_log(
                 f"Пользователь с id={current_user.id} стал подписчиком пользователя с id={user_id}",
                 db_sess=db_sess)
         viewer.subscribes = arr
+        user.subscribers = arr1
     else:
         viewer.subscribes = [user_id]
         user.subscribers_count += 1
+        user.subscribers = [viewer_id]
         add_log(
             f"Пользователь с id={current_user.id} стал подписчиком пользователя с id={user_id}",
             db_sess=db_sess)
@@ -598,6 +633,7 @@ def subscribe(user_id, viewer_id):
 @login_required
 @app.route('/reader/<int:user_id>/<int:viewer_id>')
 def become_reader(user_id, viewer_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел стать читателем пользователя с id={user_id}")
         return redirect(f'/login/$reader${user_id}${viewer_id}')
@@ -633,6 +669,7 @@ def become_reader(user_id, viewer_id):
 @login_required
 @app.route('/addtoread/<int:user_id>/<name>/<int:cont_id>')
 def add_toread(user_id, name, cont_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел почитать {name} {cont_id} попозже")
         return redirect(f'/login/$addtoread${user_id}${name}${cont_id}')
@@ -668,6 +705,7 @@ def add_toread(user_id, name, cont_id):
 @login_required
 @app.route('/liked/<int:user_id>/<name>/<int:cont_id>')
 def like(user_id, name, cont_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел лайкнуть {name} {cont_id}")
         return redirect(f'/login/$liked${user_id}${name}${cont_id}')
@@ -690,7 +728,7 @@ def like(user_id, name, cont_id):
         add_log(f"Пользователь с id={current_user.id} хотел лайкнуть {name} {cont_id}, но оно не существует")
         abort(404)
     add_log(
-        f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} лайкнул {name} {cont_id}. Рейтинг публикации был {publ.id}, её лайкнули {publ.liked_by}",
+        f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} лайкнул {name} {cont_id}. Рейтинг публикации был {publ.rank}, её лайкнули {publ.liked_by}",
         db_sess=db_sess)
     # print(publ.rank, publ.liked_by, user_id)
     # print(user.get_rank())
@@ -704,8 +742,16 @@ def like(user_id, name, cont_id):
         arr.append(user_id)
         publ.liked_by = arr
         add_log(
-            f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} лайкнул {name} {cont_id}. Рейтинг публикации стал {publ.id}, её лайкнули {publ.liked_by}",
+            f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} лайкнул {name} {cont_id}. Рейтинг публикации стал {publ.rank}, её лайкнули {publ.liked_by}",
             db_sess=db_sess)
+        if name == "post":
+            like_under_post_added(cont_id, user_id)
+        if name == "problem":
+            like_under_problem_added(cont_id, user_id)
+        if name == "solution":
+            like_under_solution_added(cont_id, user_id)
+        if name == "comment":
+            like_under_comment_added(cont_id, user_id)
     else:
         # print(456)
         publ.rank -= user.get_rank()
@@ -713,7 +759,7 @@ def like(user_id, name, cont_id):
         arr.remove(user_id)
         publ.liked_by = arr
         add_log(
-            f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} убрал лайк {name} {cont_id}. Рейтинг публикации стал {publ.id}, её лайкнули {publ.liked_by}",
+            f"Пользователь с id={current_user.id} и рейтингом {user.get_rank()} убрал лайк {name} {cont_id}. Рейтинг публикации стал {publ.rank}, её лайкнули {publ.liked_by}",
             db_sess=db_sess)
     # print(publ.liked_by, publ.rank)
     db_sess.commit()
@@ -731,6 +777,7 @@ def load_user(user_id):
 @login_required
 @app.route('/problem/<int:problem_id>', methods=['GET', 'POST'])
 def problem_show(problem_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть задачу {problem_id}")
         return redirect(f'/login/$problem${problem_id}')
@@ -752,11 +799,14 @@ def problem_show(problem_id):
             db_sess.merge(current_user)
             comment = db_sess.merge(comment)
             problem.comments.append(comment)
-            db_sess.commit()
+            user_id = current_user.id
+            comment_id = comment.id
             fix_cats(problem, db_sess)
+            db_sess.commit()
             db_sess.close()
             add_log(
-                f"Пользователь с id={current_user.id} добавил комментарий с содержанием:\n {form.content.data}\n к задаче {problem_id}.")
+                f"Пользователь с id={user_id} добавил комментарий с содержанием:\n {form.content.data}\n к задаче {problem_id}.")
+            comment_added(comment_id)
             return redirect(f'/problem/{problem_id}')
         if solform.validate_on_submit():  # Кто-то написал решение к задаче
             solution = Solution()
@@ -767,10 +817,13 @@ def problem_show(problem_id):
             solution = db_sess.merge(solution)
             problem.solutions.append(solution)
             fix_cats(problem, db_sess)
+            user_id = current_user.id
+            solution_id = solution.id
             db_sess.commit()
             db_sess.close()
             add_log(
-                f"Пользователь с id={current_user.id} добавил решение с содержанием:\n {solform.content.data}\n к задаче {problem_id}.")
+                f"Пользователь с id={user_id} добавил решение с содержанием:\n {solform.content.data}\n к задаче {problem_id}.")
+            solution_added(solution_id)
             return redirect(f'/problem/{problem_id}')
         for i in range(len(comment_forms)):
             if comment_forms[i].validate_on_submit():  # Кто-то написал комментарий к решению
@@ -783,11 +836,13 @@ def problem_show(problem_id):
                 comment.theme = solution.theme
                 solution.comments.append(comment)
                 sol_id = solution.id
-                db_sess.commit()
+                comment_id = comment.id
                 fix_cats(problem, db_sess)
+                db_sess.commit()
                 db_sess.close()
                 add_log(
                     f"Пользователь с id={current_user.id} добавил комментарий с содержанием:\n {comment_forms[i].content.data}\n к {i} решению с id={sol_id} задачи {problem_id}.")
+                comment_added(comment_id)
                 return redirect(f'/problem/{problem_id}')
     add_log(
         f"Пользователь с id={current_user.id} смотрит задачу {problem_id}.")
@@ -803,6 +858,7 @@ def problem_show(problem_id):
 @login_required
 @app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def post_show(post_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть пост {post_id}")
         return redirect(f'/login/$post${post_id}')
@@ -823,11 +879,13 @@ def post_show(post_id):
         db_sess.merge(current_user)
         comment = db_sess.merge(comment)
         post.comments.append(comment)
-        db_sess.commit()
+        comment_id = comment.id
         fix_cats(post, db_sess)
+        db_sess.commit()
         db_sess.close()
         add_log(
             f"Пользователь с id={current_user.id} добавил комментарий с содержанием:\n {form.content.data}\n к посту {post_id}.")
+        comment_added(comment_id)
         return redirect(f'/post/{post_id}')
     add_log(
         f"Пользователь с id={current_user.id} смотрит пост {post_id}.")
@@ -842,6 +900,7 @@ def post_show(post_id):
 @login_required
 @app.route('/my')
 def toread():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть в /my")
         return redirect('/login/$my')
@@ -869,6 +928,7 @@ def toread():
 @login_required
 @app.route('/')
 def main_page():
+    submit_changes()
     add_log(f"Чувака отправили на главную страницу")
     return redirect('/***/***/месяц/NOTEGS')
 
@@ -878,11 +938,12 @@ def main_page():
 @login_required
 @app.route('/<cathegories>/<post_types>/<time>/<tegs>', methods=["POST", "GET"])
 def index(cathegories, post_types, time, tegs: str):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел попасть на главную")
         return redirect(f'/login/${cathegories}${post_types}${time}${tegs}')
     form = NavForm()
-    if form.validate_on_submit():  # Если кто-то заполнил фарму и нажал искать, мы его переадресовываем
+    if form.validate_on_submit():  # Если кто-то заполнил форму и нажал искать, мы его переадресовываем
         cats = ''
         if form.geom.data:
             cats += '*'
@@ -962,7 +1023,7 @@ def index(cathegories, post_types, time, tegs: str):
                 'всё время': timedelta(days=365 * (now.year - 1))}[time]
     oldest = now - timedist
     db_sess = db_session.create_session()
-    # Подбираем подходящии публикации
+    # Подбираем подходящие публикации
     good_themes = [str(i) for i in range(3) if cats[i] == '*']
     if form.posts.data:
         posts = []
@@ -990,7 +1051,7 @@ def index(cathegories, post_types, time, tegs: str):
         if (datetime.now() - publ.created_date).seconds < 60 * 15:
             reit += max(24 * 60 * 60 - (datetime.now() - publ.created_date).seconds, 0) / (24 * 6 * 6)
         reit += publ.user.get_rank()
-        reit += random.randrange(10)
+        # reit += random.randrange(10)
         k = 0
         if tegs != "NOTEGS":
             for teg_name in tegs.split(","):
@@ -1023,8 +1084,9 @@ def index(cathegories, post_types, time, tegs: str):
 
 # Профиль
 @login_required
-@app.route('/profile/<int:user_id>')
+@app.route('/profile/<int:user_id>', methods=['POST', 'GET'])
 def profile(user_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел посмотреть профиль пользователя с id={user_id}")
         return redirect(f'/login/$profile${user_id}')
@@ -1037,6 +1099,25 @@ def profile(user_id):
         return redirect("/")
     publs = sorted(list(user.posts) + list(user.problems), key=lambda x: x.created_date)[
             ::-1]
+
+    vk_form = SimpleForm(prefix="vkform")
+    tg_form = SimpleForm(prefix="tgform")
+    if vk_form.validate_on_submit():
+        user.vk_id = vk_form.text.data
+
+        extend_messages([{'vk': vk_form.text.data,
+                          'text': 'Кто-то привязал ваш аккаунт в Вконтакте к сайту ge0math.ru. Если это не вы, напишите /stop и бот не будет вам писать.'}],
+                        "vk")
+
+        db_sess.commit()
+
+    if tg_form.validate_on_submit():
+        user.tg_id = tg_form.text.data
+        extend_messages([{'tg': tg_form.text.data,
+                          'text': 'Кто-то привязал ваш аккаунт в telegram к сайту ge0math.ru. Если это не вы, напишите /stop и бот не будет вам писать.'}],
+                        "tg")
+        db_sess.commit()
+
     add_log(f"Пользователь с id={current_user.id} посмотрел профиль пользователя с id={user_id}", db_sess=db_sess)
     res = make_response(
         render_template("profile.html", title=user.name, user=user, viewer=current_user, publications=publs,
@@ -1048,7 +1129,8 @@ def profile(user_id):
                         geom2=user.get_rank('0'),
                         alg2=user.get_rank('1'), comb2=user.get_rank('2'), with_cats_show=with_cats_show,
                         admin_message=get_adminmessage(), users_count=db_sess.query(User).count(),
-                        publ_count=db_sess.query(Post).count() + db_sess.query(Problem).count()
+                        publ_count=db_sess.query(Post).count() + db_sess.query(Problem).count(),
+                        vk_form=vk_form, tg_form=tg_form
                         ))
 
     return res
@@ -1058,6 +1140,7 @@ def profile(user_id):
 @login_required
 @app.route('/abord_email_reseting/<int:user_id>')
 def abord_email_reseting(user_id):
+    submit_changes()
     db_sess = db_session.create_session()
     if current_user.id != User.id:
         db_sess.close()
@@ -1077,6 +1160,7 @@ def abord_email_reseting(user_id):
 @login_required
 @app.route('/reset_new_email_code/<int:user_id>')
 def reset_new_email_code(user_id):
+    submit_changes()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     user.new_email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
@@ -1091,6 +1175,7 @@ def reset_new_email_code(user_id):
 @login_required
 @app.route('/new_email_verify/<int:user_id>', methods=['GET', 'POST'])
 def verify_new_email(user_id):
+    submit_changes()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     if user.new_email_code == "":
@@ -1124,6 +1209,7 @@ def verify_new_email(user_id):
 @login_required
 @app.route('/reset_email/<int:user_id>', methods=['GET', 'POST'])
 def reset_email(user_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел изменить электронную почту пользователя с id={user_id}")
@@ -1185,6 +1271,7 @@ def reset_email(user_id):
 @login_required
 @app.route('/edit_profile/<int:user_id>', methods=["POST", "GET"])
 def edit_profile(user_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел изменить профиль пользователя с id={user_id}")
@@ -1278,7 +1365,7 @@ def check_code(code, db_sess):
         add_log(
             f"Код {reg_code} существует, но создан давно", db_sess=db_sess)
         db_sess.close()
-        return False, "Время действи кода истекло", None
+        return False, "Время действия кода истекло", None
     result = reg_code.status
     add_log(
         f"Код {reg_code} существует, его статус: {result}", db_sess=db_sess)
@@ -1290,6 +1377,7 @@ def check_code(code, db_sess):
 @login_required
 @app.route('/generate_code/<status>')
 def gen_code(status):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел сгенерировать код регистрации")
@@ -1323,8 +1411,9 @@ def gen_code(status):
         return res
 
 
-@app.route('/login/<togo>', methods=['GET','POST'])
+@app.route('/login/<togo>', methods=['GET', 'POST'])
 def login_with_link(togo):
+    submit_changes()
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -1375,6 +1464,7 @@ def login_with_link(togo):
 # Вход
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    submit_changes()
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -1425,6 +1515,7 @@ def login():
 # Смена кода подтверждения почты
 @app.route('/reset_email_code/<int:user_id>')
 def reset_email_code(user_id):
+    submit_changes()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     user.email_code = ''.join([str(random.randrange(10)) for _ in range(6)])
@@ -1438,6 +1529,7 @@ def reset_email_code(user_id):
 # Подтверждение почты
 @app.route('/email_verify/<int:user_id>', methods=['GET', 'POST'])
 def verify_email(user_id):
+    submit_changes()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == user_id).first()
     if user.email_code == "":
@@ -1470,6 +1562,7 @@ def verify_email(user_id):
 # Регистрация
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    submit_changes()
     form = RegisterForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -1540,6 +1633,7 @@ def register():
 @app.route('/logout')
 @login_required
 def logout():
+    submit_changes()
     add_log(f"Чувак с id={current_user.id} выходит(")
     logout_user()
     return redirect("/")
@@ -1549,6 +1643,7 @@ def logout():
 @app.route('/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел добавить пост")
         return redirect('/login/$add_post')
@@ -1580,6 +1675,7 @@ def add_post():
             f"Пользователь с id={current_user.id} добавил пост '{post.title}'({post.theme}) с содержанием:\n{post.content}\nОн автоматически добавлен к прочтению пользователям {readers}",
             db_sess=db_sess)
         db_sess.close()
+        post_added(post_id)
         return redirect(f'/post/{post_id}')
     add_log(
         f"Пользователь с id={current_user.id} пришёл добавить пост", db_sess=db_sess)
@@ -1593,6 +1689,7 @@ def add_post():
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
 def add_problem():
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел добавить задачу")
         return redirect('/login/$add_problem')
@@ -1633,6 +1730,7 @@ def add_problem():
         fix_cats(problem, db_sess)
         db_sess.commit()
         db_sess.close()
+        problem_added(problem_id)
         return redirect(f'/problem/{problem_id}')
     add_log(
         f"Пользователь с id={current_user.id} пришёл добавить задачу")
@@ -1646,6 +1744,7 @@ def add_problem():
 @app.route('/edit_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел отредактировать пост с id={id}")
         return redirect(f'/login/$edit_post${id}')
@@ -1744,6 +1843,7 @@ def edit_post(id):
 @app.route('/edit_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_problem(id):  # without solution
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел отредактировать задачу с id={id}")
         return redirect(f'/login/$edit_problem/{id}')
@@ -1842,6 +1942,7 @@ def edit_problem(id):  # without solution
 @app.route('/delete_post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_post(id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить пост с id={id}")
         return redirect(f'/login/$delete_post${id}')
@@ -1870,6 +1971,7 @@ def delete_post(id):
 @app.route('/delete_problem/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_problem(id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить задачу с id={id}")
         return redirect(f'/login/$delete_problem${id}')
@@ -1905,6 +2007,7 @@ def delete_problem(id):
            methods=["POST", "GET"])
 @login_required
 def edit_comment(comment_id, place_name, place_id, par_name, par_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел отредактировать комментарий по ссылке /edit_comment/comment_id:{comment_id}/place_name:{place_name}/place_id:{place_id}/par_name:{par_name}/par_id:{par_id}")
@@ -2013,6 +2116,7 @@ def edit_comment(comment_id, place_name, place_id, par_name, par_id):
            methods=["POST", "GET"])
 @login_required
 def delete_comment(comment_id, place_name, place_id, par_name, par_id):
+    submit_changes()
     "/edit_comment/comment_id:{comment_id}/place_name:{place_name}/place_id:{place_id}/par_name:{par_name}/par_id:{par_id}"
     if not current_user.is_authenticated:
         add_log(
@@ -2075,6 +2179,7 @@ def delete_comment(comment_id, place_name, place_id, par_name, par_id):
            methods=["POST", "GET"])
 @login_required
 def edit_solution(solution_id, problem_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(
             f"Неавторизованный пользователь хотел отредактировать решение с id={solution_id} у задачи с id={problem_id}")
@@ -2161,6 +2266,7 @@ def edit_solution(solution_id, problem_id):
            methods=["POST", "GET"])
 @login_required
 def delete_solution(solution_id, problem_id):
+    submit_changes()
     if not current_user.is_authenticated:
         add_log(f"Неавторизованный пользователь хотел удалить решение с id={solution_id} у задачи с id={problem_id}")
         return redirect(f'/login/$delete_solution${solution_id}${problem_id}')

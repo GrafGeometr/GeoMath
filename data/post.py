@@ -45,6 +45,7 @@ class Post(SqlAlchemyBase):
     comments = orm.relation("Comment", back_populates='post')
 
     liked_by = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+    are_interested = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     files = orm.relation("UsersFile", back_populates='post')
 

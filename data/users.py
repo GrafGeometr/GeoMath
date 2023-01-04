@@ -19,6 +19,9 @@ class User(SqlAlchemyBase, UserMixin):
     email = sqlalchemy.Column(sqlalchemy.String,
                               index=True, unique=True, nullable=True)
 
+    tg_id = sqlalchemy.Column(sqlalchemy.String, default="")
+    vk_id = sqlalchemy.Column(sqlalchemy.String, default="")
+
     email_code = sqlalchemy.Column(sqlalchemy.String)
 
     new_email = sqlalchemy.Column(sqlalchemy.String)
@@ -34,8 +37,22 @@ class User(SqlAlchemyBase, UserMixin):
     toread = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
 
     subscribers_count = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+    subscribers = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
     readers = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
     subscribes = sqlalchemy.Column(sqlalchemy.PickleType, default=[])
+
+    wants_geom = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_comb = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_algt = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+
+    wants_prob = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_post = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_comm = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_solu = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_like = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_fals = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_true = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+    wants_athf = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
 
     posts = orm.relation("Post", back_populates='user')
     problems = orm.relation("Problem", back_populates='user')
@@ -94,4 +111,4 @@ class User(SqlAlchemyBase, UserMixin):
         months = timedelta.seconds / 60 / 60 / 24 / 30
         res -= months
         rank = 1 + math.atan(res / 2000) / math.pi * 2 * 99
-        return int(rank*1000)/1000
+        return int(rank * 1000) / 1000
