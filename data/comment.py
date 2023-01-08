@@ -36,3 +36,19 @@ class Comment(SqlAlchemyBase):
 
     def get_rank(self):
         return int(self.rank*1000)/1000
+
+    def get_parent(self):
+        if self.post is not None:
+            return ("post", self.post_id)
+        if self.problem is not None:
+            return ("problem", self.problem_id)
+        if self.solution is not None:
+            return ("solution", self.solution_id)
+
+    def get_great_parent(self):
+        if self.post is not None:
+            return ("post", self.post_id)
+        if self.problem is not None:
+            return ("problem", self.problem_id)
+        if self.solution is not None:
+            return ("problem", self.solution.problem_id)

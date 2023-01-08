@@ -1,0 +1,37 @@
+<div class="alert alert-secondary" style="margin-left:20px">
+    {% with show_user=comment.user %}
+    {% include "user_nickname.html" %}
+    {% endwith %}<br>
+    {% for users_file in comment.files %}
+    {{ users_file|safe }}
+    {% endfor %}
+    {{ with_cats_show(comment.content)|safe }}
+    <hr>
+    <div>Рейтинг: {{comment.get_rank()}}</div>
+    {% if viewer==comment.user %}
+    {% set edit_href = "/edit_comment/"+comment.id|string %}
+    {% set delete_href = "/delete_comment/"+comment.id|string %}
+    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+    <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+    {% else %}
+    {% set likehref = "/liked/"+viewer.id|string+"/comment/"+comment.id|string %}
+    {% set btnid = "#commentlike"+comment.id|string %}
+    {% set imgid = "#commentlikeimg"+comment.id|string %}
+    {% if comment.liked_by and viewer.id in comment.liked_by %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+    </button>
+    <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% else %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+    </button>
+    <script>
+        var btn1 = document.getElementById( "{{ btnid }}" );
+        btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% endif %}
+    {% endif %}
+</div>
+<br>

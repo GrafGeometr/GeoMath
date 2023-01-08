@@ -105,9 +105,27 @@
         }
         window.open(link_to_go);
     }
+</script>
+<script>
+    function makeFalse(false_id, true_id, link_to_go) {
+        if (document.getElementById(false_id).className=="btn btn-outline-danger") {
+            document.getElementById(false_id).className="btn btn-danger";
+            document.getElementById(true_id).className="btn btn-outline-success";
+        } else {
+            document.getElementById(false_id).className="btn btn-outline-danger";
+        }
+        window.open(link_to_go);
+    }
 
-
-
+    function makeTrue(false_id, true_id, link_to_go) {
+        if (document.getElementById(true_id).className=="btn btn-outline-success") {
+            document.getElementById(true_id).className="btn btn-success";
+            document.getElementById(false_id).className="btn btn-outline-danger";
+        } else {
+            document.getElementById(true_id).className="btn btn-outline-success";
+        }
+        window.open(link_to_go);
+    }
 </script>
 <!-- Begin page content -->
 

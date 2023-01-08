@@ -1,0 +1,13 @@
+<a class="badge bg-light" href={{ show_user.profile_href() }}><font size="3"
+                                                                                                color="blue">
+    {% if show_user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+    {% endif %}
+    {% if show_user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
+    {% endif %}
+    {{ show_user.name }}
+    {% if show_user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
+    преподаватель
+    {% endif %}
+    {% if show_user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
+    {% endif %}
+</font></a>
