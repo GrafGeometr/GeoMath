@@ -19,3 +19,5 @@ typing_extensions==4.3.0
 Werkzeug==2.2.2
 WTForms==3.0.1
 zipp==3.8.1
+
+telebot~=0.0.4

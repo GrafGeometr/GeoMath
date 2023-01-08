@@ -4,6 +4,7 @@ import math
 import os
 import random
 import smtplib
+import subprocess
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -1685,6 +1686,32 @@ def add_post():
     return res
 
 
+def error_message(result):
+    lines = result.stdout.split(b'\n')
+    ans = b""
+    flag = -1
+    for line in lines:
+        if flag == -1:
+            if b'!' in line:
+                ans += line
+                ans += b'\n'
+                if line == b"! Missing $ inserted.":
+                    flag = 2
+                elif line == b"! Too many }'s.":
+                    flag = 1
+                elif line == b"! Undefined control sequence.":
+                    flag = 0
+                else:
+                    ans += "A weird mistake occured. Check everything again, please."
+                    break
+
+        elif flag == 0:
+            ans += line
+            break
+        else:
+            flag -= 1
+    return ans
+
 # Добавление задачи
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
@@ -1697,7 +1724,61 @@ def add_problem():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         problem = Problem()
-        problem.content = form.content.data
+
+        # latex suffering
+        if form.latex.data == "0":
+            problem.content = form.content.data
+        elif form.latex.data == "2":
+            problem.content = "См. прилежащий файл"
+            with open('static/global_files/amount_of_tasks.txt') as f:
+                amount_s = f.readline()
+                amount = int(amount_s)
+            with open(f'static/latex_files/{amount_s}.tex', 'w') as f:
+                for symbol in form.content.data:
+                    f.write(symbol)
+            latex_result = subprocess.run(["latex", "-output-format=pdf", "-halt-on-error", f'{amount_s}.tex'], cwd='static/latex_files', capture_output=True)
+            if latex_result.returncode == 0:
+                problem.pdf_name = f"static/latex_files/{amount_s}.pdf"
+                amount += 1
+                with open('static/global_files/amount_of_tasks.txt', 'w') as f:
+                    f.write(str(amount))
+            else:
+                return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                 message=str(error_message(latex_result))[2:-1],
+                                                 form=form, with_cats_show=with_cats_show,
+                                                 admin_message=get_adminmessage()))
+                # DONE
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+        else:
+            problem.content = "См. прилежащий файл"
+            latex_default_fill = "\\documentclass{article} \n \\usepackage[utf8x]{inputenc} \n \\usepackage[russian]{babel} \n \\begin{document} \n"
+            with open('static/global_files/amount_of_tasks.txt') as f:
+                amount_s = f.readline()
+                amount = int(amount_s)
+                print(amount_s)
+                print(amount)
+            with open(f'static/latex_files/{amount_s}.tex', 'w') as f:
+                f.write(latex_default_fill)
+                for symbol in form.content.data:
+                    f.write(symbol)
+                f.write("\n \\end{document}")
+
+            latex_result = subprocess.run(["latex", "-output-format=pdf", "-halt-on-error", f'{amount_s}.tex'], cwd='static/latex_files', capture_output=True)
+            if latex_result.returncode == 0:
+                problem.pdf_name = f"static/latex_files/{amount_s}.pdf"
+                amount += 1
+                with open('static/global_files/amount_of_tasks.txt', 'w') as f:
+                    f.write(str(amount))
+            else:
+                print("---------------------------")
+                print(str(error_message(latex_result))[2:-1])
+                return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                     message=str(error_message(latex_result))[2:-1],
+                                                     form=form, with_cats_show=with_cats_show,
+                                                     admin_message=get_adminmessage()))
+                # DONE
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+
         problem.theme = form.theme.data
         problem.notauthor = form.notauthor.data
         current_user.problems.append(problem)
