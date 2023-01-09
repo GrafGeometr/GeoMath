@@ -12,6 +12,9 @@ class Comment(SqlAlchemyBase):
                            primary_key=True, autoincrement=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     rank = sqlalchemy.Column(sqlalchemy.Float, default=0)
+
+    pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     theme = sqlalchemy.Column(sqlalchemy.String)

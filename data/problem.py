@@ -35,6 +35,8 @@ class Problem(SqlAlchemyBase):
     theme = sqlalchemy.Column(sqlalchemy.String)
     notauthor = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
+    pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     author_thinks_false = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     is_true = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
