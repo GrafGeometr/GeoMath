@@ -1770,8 +1770,6 @@ def add_problem():
                 with open('static/global_files/amount_of_tasks.txt', 'w') as f:
                     f.write(str(amount))
             else:
-                print("---------------------------")
-                print(str(error_message(latex_result))[2:-1])
                 return make_response(render_template('problemadd.html', title='Добавление задачи',
                                                      message=str(error_message(latex_result))[2:-1],
                                                      form=form, with_cats_show=with_cats_show,
