@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from set_bot_message import *
 from submit_bots_changes import submit_changes
-from two_teg_functions import good_show, fix_cats, fix_tegs, add_links
+from two_teg_functions import good_show, fix_tegs, add_links
 from add_log_file import add_log
 
 from flask import Flask, render_template, redirect, request, make_response
@@ -746,7 +746,7 @@ def problem_show(problem_id):
             problem.comments.append(comment)
             user_id = current_user.id
             comment_id = comment.id
-            fix_cats(problem, db_sess)
+            fix_tegs(problem, db_sess)
             db_sess.commit()
             db_sess.close()
             add_log(
@@ -761,7 +761,7 @@ def problem_show(problem_id):
             fake_user.solutions.append(solution)
             solution = db_sess.merge(solution)
             problem.solutions.append(solution)
-            fix_cats(problem, db_sess)
+            fix_tegs(problem, db_sess)
             user_id = current_user.id
             solution_id = solution.id
             db_sess.commit()
@@ -782,7 +782,7 @@ def problem_show(problem_id):
                 solution.comments.append(comment)
                 sol_id = solution.id
                 comment_id = comment.id
-                fix_cats(problem, db_sess)
+                fix_tegs(problem, db_sess)
                 db_sess.commit()
                 db_sess.close()
                 add_log(
@@ -825,7 +825,7 @@ def post_show(post_id):
         comment = db_sess.merge(comment)
         post.comments.append(comment)
         comment_id = comment.id
-        fix_cats(post, db_sess)
+        fix_tegs(post, db_sess)
         db_sess.commit()
         db_sess.close()
         add_log(
@@ -1584,52 +1584,6 @@ def logout():
     return redirect("/")
 
 
-# Добавление поста
-@app.route('/add_post', methods=['GET', 'POST'])
-@login_required
-def add_post():
-    submit_changes()
-    if not current_user.is_authenticated:
-        add_log(f"Неавторизованный пользователь хотел добавить пост")
-        return redirect('/login/$add_post')
-    form = PostAddForm()
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == current_user.id).first()
-    db_sess.commit()
-    if form.validate_on_submit():
-        post = Post()
-        post.title = form.title.data
-        post.content = form.content.data
-        post.theme = form.theme.data
-        user.posts.append(post)
-
-        db_sess.commit()
-        fix_cats(post, db_sess)
-        post = user.posts[-1]
-        readers = []
-        for reader_id in (user.readers if user.readers is not None else []):
-            reader = db_sess.query(User).filter(User.id == reader_id).first()
-            arr = (list(reader.toread) if reader.toread is not None else [])
-            arr.append('post ' + str(post.id))
-            reader.toread = arr
-            db_sess.commit()
-            readers.append((reader.name, reader.id))
-        post_id = post.id
-        db_sess.commit()
-        add_log(
-            f"Пользователь с id={current_user.id} добавил пост '{post.title}'({post.theme}) с содержанием:\n{post.content}\nОн автоматически добавлен к прочтению пользователям {readers}",
-            db_sess=db_sess)
-        db_sess.close()
-        post_added(post_id)
-        return redirect(f'/post/{post_id}')
-    add_log(
-        f"Пользователь с id={current_user.id} пришёл добавить пост", db_sess=db_sess)
-    res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
-                                        form=form, good_show=good_show, admin_message=get_adminmessage()))
-
-    return res
-
-
 def error_message(result):
     lines = result.stdout.split(b'\n')
     ans = b""
@@ -1656,6 +1610,108 @@ def error_message(result):
             flag -= 1
     return ans
 
+
+def make_file(text, autofill = False):
+    latex_default_fill = "\\documentclass{article} \n \\usepackage[utf8x]{inputenc} \n \\usepackage[russian]{babel} \n \\begin{document} \n"
+    with open('static/global_files/amount_of_tasks.txt') as f:
+        amount_s = f.readline()
+        amount = int(amount_s)
+    with open(f'static/latex_files/{amount_s}.tex', 'w') as f:
+        if autofill:
+            f.write(latex_default_fill)
+        f.write(text)
+        if autofill:
+            f.write("\n \\end{document}")
+    latex_result = subprocess.run(["latex", "-output-format=pdf", "-halt-on-error", f'{amount_s}.tex'],
+                                  cwd='static/latex_files', capture_output=True)
+    if latex_result.returncode == 0:
+        pdf_name = f"static/latex_files/{amount_s}.pdf"
+        amount += 1
+        with open('static/global_files/amount_of_tasks.txt', 'w') as f:
+            f.write(str(amount))
+        return pdf_name, ''
+    else:
+        return "", str(error_message(latex_result))[2:-1]
+
+
+# Добавление поста
+@app.route('/add_post', methods=['GET', 'POST'])
+@login_required
+def add_post():
+    submit_changes()
+    if not current_user.is_authenticated:
+        add_log(f"Неавторизованный пользователь хотел добавить пост")
+        return redirect('/login/$add_post')
+    form = PostAddForm()
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == current_user.id).first()
+    db_sess.commit()
+    if form.validate_on_submit():
+        post = Post()
+        post.title = form.title.data
+        post.original_text = form.content.data
+
+        if form.latex.data == "0":
+            post.content = add_links(form.content.data)
+        elif form.latex.data == "2":
+            # problem.content = "См. прилежащий файл"
+
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text)
+            if errors != '':
+                return make_response(render_template('postadd.html', title='Добавление поста',
+                                                 message=errors,
+                                                 form=form, good_show=good_show,
+                                                 admin_message=get_adminmessage()))
+
+            post.pdf_name = name
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+        else:
+            # problem.content = "См. прилежащий файл"
+
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text, autofill=True)
+            if errors != '':
+                return make_response(render_template('postadd.html', title='Добавление поста',
+                                                     message=errors,
+                                                     form=form, good_show=good_show,
+                                                     admin_message=get_adminmessage()))
+
+            post.pdf_name = name
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+
+        post.theme = form.theme.data
+        user.posts.append(post)
+
+        db_sess.commit()
+        fix_tegs(post, db_sess)
+        post = user.posts[-1]
+        readers = []
+        for reader_id in (user.readers if user.readers is not None else []):
+            reader = db_sess.query(User).filter(User.id == reader_id).first()
+            arr = (list(reader.toread) if reader.toread is not None else [])
+            arr.append('post ' + str(post.id))
+            reader.toread = arr
+            db_sess.commit()
+            readers.append((reader.name, reader.id))
+        post_id = post.id
+        db_sess.commit()
+        add_log(
+            f"Пользователь с id={current_user.id} добавил пост '{post.title}'({post.theme}) с содержанием:\n{post.content}\nОн автоматически добавлен к прочтению пользователям {readers}",
+            db_sess=db_sess)
+        db_sess.close()
+        post_added(post_id)
+        return redirect(f'/post/{post_id}')
+    add_log(
+        f"Пользователь с id={current_user.id} пришёл добавить пост", db_sess=db_sess)
+    res = make_response(render_template('postadd.html', title='Добавление информации для размышления',
+                                        form=form, good_show=good_show, admin_message=get_adminmessage()))
+
+    return res
+
+
 # Добавление задачи
 @app.route('/add_problem', methods=['GET', 'POST'])
 @login_required
@@ -1668,57 +1724,39 @@ def add_problem():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         problem = Problem()
+        problem.original_text = form.content.data
 
         # latex suffering
+
         if form.latex.data == "0":
-            problem.content = form.content.data
+            problem.content = add_links(form.content.data)
         elif form.latex.data == "2":
-            problem.content = "См. прилежащий файл"
-            with open('static/global_files/amount_of_tasks.txt') as f:
-                amount_s = f.readline()
-                amount = int(amount_s)
-            with open(f'static/latex_files/{amount_s}.tex', 'w') as f:
-                for symbol in form.content.data:
-                    f.write(symbol)
-            latex_result = subprocess.run(["latex", "-output-format=pdf", "-halt-on-error", f'{amount_s}.tex'], cwd='static/latex_files', capture_output=True)
-            if latex_result.returncode == 0:
-                problem.pdf_name = f"static/latex_files/{amount_s}.pdf"
-                amount += 1
-                with open('static/global_files/amount_of_tasks.txt', 'w') as f:
-                    f.write(str(amount))
-            else:
+            # problem.content = "См. прилежащий файл"
+
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text)
+            if errors != '':
                 return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                 message=str(error_message(latex_result))[2:-1],
+                                                 message=errors,
                                                  form=form, good_show=good_show,
                                                  admin_message=get_adminmessage()))
-                # DONE
+
+            problem.pdf_name = name
             subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
         else:
-            problem.content = "См. прилежащий файл"
-            latex_default_fill = "\\documentclass{article} \n \\usepackage[utf8x]{inputenc} \n \\usepackage[russian]{babel} \n \\begin{document} \n"
-            with open('static/global_files/amount_of_tasks.txt') as f:
-                amount_s = f.readline()
-                amount = int(amount_s)
-                print(amount_s)
-                print(amount)
-            with open(f'static/latex_files/{amount_s}.tex', 'w') as f:
-                f.write(latex_default_fill)
-                for symbol in form.content.data:
-                    f.write(symbol)
-                f.write("\n \\end{document}")
+            # problem.content = "См. прилежащий файл"
 
-            latex_result = subprocess.run(["latex", "-output-format=pdf", "-halt-on-error", f'{amount_s}.tex'], cwd='static/latex_files', capture_output=True)
-            if latex_result.returncode == 0:
-                problem.pdf_name = f"static/latex_files/{amount_s}.pdf"
-                amount += 1
-                with open('static/global_files/amount_of_tasks.txt', 'w') as f:
-                    f.write(str(amount))
-            else:
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text, autofill=True)
+            if errors != '':
                 return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                     message=str(error_message(latex_result))[2:-1],
+                                                     message=errors,
                                                      form=form, good_show=good_show,
                                                      admin_message=get_adminmessage()))
-                # DONE
+
+            problem.pdf_name = name
             subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
 
         problem.theme = form.theme.data
@@ -1750,7 +1788,7 @@ def add_problem():
             add_log(
                 f"Пользователь{'(не автор)' if form.notauthor.data else ''} с id={current_user.id} добавил задачу({problem.theme}) с содержанием:\n{problem.content}\nИ не прикрепил к ней решение. Она автоматически добавлена к прочтению пользователям {readers}",
                 db_sess=db_sess)
-        fix_cats(problem, db_sess)
+        fix_tegs(problem, db_sess)
         db_sess.commit()
         db_sess.close()
         problem_added(problem_id)
@@ -1801,10 +1839,42 @@ def edit_post(id):
             abort(404)
         if form.validate_on_submit():
             post.title = form.title.data
-            post.content = form.content.data
+            post.original_text = form.content.data
+
+            if form.latex.data == "0":
+                post.content = add_links(form.content.data)
+            elif form.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(render_template('postadd.html', title='Добавление поста',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                post.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(render_template('postadd.html', title='Добавление поста',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                post.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             post.theme = form.theme.data
+
             db_sess.commit()
-            fix_cats(post, db_sess)
+            fix_tegs(post, db_sess)
             add_log(
                 f"Пользователь с id={current_user.id} отредактировал пост '{post.title}'({post.theme})с id={id}. Содержание:\n{post.content}\n",
                 db_sess=db_sess)
@@ -1898,11 +1968,44 @@ def edit_problem(id):  # without solution
             db_sess.close()
             abort(404)
         if form.validate_on_submit():
-            problem.content = form.content.data
+            problem.original_text = form.content.data
+
+            # latex suffering
+
+            if form.latex.data == "0":
+                problem.content = add_links(form.content.data)
+            elif form.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                problem.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                problem.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             problem.theme = form.theme.data
             problem.notauthor = form.notauthor.data
             db_sess.commit()
-            fix_cats(problem, db_sess)
+            fix_tegs(problem, db_sess)
             add_log(
                 f"Пользователь{'(не автор)' if form.notauthor.data else ''} с id={current_user.id} отредактировал задачу ({problem.theme}) с id={id}. Содержание:\n{problem.content}\n",
                 db_sess=db_sess)
@@ -2047,14 +2150,42 @@ def edit_comment(comment_id):
             if not form.content.data:
                 form.content.data = comment.content
         if form.validate_on_submit():
-            comment.content = form.content.data
+            comment.original_text = form.content.data
+
+            # latex suffering
+
+            if form.latex.data == "0":
+                comment.content = add_links(form.content.data)
+            elif form.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                comment.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                comment.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             db_sess.commit()
-            if comment.post:
-                fix_cats(comment.post, db_sess)
-            elif comment.problem:
-                fix_cats(comment.problem, db_sess)
-            elif comment.solution:
-                fix_cats(comment.solution, db_sess)
+            fix_tegs(comment, db_sess)
             db_sess.close()
             add_log(
                 f"Пользователь с id={current_user.id} отредактировал комментарий по ссылке /edit_comment/comment_id:{comment_id} и изменил content={form.content.data}")
@@ -2189,9 +2320,46 @@ def edit_solution(solution_id):
             if not form.content.data:
                 form.content.data = solution.content
         if form.validate_on_submit():
-            solution.content = form.content.data
+            solution.original_text = form.content.data
+
+            # latex suffering
+
+            if form.latex.data == "0":
+                solution.content = add_links(form.content.data)
+            elif form.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                solution.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+                solution.content = ''
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(render_template('problemadd.html', title='Добавление задачи',
+                                                         message=errors,
+                                                         form=form, good_show=good_show,
+                                                         admin_message=get_adminmessage()))
+
+                solution.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+                solution.content = ''
             db_sess.commit()
-            fix_cats(solution.problem, db_sess)
+            fix_tegs(solution.problem, db_sess)
             db_sess.close()
             add_log(
                 f"Пользователь с id={current_user.id} отредактировал решение с id={solution_id} у задачи с id={problem_id}. Содержание:\n{form.content.data}")

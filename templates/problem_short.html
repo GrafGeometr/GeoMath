@@ -18,6 +18,7 @@
     <embed src="/{{ problem.pdf_name }}" width="100%" height="800"/>
     {% endif %}
     <hr>
+    {{ problem.pdf_name }}
     Опубликовано пользователем:
     {% with show_user=problem.user %}
     {% include "user_nickname.html" %}
