@@ -10,6 +10,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from set_bot_message import *
 from submit_bots_changes import submit_changes
+from two_teg_functions import good_show, fix_cats, fix_tegs, add_links
+from add_log_file import add_log
 
 from flask import Flask, render_template, redirect, request, make_response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -57,22 +59,7 @@ login_manager.init_app(app)
 basedir = os.path.abspath(os.curdir)
 
 
-def add_log(text, db_sess=None):
-    if db_sess is None:
-        new_session = True
-        db_sess = db_session.create_session()
-    else:
-        new_session = False
-    log = Log()
-    log.message = text
-    db_sess.add(log)
-    while db_sess.query(Log).count() > 10000:
-        first_log = db_sess.query(Log).first()
-        db_sess.delete(first_log)
-    db_sess.commit()
-    # print(db_sess.query(Log).all())
-    if new_session:
-        db_sess.close()
+
 
 
 # ненужный гитхаб
@@ -138,63 +125,6 @@ def set_adminmessage(text):
 # def jstest():
 #    return render_template("jstest.html")
 
-def fix_html_problems(text: str):
-    list_of_bad_characters = [("&", "&AMP;"), ("<", "&lt;"),
-                              (">", "&gt;"), ("\t", "&Tab;"), ("\r", ''), ('\n', '<br>'), ("{", "&lcub;"),
-                              ("}", "&rcub;")]
-    for ch, rch in list_of_bad_characters:
-        text = text.replace(ch, rch)
-    return text
-
-
-# Выделяем теги из текста и преобразуем их в ссылки
-def with_cats_show(text):
-    res = []
-    i = 0
-    n = len(text)
-    while i < n:
-        if text[i] == '#':
-            j = 1
-            teg = ["#"]
-            while i + j < n:
-                if not (text[i + j].isalpha() or text[i + j].isdigit() or text[i + j] in "_."):
-                    break
-                teg.append(text[i + j])
-                j += 1
-            if teg:
-                res.append(f"<a href='/***/***/год/{''.join(teg)}'>#{''.join(teg)}</a>")
-            if i + j < n:
-                res.append(text[i + j])
-            i += j
-        else:
-            res.append(text[i])
-            i += 1
-    return ''.join(res)
-
-
-def good_show(text):
-    return with_cats_show(fix_html_problems(text))
-
-
-# Проверяем, что у публикации категории в базе данных совпадают с теми, что в её тексте(заголовке, тексте, комментариях...)
-def fix_cats(publ, db_sess):
-    names = publ.get_needed_cats()
-    publ_name = str(type(publ)) + str(publ.id)
-    add_log(f"У публикации {publ_name} были теги {[teg.name for teg in publ.categories]}", db_sess=db_sess)
-    for name in names:
-        if not db_sess.query(Category).filter(Category.name == name).first():
-            category = Category()
-            category.name = name
-            publ.categories.append(category)
-        else:
-            category = db_sess.query(Category).filter(Category.name == name).first()
-            if category not in publ.categories:
-                publ.categories.append(category)
-    for category in publ.categories:
-        if category.name not in names:
-            publ.categories.remove(category)
-    add_log(f"Теперь у публикации {publ_name} теги {[teg.name for teg in publ.categories]}", db_sess=db_sess)
-    db_sess.commit()
 
 
 @app.route('/show_last_logs')
@@ -1759,7 +1689,7 @@ def add_problem():
             else:
                 return make_response(render_template('problemadd.html', title='Добавление задачи',
                                                  message=str(error_message(latex_result))[2:-1],
-                                                 form=form, with_cats_show=with_cats_show,
+                                                 form=form, good_show=good_show,
                                                  admin_message=get_adminmessage()))
                 # DONE
             subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
@@ -1786,7 +1716,7 @@ def add_problem():
             else:
                 return make_response(render_template('problemadd.html', title='Добавление задачи',
                                                      message=str(error_message(latex_result))[2:-1],
-                                                     form=form, with_cats_show=with_cats_show,
+                                                     form=form, good_show=good_show,
                                                      admin_message=get_adminmessage()))
                 # DONE
             subprocess.run(["latexmk", "-c"], cwd='static/latex_files')

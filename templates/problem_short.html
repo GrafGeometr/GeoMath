@@ -13,8 +13,9 @@
     <hr>
     {% if problem.content is not none %}
     {{ good_show(problem.content)|safe }}
-    {% elif problem.pdf_name is not none %}
-    <embed src="{{ problem.pdf_name }}" width="100%" height="800"/>
+    {% endif %}
+    {% if problem.pdf_name is not none %}
+    <embed src="/{{ problem.pdf_name }}" width="100%" height="800"/>
     {% endif %}
     <hr>
     Опубликовано пользователем:

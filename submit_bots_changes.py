@@ -1,4 +1,5 @@
 import json
+import os
 from data import db_session
 from data.users import User
 
@@ -29,8 +30,9 @@ from data.users import User
 
 
 def submit_changes():
+    print(os.curdir)
     try:
-        with open("bots_files/changes_in_bd.json", "r") as file:
+        with open("./bots_files/changes_in_bd.json", "r") as file:
             list_of_changes = json.load(file)
             for change in list_of_changes:
                 db_sess = db_session.create_session()
@@ -67,5 +69,5 @@ def submit_changes():
                 db_sess.commit()
                 db_sess.close()
     except Exception as e:
-        with open("bots_files/changes_in_bd.json", "w") as file:
+        with open("./bots_files/changes_in_bd.json", "w") as file:
             file.write("[]")
