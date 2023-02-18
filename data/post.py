@@ -13,7 +13,7 @@ def get_categories_from_text(text):
             j = 1
             name = []
             while i + j < n:
-                if text[i + j] in '#\n \t,;':
+                if not (text[i + j].isalpha() or text[i + j].isdigit() or text[i + j] in "_."):
                     break
                 name.append(text[i + j])
                 j += 1
@@ -62,9 +62,9 @@ class Post(SqlAlchemyBase):
 
     def get_needed_cats(self): # Получаем нужные категории
         res = []
-        res.extend(get_categories_from_text(self.content))
+        res.extend(get_categories_from_text(self.original_text))
         res.extend(get_categories_from_text(self.title))
         for comment in self.comments:
-            res.extend(get_categories_from_text(comment.content))
+            res.extend(get_categories_from_text(comment.original_text))
         return res
 
