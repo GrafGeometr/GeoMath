@@ -33,8 +33,9 @@ class Problem(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     rank = sqlalchemy.Column(sqlalchemy.Float, default=0)
     theme = sqlalchemy.Column(sqlalchemy.String)
-    pdf_name = sqlalchemy.Column(sqlalchemy.String, default="")
     notauthor = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+
+    original_text = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 

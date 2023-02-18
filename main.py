@@ -1646,7 +1646,7 @@ def error_message(result):
                 elif line == b"! Undefined control sequence.":
                     flag = 0
                 else:
-                    ans += "A weird mistake occured. Check everything again, please."
+                    ans += b"A weird mistake occured. Check everything again, please."
                     break
 
         elif flag == 0:

@@ -35,6 +35,8 @@ class Post(SqlAlchemyBase):
     rank = sqlalchemy.Column(sqlalchemy.Float,default=0)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
+    original_text = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
