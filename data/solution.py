@@ -13,6 +13,8 @@ class Solution(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     theme = sqlalchemy.Column(sqlalchemy.String)
 
+    pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     author_thinks_false = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     is_true = sqlalchemy.Column(sqlalchemy.Boolean, default=False)

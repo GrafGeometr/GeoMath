@@ -33,172 +33,21 @@
     <div class="alert alert-dark">
         <div class="alert alert-secondary">
             {% if isinstance(publ, Post) %}
-                <h2>{{with_cats_show(publ.title)|safe}}</h2>
-                {% for users_file in publ.files %}
-                {{ users_file|safe }}
-                {% endfor %}
-                <hr>
-                <div>
-                    {{ with_cats_show(publ.content)|safe }}
-                </div>
-                <div>
-                    Автор записи:
-                    <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
-                                                                                                                 color="blue">
-                        {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
-                        {% endif %}
-                        {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
-                        {% endif %}
-                        {{ publ.user.name }}
-                        {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
-                        преподаватель
-                        {% endif %}
-                        {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
-                        {% endif %}
-                    </font></a>
-                </div>
-                {% set publ_href = "/post/"+publ.id|string %}
-                {% set toread_href = "/addtoread/"+viewer.id|string+"/post/"+publ.id|string %}
-                {% set toreadbtnid = "toreadbtn"+counter|string %}
-                <div>
-                    <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a>
-                    {% if viewer.toread and ("post "+publ.id|string) in viewer.toread %}
-                        <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
-                        <script>
-                            btn = document.getElementById("{{toreadbtnid}}");
-                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                        </script>
-                    {% else %}
-                        <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
-                        <script>
-                            btn = document.getElementById("{{toreadbtnid}}");
-                            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                        </script>
-                    {% endif %}
-                </div>
-                <div>Рейтинг: {{publ.get_rank()}}</div>
-                {% if viewer==publ.user %}
-                    {% set edit_href = "/edit_post/"+publ.id|string %}
-                    {% set delete_href = "/delete_post/"+publ.id|string %}
-                    <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
-                    {% if not publ.comments %}
-                        <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
-                    {% endif %}
-                {% else %}
-                    {% set likehref = "/liked/"+viewer.id|string+"/post/"+publ.id|string %}
-                    {% set btnid = "#postbtn" + counter|string %}
-                    {% set imgid = "#postlikeimg" + counter|string %}
-                        {% if publ.liked_by and viewer.id in publ.liked_by %}
-                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-                            </button>
-                            <script>
-                            var btn1 = document.getElementById( "{{ btnid }}" );
-                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                            </script>
-                        {% else %}
-                            <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-                            </button>
-                            <script>
-                            var btn1 = document.getElementById( "{{ btnid }}" );
-                            btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                            </script>
-                        {% endif %}
-                {% endif %}
-            {% else %}
-                Условие задачи:<br>
-                {% for users_file in publ.files %}
-                {{ users_file|safe }}
-                {% endfor %}
-                <hr>
-                {{ with_cats_show(publ.content)|safe }}
-                <hr>
-
-                Автор задачи:
-                <a class="badge bg-light" style="margin-left:20px" href={{ publ.user.profile_href() }}><font size="3"
-                                                                                                             color="blue">
-                    {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
-                    {% endif %}
-                    {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
-                    {% endif %}
-                    {{ publ.user.name }}
-                    {% if publ.user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">,
-                    преподаватель
-                    {% endif %}
-                    {% if publ.user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
-                    {% endif %}
-                </font></a>
-                <div>
-                    {% set publ_href = "/problem/"+publ.id|string %}
-                    {% set toread_href = "/addtoread/"+viewer.id|string+"/problem/"+publ.id|string %}
-                    {% set toreadbtnid = "toreadbtn"+counter|string %}
-                    {% if publ.solutions %}
-                    <div>
-                        <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии и решения</a>
-                        {% if viewer.toread and ("problem "+publ.id|string) in viewer.toread %}
-                            <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
-                            <script>
-                                btn = document.getElementById("{{toreadbtnid}}");
-                                btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                            </script>
-                        {% else %}
-                            <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
-                            <script>
-                                btn = document.getElementById("{{toreadbtnid}}");
-                                btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                            </script>
-                        {% endif %}
-                    </div>
-                    {% else %}
-                        <div class="alert alert-warning">Внимание! У этой задачи пока нет решений. Первый, прикрепивший решение,
-                            получит дополнительный рейтинг.
-                        </div>
-                        <div>
-                            <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Смотреть комментарии</a>
-                            {% if viewer.toread and ("problem "+publ.id|string) in viewer.toread %}
-                                <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
-                                <script>
-                                    btn = document.getElementById("{{toreadbtnid}}");
-                                    btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                                </script>
-                            {% else %}
-                                <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
-                                <script>
-                                    btn = document.getElementById("{{toreadbtnid}}");
-                                    btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
-                                </script>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                    <div>Рейтинг: {{publ.get_rank()}}</div>
-                    {% if viewer==publ.user %}
-                        {% set edit_href = "/edit_problem/"+publ.id|string %}
-                        {% set delete_href = "/delete_problem/"+publ.id|string %}
-                        <a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
-                        {% if not publ.comments and not publ.solutions %}
-                            <a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
-                        {% endif %}
-                    {% else %}
-                        {% set likehref = "/liked/"+viewer.id|string+"/problem/"+publ.id|string %}
-                        {% set btnid = "#problembtn" + counter|string %}
-                        {% set imgid = "#problemlikeimg" + counter|string %}
-                            {% if publ.liked_by and viewer.id in publ.liked_by %}
-                                <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
-                                </button>
-                                <script>
-                                var btn1 = document.getElementById( "{{ btnid }}" );
-                                btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                                </script>
-                            {% else %}
-                                <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
-                                </button>
-                                <script>
-                                var btn1 = document.getElementById( "{{ btnid }}" );
-                                btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
-                                </script>
-                            {% endif %}
-                    {% endif %}
+            {% with post=publ %}
+            {% include "post_short.html" %}
+            <a href="/post/{{ post.id }}" class="btn btn-primary">Смотреть комментарии</a>
+            {% endwith %}
             {% endif %}
-            </div>
+            {% if isinstance(publ, Problem) %}
+            {% with problem=publ %}
+            {% include "problem_short.html" %}
+            {% if problem.solutions %}
+            <a href="/problem/{{ problem.id }}" class="btn btn-primary">Смотреть комментарии и решения</a>
+            {% else %}
+            <a href="/problem/{{ problem.id }}" class="btn btn-primary">Смотреть комментарии</a>
+            {% endif %}
+            {% endwith %}
+            {% endif %}
         </div>
     </div>
 {% endfor %}

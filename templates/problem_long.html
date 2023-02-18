@@ -1,0 +1,72 @@
+{% include "problem_short.html" %}
+
+<p>
+    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"
+            aria-expanded="false" aria-controls="collapse1">
+        {{ solform.content.label }}
+    </button>
+</p>
+<div class="collapse" id="collapse1">
+    <form action="" method="post" enctype="multipart/form-data">
+        {{ solform.hidden_tag() }}
+        <div>{{ solform.submit(type="submit", class="btn btn-primary")
+            }}{{ solform.content(class="form-control") }}
+        </div>
+        {% for error in solform.content.errors %}
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+        <p>К сожалению, сейчас файлы можно прикреплять только, при редактировании.</p>
+    </form>
+</div>
+
+{% if problem.solutions %} <font size="4"><b>Решения:</b></font>
+
+{% for counter in range(problem.solutions|length) %}
+{% set i = counter %}
+{% set solution = problem.solutions[counter] %}
+{% set solution_class = "alert alert-secondary" %}
+{% if solution.is_false or solution.author_thinks_false %}
+{% set solution_class = "alert alert-danger" %}
+{% elif solution.is_true %}
+{% set solution_class = "alert alert-success" %}
+{% endif %}
+<div class="{{ solution_class }}">
+    {% include "solution_long.html" %}
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-danger">Внимание, у этой задачи пока нет решения. Тот, кто первым напишет решение, получит
+    половину рейтинга от этой задачи.
+</div>
+{% endif %}
+<p>
+    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2"
+            aria-expanded="false" aria-controls="collapse2">
+        {{ form.content.label }}
+    </button>
+</p>
+<div class="collapse" id="collapse2">
+    <form action="" method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div>{{ form.submit(type="submit", class="btn btn-primary") }}{{
+            form.content(class="form-control") }}
+        </div>
+        {% for error in form.content.errors %}
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+        <p>К сожалению, сейчас файлы можно прикреплять только, при редактировании.</p>
+    </form>
+</div>
+{% if problem.comments %}
+<div class="alert alert-secondary"><font size="4"><b>Комментарии:</b></font>
+    <hr>
+    {% for counter3 in range(problem.comments|length) %}
+    {% set comment = problem.comments[counter3] %}
+    {% include "comment.html" %}
+    {% endfor %}
+</div>
+{% endif %}

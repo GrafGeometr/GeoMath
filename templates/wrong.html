@@ -6,30 +6,18 @@
 <div class="alert alert-dark">
     <div class="alert alert-light">
         {% if isinstance(publ, Solution) %}
-        Ваше решение считают неверным
-        {% for users_file in publ.files %}
-        {{ users_file|safe }}
-        {% endfor %}
-        <hr>
-        <div>
-            {{ with_cats_show(publ.content)|safe }}
-        </div>
-        {% set publ_href = "/problem/"+publ.problem.id|string %}
+        Ваше решение считают неверным<br>
+        {% with solution=publ %}
+        {% include "solution_short.html" %}
+        {% endwith %}
         <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Перейти к задаче</a>
 
         {% elif isinstance(publ, Problem) %}
-        Вашу задачу считают неверной
-        <hr>
-        {% for users_file in publ.files %}
-        {{ users_file|safe }}
-        {% endfor %}
-        <hr>
-        {{ with_cats_show(publ.content)|safe }}
-        <hr>
-
-        {% set publ_href = "/problem/"+publ.id|string %}
+        Вашу задачу считают неверной<br>
+        {% with problem=publ %}
+        {% include "problem_short.html" %}
+        {% endwith %}
         <a href={{ publ_href }} target="_blank" class="btn btn-secondary">Перейти к задаче</a>
-
         {% endif %}
     </div>
 </div>

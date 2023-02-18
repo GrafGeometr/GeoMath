@@ -1,0 +1,64 @@
+<h1>{{ good_show(post.title)|safe }}</h1>
+<hr>
+{% for users_file in post.files %}
+{{ users_file|safe }}
+{% endfor %}
+<hr>
+{% if post.content is not none %}
+{{ good_show(post.content)|safe }}
+{% elif post.pdf_name is not none %}
+<embed src="{{ post.pdf_name }}" width="100%" height="800"/>
+{% endif %}
+<hr>
+{% with show_user=post.user %}
+{% include "user_nickname.html" %}
+{% endwith %}
+<div>Рейтинг: {{post.get_rank()}}</div>
+{% if viewer==post.user %}
+{% set edit_href = "/edit_post/"+post.id|string %}
+{% set delete_href = "/delete_post/"+post.id|string %}
+<a class="btn btn-primary" href={{ edit_href }}>Редактировать</a>
+{% if not post.comments %}
+<a class="btn btn-danger" href={{ delete_href }}>Удалить</a>
+{% endif %}
+{% else %}
+{% set likehref = "/liked/"+viewer.id|string+"/post/"+post.id|string %}
+{% set btnid = "#postbtn" %}
+{% set imgid = "#postlikeimg" %}
+<div class="alert alert-light">
+    {% if post.liked_by and viewer.id in post.liked_by %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeon.png" width="20">Нравится
+    </button>
+    <script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% else %}
+    <button class="btn btn-light" id={{ btnid }}><img id={{ imgid }} src="/static/images/likeoff.png" width="20">Нравится
+    </button>
+    <script>
+    var btn1 = document.getElementById( "{{ btnid }}" );
+    btn1.onclick = function(){ dolike("{{ imgid }}", "{{ likehref }}"); };
+    </script>
+    {% endif %}
+</div>
+{% set post_href = "/post/"+post.id|string %}
+{% set toread_href = "/addtoread/"+viewer.id|string+"/post/"+post.id|string %}
+{% set toreadbtnid = "toreadbtn"+counter|string %}
+<div class="alert alert-light">
+    {% if viewer.toread and ("post "+post.id|string) in viewer.toread %}
+        <button id={{ toreadbtnid }} class="btn btn-secondary">Отложить к прочтению</button>
+        <script>
+            btn = document.getElementById("{{toreadbtnid}}");
+            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+        </script>
+    {% else %}
+        <button id={{ toreadbtnid }} class="btn btn-outline-secondary">Отложить к прочтению</button>
+        <script>
+            btn = document.getElementById("{{toreadbtnid}}");
+            btn.onclick = function(){ toread("{{ toreadbtnid }}", "{{ toread_href }}"); };
+        </script>
+    {% endif %}
+</div>
+{% endif %}
+<br>

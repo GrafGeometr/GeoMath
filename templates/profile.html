@@ -2,23 +2,14 @@
 
 {% block content %}
 <div class="alert alert-secondary"><font size="5">
-    {% if user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">
+    {% with show_user=user %}
+    {% include "user_nickname.html" %}
+    {% if show_user.status=="администратор" and viewer.id==show_user.id %}
+    , администратор
     {% endif %}
-    {% if user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">
-    {% endif %}
-    {{ user.name }}
-    {% if user.status=="преподаватель" %} <img src="/static/images/teacher.png" width="20" height="20">, преподаватель
-    {% endif %}
-    {% if user.status=="жюри" %} <img src="/static/images/juri.png" width="20" height="20">, жюри
-    {% endif %}
-    {% if viewer.id==user.id and user.status=="участник" %}, участник
-    {% endif %}
-    {% if viewer.id==user.id and user.status=="администратор" %}, администратор<br> Пользователей: {{users_count}}<br>Публикаций:
-    {{publ_count}}
-    {% endif %}
+    {% endwith %}
     <br>
     {% if user.id == viewer.id %}
-    Адрес электронной почты: {{ user.email }}
     {% endif %}
 </font></div>
 {% if user.about %}
@@ -247,14 +238,14 @@
     <div class="alert alert-secondary">
         <div class="alert alert-light">
             {% if isinstance(publ, Post) %}
-                <h2>{{with_cats_show(publ.title)|safe}}</h2>
+                <h2>{{good_show(publ.title)|safe}}</h2>
                 <hr>
                 {% for users_file in publ.files %}
                     {{ users_file|safe }}
                 {% endfor %}
                 <hr>
                 <div>
-                    {{ with_cats_show(publ.content)|safe }}
+                    {{ good_show(publ.content)|safe }}
                 </div>
                 <div>
                     Запись опубликована пользователем:
@@ -330,7 +321,7 @@
                     {{ users_file|safe }}
                 {% endfor %}
                 <hr>
-                {{ with_cats_show(publ.content)|safe }}
+                {{ good_show(publ.content)|safe }}
                 <hr>
 
                 Опубликовано пользователем:

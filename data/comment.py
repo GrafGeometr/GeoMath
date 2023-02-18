@@ -12,6 +12,9 @@ class Comment(SqlAlchemyBase):
                            primary_key=True, autoincrement=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     rank = sqlalchemy.Column(sqlalchemy.Float, default=0)
+
+    pdf_name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     theme = sqlalchemy.Column(sqlalchemy.String)
@@ -36,3 +39,19 @@ class Comment(SqlAlchemyBase):
 
     def get_rank(self):
         return int(self.rank*1000)/1000
+
+    def get_parent(self):
+        if self.post is not None:
+            return ("post", self.post_id)
+        if self.problem is not None:
+            return ("problem", self.problem_id)
+        if self.solution is not None:
+            return ("solution", self.solution_id)
+
+    def get_great_parent(self):
+        if self.post is not None:
+            return ("post", self.post_id)
+        if self.problem is not None:
+            return ("problem", self.problem_id)
+        if self.solution is not None:
+            return ("problem", self.solution.problem_id)

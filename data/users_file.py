@@ -35,15 +35,15 @@ class UsersFile(SqlAlchemyBase):
 
     def __repr__(self): # Показываем
         if self.extension=='.ggb':
-            return f'<iframe  scrolling="no" src="{self.name}" width="1100px" height="1000px" style="border:0px;"></iframe><br>'
+            return f'<iframe  scrolling="no" src="{self.name}" width="100%" height="1000px" style="border:0px;"></iframe><br>'
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:
             return f'<a class="btn btn-primary" target="_blank" href="/static/{self.id}{self.extension}">{self.name}</a><br>'
         elif self.extension in ['.png', '.jpeg', '.jpg', '.gif']:
-            return f'<img src="/static/{self.id}{self.extension}" width="380"><br>'
+            return f'<img src="/static/{self.id}{self.extension}" width="50%"><br>'
 
     def edit(self, togo): # Показываем при редактировании
         if self.extension=='.ggb':
-            return f'<iframe  scrolling="no" src="{self.name}" width="900px" height="700px" style="border:0px;"></iframe><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
+            return f'<iframe  scrolling="no" src="{self.name}" width="100%" height="700px" style="border:0px;"></iframe><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
         if self.extension in ['.txt', '.pdf', '.doc', '.docx']:
             return f'<a class="btn btn-primary" target="_blank" href="/static/{self.id}{self.extension}">{self.name}</a><a href="/delete_file/{self.id}/{togo}" class="btn btn-danger">Удалить</a><br>'
         elif self.extension in ['.png', '.jpeg', '.jpg', '.gif']:
