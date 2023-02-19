@@ -1,3 +1,7 @@
+{% if message %}
+<div class="alert alert-danger">{{ message }}</div>
+{% endif %}
+
 {% include "post_short.html" %}
 <p>
     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1"

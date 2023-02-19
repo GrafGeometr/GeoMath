@@ -23,14 +23,14 @@ def with_cats_show(text):
     while i < n:
         if text[i] == '#':
             j = 1
-            teg = ["#"]
+            teg = [""]
             while i + j < n:
                 if not (text[i + j].isalpha() or text[i + j].isdigit() or text[i + j] in "_."):
                     break
                 teg.append(text[i + j])
                 j += 1
             if teg:
-                res.append(f"<a href='/***/***/год/{''.join(teg)}'>#{''.join(teg)}</a>")
+                res.append(f"<a href='/***/***/year/{''.join(teg)}'>#{''.join(teg)}</a>")
             if i + j < n:
                 res.append(text[i + j])
             i += j
@@ -71,22 +71,24 @@ def add_links(text, how='normal'):
         i = 0
         n = len(text)
         while i < n:
-            if text[i] == '#':
+            if text[i] == '#' and (i==0 or text[i-1]!='\\'):
                 j = 1
-                teg = ["#"]
+                teg = [""]
                 while i + j < n:
                     if not (text[i + j].isalpha() or text[i + j].isdigit() or text[i + j] in "_."):
                         break
                     teg.append(text[i + j])
                     j += 1
                 if teg:
-                    res.append(f"\\url{'{'}http://ge0math.ru/***/***/год/{''.join(teg)}>#{''.join(teg)}{'}'}")
+                    res.append(f"\\textcolor{'{'}blue{'}'}{'{'}\\href{'{'}http://127.0.0.1:5000/***/***/year/{''.join(teg)}{'}'}{'{'}\#{''.join(teg)}{'}'}{'}'}")
+                    # res.append(f"\\href{'{'}http://ge0math.ru/***/***/year/{''.join(teg)}{'}'}{'{'}\#{''.join(teg)}{'}'}")
                 if i + j < n:
                     res.append(text[i + j])
                 i += j
             else:
                 res.append(text[i])
                 i += 1
+        print(''.join(res))
         return ''.join(res)
     else:
         return text

@@ -8,11 +8,11 @@
 {% endif %}
 {% endfor %}
 <hr>
-{% if post.content is not none %}
+{% if post.content %}
 {{ good_show(post.content)|safe }}
 {% endif %}
-{% if post.pdf_name is not none %}
-<embed src="/{{ post.pdf_name }}" width="100%" height="800"/>
+{% if post.pdf_name %}
+<embed src="/{{ post.pdf_name }}" width="100%" height="100"/>
 {% endif %}
 <hr>
 {% with show_user=post.user %}

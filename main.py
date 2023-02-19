@@ -739,7 +739,40 @@ def problem_show(problem_id):
     if request.method == 'POST':
         if form.validate_on_submit():  # Кто-то написал комментарий к задаче
             comment = Comment()
-            comment.content = form.content.data
+            comment.original_text = form.content.data
+
+            # latex suffering
+
+            if form.latex.data == "0":
+                comment.content = add_links(form.content.data)
+            elif form.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(
+        render_template("problem.html", title="Задача", problem=problem, form=form, message=errors, comment_forms=comment_forms,
+                        solform=solform,
+                        viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                comment.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(form.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(
+        render_template("problem.html", title="Задача", problem=problem, form=form, message=errors, comment_forms=comment_forms,
+                        solform=solform,
+                        viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                comment.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             current_user.comments.append(comment)
             db_sess.merge(current_user)
             comment = db_sess.merge(comment)
@@ -755,7 +788,40 @@ def problem_show(problem_id):
             return redirect(f'/problem/{problem_id}')
         if solform.validate_on_submit():  # Кто-то написал решение к задаче
             solution = Solution()
-            solution.content = solform.content.data
+            solution.original_text = solform.content.data
+
+            # latex suffering
+
+            if solform.latex.data == "0":
+                solution.content = add_links(form.content.data)
+            elif solform.latex.data == "2":
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(solform.content.data, how='latex')
+
+                (name, errors) = make_file(text)
+                if errors != '':
+                    return make_response(
+        render_template("problem.html", title="Задача", problem=problem, form=form, message=errors, comment_forms=comment_forms,
+                        solform=solform,
+                        viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                solution.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+            else:
+                # problem.content = "См. прилежащий файл"
+
+                text = add_links(solform.content.data, how='latex')
+
+                (name, errors) = make_file(text, autofill=True)
+                if errors != '':
+                    return make_response(
+        render_template("problem.html", title="Задача", problem=problem, form=form, message=errors, comment_forms=comment_forms,
+                        solform=solform,
+                        viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                solution.pdf_name = name
+                subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             solution.theme = problem.theme
             fake_user = db_sess.merge(current_user)
             fake_user.solutions.append(solution)
@@ -773,7 +839,42 @@ def problem_show(problem_id):
         for i in range(len(comment_forms)):
             if comment_forms[i].validate_on_submit():  # Кто-то написал комментарий к решению
                 comment = Comment()
-                comment.content = comment_forms[i].content.data
+                comment.original_text = comment_forms[i].content.data
+
+                # latex suffering
+
+                if comment_forms[i].latex.data == "0":
+                    comment.content = add_links(comment_forms[i].content.data)
+                elif comment_forms[i].latex.data == "2":
+                    # problem.content = "См. прилежащий файл"
+
+                    text = add_links(comment_forms[i].content.data, how='latex')
+
+                    (name, errors) = make_file(text)
+                    if errors != '':
+                        return make_response(
+                            render_template("problem.html", title="Задача", problem=problem, form=form, message=errors,
+                                            comment_forms=comment_forms,
+                                            solform=solform,
+                                            viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                    comment.pdf_name = name
+                    subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+                else:
+                    # problem.content = "См. прилежащий файл"
+
+                    text = add_links(comment_forms[i].content.data, how='latex')
+
+                    (name, errors) = make_file(text, autofill=True)
+                    if errors != '':
+                        return make_response(
+                            render_template("problem.html", title="Задача", problem=problem, form=form, message=errors,
+                                            comment_forms=comment_forms,
+                                            solform=solform,
+                                            viewer=current_user, good_show=good_show, admin_message=get_adminmessage()))
+
+                    comment.pdf_name = name
+                    subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
                 current_user.comments.append(comment)
                 db_sess.merge(current_user)
                 comment = db_sess.merge(comment)
@@ -818,7 +919,38 @@ def post_show(post_id):
     form = CommentAddForm()
     if form.validate_on_submit():  # Кто-то написал комментарий к посту
         comment = Comment()
-        comment.content = form.content.data
+        comment.original_text = form.content.data
+
+        # latex suffering
+
+        if form.latex.data == "0":
+            comment.content = add_links(form.content.data)
+        elif form.latex.data == "2":
+            # problem.content = "См. прилежащий файл"
+
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text)
+            if errors != '':
+                return make_response(
+        render_template("post.html", title="Запись", post=post, form=form, message=errors, viewer=current_user,
+                        good_show=good_show, admin_message=get_adminmessage()))
+
+            comment.pdf_name = name
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
+        else:
+            # problem.content = "См. прилежащий файл"
+
+            text = add_links(form.content.data, how='latex')
+
+            (name, errors) = make_file(text, autofill=True)
+            if errors != '':
+                return make_response(
+        render_template("post.html", title="Запись", post=post, form=form, message=errors, viewer=current_user,
+                        good_show=good_show, admin_message=get_adminmessage()))
+
+            comment.pdf_name = name
+            subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
         comment.theme = post.theme
         current_user.comments.append(comment)
         db_sess.merge(current_user)
@@ -875,11 +1007,11 @@ def toread():
 def main_page():
     submit_changes()
     add_log(f"Чувака отправили на главную страницу")
-    return redirect('/***/***/месяц/NOTEGS')
+    return redirect('/***/***/month/NOTEGS')
 
 
 # Главная страница
-# (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 минут', '5 часов', '1 день', 'неделя', 'месяц', 'год', 'всё время'
+# (геома, алгебра, комба) (посты, задачи с решениями, задачи без решений) '30 minutes', '5 hours', '1 day', 'week', 'месяц', 'year', 'всё время'
 @login_required
 @app.route('/<cathegories>/<post_types>/<time>/<tegs>', methods=["POST", "GET"])
 def index(cathegories, post_types, time, tegs: str):
@@ -963,8 +1095,8 @@ def index(cathegories, post_types, time, tegs: str):
     # Находим самую раннюю дату возможной публикации
     form.time.data = time
     now = datetime.now()
-    timedist = {'30 минут': timedelta(minutes=30), '5 часов': timedelta(hours=5), '1 день': timedelta(days=1),
-                'неделя': timedelta(weeks=1), 'месяц': timedelta(days=30), 'год': timedelta(days=365),
+    timedist = {'30 minutes': timedelta(minutes=30), '5 hours': timedelta(hours=5), '1 day': timedelta(days=1),
+                'week': timedelta(weeks=1), 'month': timedelta(days=30), 'year': timedelta(days=365),
                 'всё время': timedelta(days=365 * (now.year - 1))}[time]
     oldest = now - timedist
     db_sess = db_session.create_session()
@@ -1612,7 +1744,10 @@ def error_message(result):
 
 
 def make_file(text, autofill = False):
-    latex_default_fill = "\\documentclass{article} \n \\usepackage[utf8x]{inputenc} \n \\usepackage[russian]{babel} \n \\begin{document} \n"
+    latex_default_fill = "\\documentclass{article} \n \\usepackage[utf8x]{inputenc} \n \\usepackage[russian]{babel} \n \\usepackage{hyperref} \n \\begin{document} \n"
+    with open("default_latex.txt", "r") as f:
+        latex_default_fill = f.read()
+    print(latex_default_fill)
     with open('static/global_files/amount_of_tasks.txt') as f:
         amount_s = f.readline()
         amount = int(amount_s)
@@ -1820,7 +1955,7 @@ def edit_post(id):
             if not form.title.data:
                 form.title.data = post.title
             if not form.content.data:
-                form.content.data = post.content
+                form.content.data = post.original_text
             form.theme.data = post.theme
             # form.images.data = [FileStorage(open(os.path.join(basedir,'static','user_files',filename))) for filename in post.image_ids]
         else:
@@ -1843,6 +1978,7 @@ def edit_post(id):
 
             if form.latex.data == "0":
                 post.content = add_links(form.content.data)
+                post.pdf_name = ''
             elif form.latex.data == "2":
                 # problem.content = "См. прилежащий файл"
 
@@ -1850,12 +1986,13 @@ def edit_post(id):
 
                 (name, errors) = make_file(text)
                 if errors != '':
-                    return make_response(render_template('postadd.html', title='Добавление поста',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('postedit.html', title='Редактирование', form=form,
+                                        href=f"$edit_post${id}", publ=post, message=errors,
+                                        file_form=file_form, good_show=good_show,
+                                        admin_message=get_adminmessage()))
 
                 post.pdf_name = name
+                post.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             else:
                 # problem.content = "См. прилежащий файл"
@@ -1864,12 +2001,13 @@ def edit_post(id):
 
                 (name, errors) = make_file(text, autofill=True)
                 if errors != '':
-                    return make_response(render_template('postadd.html', title='Добавление поста',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('postedit.html', title='Редактирование', form=form,
+                                        href=f"$edit_post${id}", publ=post, message=errors,
+                                        file_form=file_form, good_show=good_show,
+                                        admin_message=get_adminmessage()))
 
                 post.pdf_name = name
+                post.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             post.theme = form.theme.data
 
@@ -1882,7 +2020,7 @@ def edit_post(id):
             return redirect(f'/post/{id}')
         if file_form.validate_on_submit():
             form.title.data = post.title
-            form.content.data = post.content
+            form.content.data = post.original_text
             form.theme.data = post.theme
             file = file_form.file.data
             if file.filename != '':
@@ -1949,7 +2087,7 @@ def edit_problem(id):  # without solution
                                                 ).first()
         if problem:
             if not form.content.data:
-                form.content.data = problem.content
+                form.content.data = problem.original_text
             form.theme.data = problem.theme
             form.notauthor.data = problem.notauthor
         else:
@@ -1974,6 +2112,7 @@ def edit_problem(id):  # without solution
 
             if form.latex.data == "0":
                 problem.content = add_links(form.content.data)
+                problem.pdf_name = ''
             elif form.latex.data == "2":
                 # problem.content = "См. прилежащий файл"
 
@@ -1981,12 +2120,13 @@ def edit_problem(id):  # without solution
 
                 (name, errors) = make_file(text)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('problemedit.html',
+                                        title='Редактирование', message=errors,
+                                        form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form,
+                                        good_show=good_show, admin_message=get_adminmessage()))
 
                 problem.pdf_name = name
+                problem.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             else:
                 # problem.content = "См. прилежащий файл"
@@ -1995,12 +2135,13 @@ def edit_problem(id):  # without solution
 
                 (name, errors) = make_file(text, autofill=True)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('problemedit.html',
+                                        title='Редактирование', message=errors,
+                                        form=form, href=f"$edit_problem${id}", publ=problem, file_form=file_form,
+                                        good_show=good_show, admin_message=get_adminmessage()))
 
                 problem.pdf_name = name
+                problem.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             problem.theme = form.theme.data
             problem.notauthor = form.notauthor.data
@@ -2012,7 +2153,7 @@ def edit_problem(id):  # without solution
             db_sess.close()
             return redirect(f'/problem/{id}')
         if file_form.validate_on_submit():
-            form.content.data = problem.content
+            form.content.data = problem.original_text
             form.notauthor.data = problem.notauthor
             form.theme.data = problem.theme
             file = file_form.file.data
@@ -2045,7 +2186,7 @@ def edit_problem(id):  # without solution
                 users_file.name = file_form.geogebra_link.data
                 problem.files.append(users_file)
             db_sess.commit()
-            form.content.data = problem.content
+            form.content.data = problem.original_text
             add_log(
                 f"Пользователь с id={current_user.id} добавил геогебровский чертёж с ссылкой {file_form.geogebra_link.data} к задаче с id={id}",
                 db_sess=db_sess)
@@ -2148,7 +2289,7 @@ def edit_comment(comment_id):
         place_name, place_id = comment.get_great_parent()
         if request.method == "GET":
             if not form.content.data:
-                form.content.data = comment.content
+                form.content.data = comment.original_text
         if form.validate_on_submit():
             comment.original_text = form.content.data
 
@@ -2156,6 +2297,7 @@ def edit_comment(comment_id):
 
             if form.latex.data == "0":
                 comment.content = add_links(form.content.data)
+                comment.pdf_name = ''
             elif form.latex.data == "2":
                 # problem.content = "См. прилежащий файл"
 
@@ -2163,12 +2305,14 @@ def edit_comment(comment_id):
 
                 (name, errors) = make_file(text)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_comment${comment_id}",
+                                                publ=comment, message=errors,
+                                                file_form=file_form, good_show=good_show,
+                                                admin_message=get_adminmessage()))
 
                 comment.pdf_name = name
+                comment.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             else:
                 # problem.content = "См. прилежащий файл"
@@ -2177,12 +2321,14 @@ def edit_comment(comment_id):
 
                 (name, errors) = make_file(text, autofill=True)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_comment${comment_id}",
+                                                publ=comment, message=errors,
+                                                file_form=file_form, good_show=good_show,
+                                                admin_message=get_adminmessage()))
 
                 comment.pdf_name = name
+                comment.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
             db_sess.commit()
             fix_tegs(comment, db_sess)
@@ -2191,7 +2337,7 @@ def edit_comment(comment_id):
                 f"Пользователь с id={current_user.id} отредактировал комментарий по ссылке /edit_comment/comment_id:{comment_id} и изменил content={form.content.data}")
             return redirect(f'/{place_name}/{place_id}')
         if file_form.validate_on_submit():
-            form.content.data = comment.content
+            form.content.data = comment.original_text
             file = file_form.file.data
             if file.filename != '':
                 file_ext = os.path.splitext(file.filename)[1]
@@ -2225,7 +2371,7 @@ def edit_comment(comment_id):
                     f"Пользователь с id={current_user.id} добавил геогебровский чертёж с ссылкой {file_form.geogebra_link.data} к комментарию по ссылке /edit_comment/comment_id:{comment_id}",
                     db_sess=db_sess)
             db_sess.commit()
-            form.content.data = comment.content
+            form.content.data = comment.original_text
             res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_comment${comment_id}",
                                                 publ=comment,
@@ -2318,7 +2464,7 @@ def edit_solution(solution_id):
         problem_id = solution.problem_id
         if request.method == "GET":
             if not form.content.data:
-                form.content.data = solution.content
+                form.content.data = solution.original_text
         if form.validate_on_submit():
             solution.original_text = form.content.data
 
@@ -2326,6 +2472,7 @@ def edit_solution(solution_id):
 
             if form.latex.data == "0":
                 solution.content = add_links(form.content.data)
+                solution.pdf_name = ''
             elif form.latex.data == "2":
                 # problem.content = "См. прилежащий файл"
 
@@ -2335,12 +2482,13 @@ def edit_solution(solution_id):
 
                 (name, errors) = make_file(text)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
+                                                file_form=file_form, good_show=good_show, message=errors,
+                                                admin_message=get_adminmessage()))
 
                 solution.pdf_name = name
+                solution.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
                 solution.content = ''
             else:
@@ -2350,12 +2498,13 @@ def edit_solution(solution_id):
 
                 (name, errors) = make_file(text, autofill=True)
                 if errors != '':
-                    return make_response(render_template('problemadd.html', title='Добавление задачи',
-                                                         message=errors,
-                                                         form=form, good_show=good_show,
-                                                         admin_message=get_adminmessage()))
+                    return make_response(render_template('solutionedit.html', title='Редактирование', form=form,
+                                                href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
+                                                file_form=file_form, good_show=good_show, message=errors,
+                                                admin_message=get_adminmessage()))
 
                 solution.pdf_name = name
+                solution.content = ''
                 subprocess.run(["latexmk", "-c"], cwd='static/latex_files')
                 solution.content = ''
             db_sess.commit()
@@ -2365,7 +2514,7 @@ def edit_solution(solution_id):
                 f"Пользователь с id={current_user.id} отредактировал решение с id={solution_id} у задачи с id={problem_id}. Содержание:\n{form.content.data}")
             return redirect(f'/problem/{problem_id}')
         if file_form.validate_on_submit():
-            form.content.data = solution.content
+            form.content.data = solution.original_text
             file = file_form.file.data
             if file.filename != '':
                 file_ext = os.path.splitext(file.filename)[1]
@@ -2399,7 +2548,7 @@ def edit_solution(solution_id):
                     f"Пользователь с id={current_user.id} добавил геогебровский чертёж с ссылкой {file_form.geogebra_link.data} к решению с id={solution_id} у задачи с id={problem_id}",
                     db_sess=db_sess)
             db_sess.commit()
-            form.content.data = solution.content
+            form.content.data = solution.original_text
             res = make_response(render_template('solutionedit.html', title='Редактирование', form=form,
                                                 href=f"$edit_solution${solution_id}${problem_id}", publ=solution,
                                                 file_form=file_form, good_show=good_show,

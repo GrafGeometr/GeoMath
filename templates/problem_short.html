@@ -15,14 +15,13 @@
     {% endif %}
     {% endfor %}
     <hr>
-    {% if problem.content is not none %}
+    {% if problem.content %}
     {{ good_show(problem.content)|safe }}
     {% endif %}
-    {% if problem.pdf_name is not none %}
-    <embed src="/{{ problem.pdf_name }}" width="100%" height="800"/>
+    {% if problem.pdf_name %}
+    <embed src="/{{ problem.pdf_name }}" width="100%" height="100"/>
     {% endif %}
     <hr>
-    {{ problem.pdf_name }}
     Опубликовано пользователем:
     {% with show_user=problem.user %}
     {% include "user_nickname.html" %}
